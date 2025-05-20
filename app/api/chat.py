@@ -10,6 +10,7 @@ from app import db
 from app.models import User, ChatMessage, Goal, Reflection, ProgressUpdate, Milestone
 from app.services.sensay import get_sensay_client, SensayAPIError
 from app.api.goals import create_goal_internal
+from app.prompts import STRATEGIST_SYSTEM_MESSAGE, STRATEGIST_GREETING
 
 # Get logger
 logger = logging.getLogger('strategist.chat')
@@ -19,65 +20,6 @@ chat_bp = Blueprint('chat', __name__)
 # Constants
 REPLICA_SLUG = os.environ.get('SENSAY_REPLICA_SLUG', 'strategist_planning_assistant')
 
-# Unified system message that includes all functionality
-UNIFIED_SYSTEM_MESSAGE = """
-You are a strategic planning assistant, helping users define and achieve their goals. 
-Your primary focus is to help users craft clear, meaningful goals, create actionable steps to achieve them, 
-and track their progress.
-
-Your approach is minimalistic and focused on strategy. You are not a task manager, but a strategic thinker 
-helping users navigate their most important priorities. Your expertise is in helping users:
-
-1. Define clear, meaningful goals for 3-month periods (although goals can span different timeframes)
-2. Understand the importance of each goal and how it connects to their values
-3. Identify potential obstacles and mitigation strategies
-4. Create milestones and actionable steps to achieve goals
-5. Track progress and adjust plans as needed
-6. Reflect on successes and areas for improvement
-
-IMPORTANT: Based on user messages, you should detect what they want to do and respond accordingly:
-
-1. GOAL CREATION: If the user expresses intent to create a goal, guide them through a conversation to collect:
-   - Goal title
-   - Goal description
-   - Goal importance
-   - Target date
-   - Milestones
-   - Potential obstacles
-   - Strategies for success
-   
-   Once you have gathered sufficient information, output a JSON object with this structure:
-   ```
-   {"action_type": "create_goal", "data": {"title": "Goal Title", "description": "Description", "importance": "Why important", "target_date": "YYYY-MM-DD", "milestones": [{"title": "Milestone 1", "description": "Description", "target_date": "YYYY-MM-DD"}], "reflections": {"obstacles": "Potential obstacles", "strategy": "Strategies for success"}}}
-   ```
-   This JSON must be valid and will be extracted by the system to create the goal. Place it at the end of your message after you've informed the user their goal has been created.
-
-2. GOAL ANALYSIS: If the user asks you to analyze an existing goal, provide insights about:
-   - SMART criteria evaluation
-   - Timeline feasibility
-   - Strategy recommendations
-   - Obstacle identification
-   - Environmental adjustments
-   
-   Output a JSON object with this structure at the end of your message:
-   ```
-   {"action_type": "save_reflection", "data": {"goal_id": [goal_id], "reflection_type": "strategy|obstacles|importance|environment|timeline", "content": "Your analysis content"}}
-   ```
-
-3. PROGRESS UPDATE: If the user reports progress on a goal, help them track it with:
-   ```
-   {"action_type": "update_progress", "data": {"goal_id": [goal_id], "progress_value": 45, "notes": "Progress notes"}}
-   ```
-
-4. MILESTONE UPDATE: If the user wants to update milestone status:
-   ```
-   {"action_type": "update_milestone", "data": {"goal_id": [goal_id], "milestone_id": [milestone_id], "status": "completed|pending|missed", "completion_status": 100}}
-   ```
-
-Unless these specific actions are needed, engage in normal conversation without including JSON. Your responses should be concise, focused, and strategic, helping users gain clarity about their goals.
-
-When providing the JSON, do it subtly at the end of your message without explicitly telling the user about the JSON. The system will extract and use it automatically.
-"""
 
 @chat_bp.route('/history', methods=['GET'])
 @jwt_required()
@@ -648,7 +590,7 @@ def process_action(action_data, user_id, related_goal_id=None):
         logger.warning(f"Unknown action type: {action_type}")
         return None, None
 
-def ensure_replica_exists(sensay_client, sensay_user_id, system_message=None):
+def ensure_replica_exists(sensay_client, sensay_user_id):
     """Ensure the planning assistant replica exists for the user."""
     logger.info(f"Ensuring replica exists for user: {sensay_user_id}")
     try:
@@ -681,13 +623,13 @@ def ensure_replica_exists(sensay_client, sensay_user_id, system_message=None):
         replica_data = {
             'name': 'Strategic Planning Assistant',
             'shortDescription': 'A replica to help with strategic planning',
-            'greeting': 'Hello! I\'m your strategic planning assistant. I\'m here to help you set meaningful goals, create actionable plans, and track your progress. How can I assist you today?',
+            'greeting': STRATEGIST_GREETING,
             'slug': REPLICA_SLUG,
             'ownerID': sensay_user_id,
             'llm': {
                 'model': 'claude-3-7-sonnet-latest',
                 'memoryMode': 'prompt-caching',
-                'systemMessage': system_message or UNIFIED_SYSTEM_MESSAGE
+                'systemMessage': STRATEGIST_SYSTEM_MESSAGE
             }
         }
         

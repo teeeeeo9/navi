@@ -145,6 +145,30 @@ Behind the scenes, the AI formats the goal information into JSON and calls the a
    AI: "Let me analyze your goal... Based on your timeline and progress, here are some strategies that might help you stay on track..."
    ```
 
+## Directory Structure
+
+```
+strategist/
+├── app/                        # Main application package
+│   ├── __init__.py             # Application factory
+│   ├── models.py               # Database models
+│   ├── prompts.py              # AI assistant system prompts
+│   ├── api/                    # API endpoints
+│   │   ├── __init__.py
+│   │   ├── auth.py             # Authentication endpoints
+│   │   ├── goals.py            # Goal management endpoints
+│   │   ├── progress.py         # Progress tracking endpoints
+│   │   └── chat.py             # AI chat endpoints
+│   └── services/               # Service modules
+│       ├── __init__.py
+│       └── sensay.py           # Sensay API client
+├── app.py                      # Application entry point
+├── test_app.py                 # Application test script
+├── requirements.txt            # Python dependencies
+├── env.example                 # Example environment variables
+└── README.md                   # Documentation
+```
+
 ## Acknowledgments
 
 - [Sensay AI](https://sensay.io) for providing the AI technology

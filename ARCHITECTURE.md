@@ -22,6 +22,7 @@ strategist/
 ├── app/                        # Main application package
 │   ├── __init__.py             # Application factory
 │   ├── models.py               # Database models
+│   ├── prompts.py              # AI assistant system prompts
 │   ├── api/                    # API endpoints
 │   │   ├── __init__.py
 │   │   ├── auth.py             # Authentication endpoints
@@ -170,4 +171,24 @@ The application integrates with Sensay AI through the following components:
 4. **AI Enhancements**
    - Custom-trained replica models
    - Personalized goal recommendations
-   - Progress forecasting 
+   - Progress forecasting
+
+## AI Prompt Management
+
+The application centralizes AI system prompts in the `prompts.py` file for easier maintenance and modification. The key components include:
+
+1. **Prompt Design**
+   - Direct, minimalist communication style
+   - Confident tone with appropriate critical feedback when needed
+   - Emphasis on proactive suggestions based on user history
+   - Clear JSON format instructions for system integration
+
+2. **Adaptive Interaction**
+   - The AI adapts its interaction style based on user history
+   - More suggestions for known users, more questions for new users
+   - Automatic title and milestone generation to simplify user experience
+
+3. **Prompt Maintenance**
+   - All system prompts are centralized for easier updates
+   - Separated from code logic for better maintainability
+   - Allows for experimentation with different prompt styles 
