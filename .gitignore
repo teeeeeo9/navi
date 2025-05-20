@@ -1,0 +1,7 @@
+app_description.txt
+.env
+env/
+
+*.pyc
+*.log
+*.db
