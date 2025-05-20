@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import desc
@@ -7,6 +8,9 @@ from app import db
 from app.models import Goal, Milestone, User, Reflection
 from app.services.sensay import get_sensay_client
 
+# Get logger
+logger = logging.getLogger('strategist.goals')
+
 goals_bp = Blueprint('goals', __name__)
 
 @goals_bp.route('/', methods=['GET'])
@@ -14,10 +18,13 @@ goals_bp = Blueprint('goals', __name__)
 def get_goals():
     """Get all goals for the current user."""
     user_id = get_jwt_identity()
+    logger.info(f"Getting goals for user ID: {user_id}")
     
     # Get query parameters
     status = request.args.get('status')
     parent_id = request.args.get('parent_id')
+    
+    logger.debug(f"Query parameters - status: {status}, parent_id: {parent_id}")
     
     # Build query
     query = Goal.query.filter_by(user_id=user_id)
@@ -25,18 +32,22 @@ def get_goals():
     # Filter by status if provided
     if status:
         query = query.filter_by(status=status)
+        logger.debug(f"Filtering by status: {status}")
     
     # Filter by parent_goal_id if provided
     if parent_id:
         if parent_id == 'null':
             # Get top-level goals
             query = query.filter_by(parent_goal_id=None)
+            logger.debug("Filtering top-level goals (parent_goal_id is NULL)")
         else:
             # Get subgoals of a specific parent
             query = query.filter_by(parent_goal_id=parent_id)
+            logger.debug(f"Filtering subgoals of parent: {parent_id}")
     
     # Order by creation date (newest first)
     goals = query.order_by(desc(Goal.created_at)).all()
+    logger.info(f"Retrieved {len(goals)} goals for user {user_id}")
     
     # Format response
     goals_data = []
@@ -94,10 +105,14 @@ def get_goals():
 def get_goal(goal_id):
     """Get a specific goal with detailed information."""
     user_id = get_jwt_identity()
+    logger.info(f"Getting goal details for ID: {goal_id}, user ID: {user_id}")
     
     goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
     if not goal:
+        logger.warning(f"Goal not found: {goal_id} for user: {user_id}")
         return jsonify({'error': 'Goal not found'}), 404
+    
+    logger.debug(f"Found goal: {goal.title}, status: {goal.status}")
     
     # Get milestones
     milestones_data = []
@@ -174,6 +189,7 @@ def get_goal(goal_id):
         'updated_at': goal.updated_at.isoformat()
     }
     
+    logger.info(f"Successfully retrieved goal details for ID: {goal_id}")
     return jsonify({'goal': goal_data}), 200
 
 @goals_bp.route('/', methods=['POST'])
@@ -182,19 +198,43 @@ def create_goal():
     """Create a new goal."""
     user_id = get_jwt_identity()
     data = request.get_json()
+    logger.info(f"Creating new goal for user ID: {user_id}")
+    logger.debug(f"Goal data: {data}")
+    
+    # Call the internal function to create the goal
+    try:
+        result = create_goal_internal(user_id, data)
+        logger.info(f"Goal created successfully with ID: {result['id']}")
+        return jsonify({
+            'message': 'Goal created successfully',
+            'goal': result
+        }), 201
+    except ValueError as e:
+        logger.warning(f"Failed to create goal: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        logger.error(f"Error creating goal: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Failed to create goal: {str(e)}'}), 500
+
+def create_goal_internal(user_id, data):
+    """Create a new goal (internal function, can be called by other modules)."""
+    logger.info(f"Creating goal internally for user ID: {user_id}")
     
     # Validate required fields
     required_fields = ['title', 'target_date']
     for field in required_fields:
         if field not in data:
-            return jsonify({'error': f'Missing required field: {field}'}), 400
+            logger.warning(f"Missing required field: {field}")
+            raise ValueError(f'Missing required field: {field}')
     
     # Parse dates
     try:
         start_date = datetime.fromisoformat(data.get('start_date', datetime.now().isoformat()))
         target_date = datetime.fromisoformat(data['target_date'])
+        logger.debug(f"Parsed dates - start: {start_date}, target: {target_date}")
     except ValueError:
-        return jsonify({'error': 'Invalid date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
+        logger.warning("Invalid date format")
+        raise ValueError('Invalid date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)')
     
     # Create goal
     goal = Goal(
@@ -210,17 +250,21 @@ def create_goal():
     
     db.session.add(goal)
     db.session.commit()
+    logger.debug(f"Goal created with ID: {goal.id}")
     
     # Create milestones if provided
     milestones_data = []
     if 'milestones' in data and isinstance(data['milestones'], list):
+        logger.debug(f"Processing {len(data['milestones'])} milestones")
         for milestone_data in data['milestones']:
             if 'title' not in milestone_data or 'target_date' not in milestone_data:
+                logger.warning("Skipping milestone with missing title or target_date")
                 continue
                 
             try:
                 milestone_target_date = datetime.fromisoformat(milestone_data['target_date'])
             except ValueError:
+                logger.warning(f"Skipping milestone with invalid target date: {milestone_data['target_date']}")
                 continue
                 
             milestone = Milestone(
@@ -239,12 +283,15 @@ def create_goal():
                 'completion_status': milestone.completion_status,
                 'status': milestone.status
             })
+            logger.debug(f"Milestone created: {milestone.title}")
     
     # Create reflections if provided
     reflections_data = {}
     if 'reflections' in data and isinstance(data['reflections'], dict):
+        logger.debug(f"Processing {len(data['reflections'])} reflections")
         for reflection_type, content in data['reflections'].items():
             if not content:
+                logger.warning(f"Skipping empty reflection of type: {reflection_type}")
                 continue
                 
             reflection = Reflection(
@@ -254,65 +301,81 @@ def create_goal():
             )
             
             db.session.add(reflection)
-            reflections_data[reflection_type] = {
-                'id': reflection.id,
-                'content': reflection.content,
-                'created_at': reflection.created_at.isoformat()
-            }
     
+    # Commit to ensure all objects have their timestamps set
     db.session.commit()
     
-    return jsonify({
-        'message': 'Goal created successfully',
-        'goal': {
-            'id': goal.id,
-            'title': goal.title,
-            'description': goal.description,
-            'importance': goal.importance,
-            'start_date': goal.start_date.isoformat(),
-            'target_date': goal.target_date.isoformat(),
-            'completion_status': goal.completion_status,
-            'status': goal.status,
-            'parent_goal_id': goal.parent_goal_id,
-            'milestones': milestones_data,
-            'reflections': reflections_data,
-            'created_at': goal.created_at.isoformat(),
-            'updated_at': goal.updated_at.isoformat()
+    # Now build the reflections data for response
+    reflections_data = {}
+    for reflection in goal.reflections:
+        reflections_data[reflection.reflection_type] = {
+            'id': reflection.id,
+            'content': reflection.content,
+            'created_at': reflection.created_at.isoformat()
         }
-    }), 201
+        logger.debug(f"Reflection created: {reflection.reflection_type}")
+    
+    logger.info(f"Goal creation completed - ID: {goal.id}, Title: {goal.title}")
+    
+    return {
+        'id': goal.id,
+        'title': goal.title,
+        'description': goal.description,
+        'importance': goal.importance,
+        'start_date': goal.start_date.isoformat(),
+        'target_date': goal.target_date.isoformat(),
+        'completion_status': goal.completion_status,
+        'status': goal.status,
+        'parent_goal_id': goal.parent_goal_id,
+        'milestones': milestones_data,
+        'reflections': reflections_data,
+        'created_at': goal.created_at.isoformat(),
+        'updated_at': goal.updated_at.isoformat()
+    }
 
 @goals_bp.route('/<int:goal_id>', methods=['PUT'])
 @jwt_required()
 def update_goal(goal_id):
     """Update an existing goal."""
     user_id = get_jwt_identity()
+    logger.info(f"Updating goal ID: {goal_id} for user ID: {user_id}")
+    
     goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
     
     if not goal:
+        logger.warning(f"Goal not found: {goal_id} for user: {user_id}")
         return jsonify({'error': 'Goal not found'}), 404
     
     data = request.get_json()
+    logger.debug(f"Update data: {data}")
     
     # Update goal fields if provided
     if 'title' in data:
         goal.title = data['title']
+        logger.debug(f"Updated title: {goal.title}")
     
     if 'description' in data:
         goal.description = data['description']
+        logger.debug(f"Updated description")
     
     if 'importance' in data:
         goal.importance = data['importance']
+        logger.debug(f"Updated importance")
     
     if 'start_date' in data:
         try:
             goal.start_date = datetime.fromisoformat(data['start_date'])
+            logger.debug(f"Updated start_date: {goal.start_date}")
         except ValueError:
+            logger.warning(f"Invalid start_date format: {data['start_date']}")
             return jsonify({'error': 'Invalid start_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
     
     if 'target_date' in data:
         try:
             goal.target_date = datetime.fromisoformat(data['target_date'])
+            logger.debug(f"Updated target_date: {goal.target_date}")
         except ValueError:
+            logger.warning(f"Invalid target_date format: {data['target_date']}")
             return jsonify({'error': 'Invalid target_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
     
     if 'completion_status' in data:
@@ -320,16 +383,21 @@ def update_goal(goal_id):
             completion_status = float(data['completion_status'])
             if 0 <= completion_status <= 100:
                 goal.completion_status = completion_status
+                logger.debug(f"Updated completion_status: {goal.completion_status}%")
             else:
+                logger.warning(f"Invalid completion_status range: {completion_status}")
                 return jsonify({'error': 'Completion status must be between 0 and 100'}), 400
         except ValueError:
+            logger.warning(f"Invalid completion_status format: {data['completion_status']}")
             return jsonify({'error': 'Invalid completion_status format. Must be a number between 0 and 100'}), 400
     
     if 'status' in data:
         valid_statuses = ['active', 'completed', 'abandoned', 'deferred']
         if data['status'] in valid_statuses:
             goal.status = data['status']
+            logger.debug(f"Updated status: {goal.status}")
         else:
+            logger.warning(f"Invalid status: {data['status']}")
             return jsonify({'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}), 400
     
     if 'parent_goal_id' in data:
@@ -337,16 +405,23 @@ def update_goal(goal_id):
         if data['parent_goal_id'] is not None:
             parent_goal = Goal.query.filter_by(id=data['parent_goal_id'], user_id=user_id).first()
             if not parent_goal:
+                logger.warning(f"Parent goal not found: {data['parent_goal_id']}")
                 return jsonify({'error': 'Parent goal not found'}), 404
             
             # Prevent circular dependency
             if parent_goal.id == goal.id:
+                logger.warning(f"Circular dependency detected: Goal {goal.id} cannot be its own parent")
                 return jsonify({'error': 'A goal cannot be its own parent'}), 400
+            
+            logger.debug(f"Updated parent_goal_id: {data['parent_goal_id']}")
+        else:
+            logger.debug("Removed parent_goal_id (set to None)")
         
         goal.parent_goal_id = data['parent_goal_id']
     
     # Update reflections if provided
     if 'reflections' in data and isinstance(data['reflections'], dict):
+        logger.debug(f"Updating {len(data['reflections'])} reflections")
         for reflection_type, content in data['reflections'].items():
             # Find existing reflection of this type
             reflection = Reflection.query.filter_by(
@@ -358,6 +433,7 @@ def update_goal(goal_id):
                 # Update existing reflection
                 reflection.content = content
                 reflection.updated_at = datetime.utcnow()
+                logger.debug(f"Updated reflection: {reflection_type}")
             else:
                 # Create new reflection
                 reflection = Reflection(
@@ -366,8 +442,10 @@ def update_goal(goal_id):
                     content=content
                 )
                 db.session.add(reflection)
+                logger.debug(f"Created new reflection: {reflection_type}")
     
     db.session.commit()
+    logger.info(f"Goal updated successfully: {goal.id}")
     
     return jsonify({
         'message': 'Goal updated successfully',
@@ -390,18 +468,23 @@ def update_goal(goal_id):
 def delete_goal(goal_id):
     """Delete a goal."""
     user_id = get_jwt_identity()
+    logger.info(f"Deleting goal ID: {goal_id} for user ID: {user_id}")
+    
     goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
     
     if not goal:
+        logger.warning(f"Goal not found: {goal_id} for user: {user_id}")
         return jsonify({'error': 'Goal not found'}), 404
     
     # Set parent_goal_id to None for any subgoals
     subgoals = Goal.query.filter_by(parent_goal_id=goal.id).all()
     for subgoal in subgoals:
+        logger.debug(f"Removing parent link for subgoal: {subgoal.id}")
         subgoal.parent_goal_id = None
     
     db.session.delete(goal)
     db.session.commit()
+    logger.info(f"Goal deleted successfully: {goal_id}")
     
     return jsonify({'message': 'Goal deleted successfully'}), 200
 
@@ -412,14 +495,17 @@ def delete_goal(goal_id):
 def get_milestones(goal_id):
     """Get all milestones for a specific goal."""
     user_id = get_jwt_identity()
+    logger.info(f"Getting milestones for goal ID: {goal_id}, user ID: {user_id}")
     
     # Check if goal exists and belongs to user
     goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
     if not goal:
+        logger.warning(f"Goal not found: {goal_id} for user: {user_id}")
         return jsonify({'error': 'Goal not found'}), 404
     
     # Get milestones
     milestones = Milestone.query.filter_by(goal_id=goal_id).order_by(Milestone.target_date).all()
+    logger.debug(f"Retrieved {len(milestones)} milestones")
     
     milestones_data = []
     for milestone in milestones:
@@ -441,24 +527,30 @@ def get_milestones(goal_id):
 def create_milestone(goal_id):
     """Create a new milestone for a goal."""
     user_id = get_jwt_identity()
+    logger.info(f"Creating milestone for goal ID: {goal_id}, user ID: {user_id}")
     
     # Check if goal exists and belongs to user
     goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
     if not goal:
+        logger.warning(f"Goal not found: {goal_id} for user: {user_id}")
         return jsonify({'error': 'Goal not found'}), 404
     
     data = request.get_json()
+    logger.debug(f"Milestone data: {data}")
     
     # Validate required fields
     required_fields = ['title', 'target_date']
     for field in required_fields:
         if field not in data:
+            logger.warning(f"Missing required field: {field}")
             return jsonify({'error': f'Missing required field: {field}'}), 400
     
     # Parse target date
     try:
         target_date = datetime.fromisoformat(data['target_date'])
+        logger.debug(f"Parsed target_date: {target_date}")
     except ValueError:
+        logger.warning(f"Invalid target_date format: {data['target_date']}")
         return jsonify({'error': 'Invalid target_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
     
     # Create milestone
@@ -472,6 +564,7 @@ def create_milestone(goal_id):
     
     db.session.add(milestone)
     db.session.commit()
+    logger.info(f"Milestone created successfully: {milestone.id} - {milestone.title}")
     
     return jsonify({
         'message': 'Milestone created successfully',

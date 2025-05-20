@@ -5,6 +5,7 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 ## Key Features
 
 - **Goal Setting**: Define clear, meaningful goals with descriptions, timelines, and importance.
+- **Conversational Goal Creation**: Create goals naturally through a guided conversation with the AI assistant.
 - **Hierarchical Goals**: Create nested goals and subgoals for better organization.
 - **Milestones**: Break goals into achievable milestones with their own deadlines.
 - **Progress Tracking**: Track progress on goals and visualize your journey.
@@ -111,6 +112,43 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 - `GET /api/chat/history` - Get chat history
 - `POST /api/chat/send` - Send a message to the AI replica
 - `POST /api/chat/analyze-goal/<goal_id>` - Get AI analysis of a goal
+- `POST /api/chat/create-goal` - Start a goal creation conversation with the AI assistant
+- `POST /api/chat/goal-chat` - Continue a goal creation conversation (add `"finalize": true` to create the goal)
+
+## Example: Creating a Goal Through Chat
+
+One of the core features of Strategist is the ability to create goals through natural conversation with the AI assistant. This makes goal setting more intuitive and helps users think through their goals more thoroughly.
+
+Here's how it works:
+
+1. Start a goal creation conversation:
+   ```
+   POST /api/chat/create-goal
+   {
+     "content": "I want to create a goal to learn machine learning"
+   }
+   ```
+
+2. The AI will guide you through defining your goal with follow-up questions.
+
+3. Continue the conversation by responding to the AI's questions:
+   ```
+   POST /api/chat/goal-chat
+   {
+     "content": "I want to become proficient enough to build practical ML models"
+   }
+   ```
+
+4. When you've provided all the necessary information, finalize the goal creation:
+   ```
+   POST /api/chat/goal-chat
+   {
+     "content": "I think that covers everything",
+     "finalize": true
+   }
+   ```
+
+5. The AI will create a structured goal based on your conversation, complete with title, description, milestones, and reflections.
 
 ## Acknowledgments
 

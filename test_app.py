@@ -115,6 +115,8 @@ def create_goal():
     
     # Target date is 3 months from now
     target_date = (datetime.now() + timedelta(days=90)).isoformat()
+    # print(datetime.now())
+    # print(target_date)
     
     response = requests.post(
         f"{BASE_URL}/goals/",
@@ -158,6 +160,68 @@ def create_goal():
         print(f"Failed to create goal: {response.status_code}")
         pretty_print(response.json())
         return None
+
+def create_goal_via_chat():
+    """Create a goal through conversation with the AI replica."""
+    print("\n===== CREATING A GOAL VIA CHAT =====")
+    
+    # Start the goal creation conversation
+    print("Starting goal creation conversation...")
+    response = requests.post(
+        f"{BASE_URL}/chat/create-goal",
+        headers=auth_headers,
+        json={
+            "content": "I want to create a goal to learn machine learning"
+        }
+    )
+    
+    if response.status_code != 200:
+        print(f"Failed to start goal creation: {response.status_code}")
+        pretty_print(response.json())
+        return None
+    
+    data = response.json()
+    print(f"AI: {data['ai_response']['content']}")
+    
+    # # Continue the conversation with multiple exchanges
+    # conversation_steps = [
+    #     "I want to become proficient in machine learning techniques and be able to build practical ML models for real-world problems.",
+    #     # "I think it's important because machine learning skills are in high demand, and I want to enhance my career prospects. Also, I'm fascinated by how ML can extract insights from data.",
+    #     # "I think 6 months from now would be a reasonable target date.",
+    #     # "For milestones, I'd like to 1) Learn the mathematical foundations, 2) Master Python libraries like scikit-learn and TensorFlow, 3) Build my first prediction model, and 4) Complete an end-to-end ML project.",
+    #     # "Challenges might include the math prerequisites, finding time to practice consistently, and keeping up with the rapidly changing field."
+    # ]
+    
+    # # Simulate a conversation
+    # for i, message in enumerate(conversation_steps):
+    #     print(f"\nUser: {message}")
+        
+    #     # Send message to continue the conversation
+    #     response = requests.post(
+    #         f"{BASE_URL}/chat/goal-chat",
+    #         headers=auth_headers,
+    #         json={
+    #             "content": message,
+    #             "finalize": i == len(conversation_steps) - 1  # Finalize on the last message
+    #         }
+    #     )
+        
+    #     if response.status_code != 200:
+    #         print(f"Failed to continue goal creation: {response.status_code}")
+    #         pretty_print(response.json())
+    #         return None
+        
+    #     data = response.json()
+    #     print(f"AI: {data['ai_response']['content']}")
+        
+    #     # If a goal was created, return its ID
+    #     if data.get('goal_created', False) and 'goal' in data:
+    #         goal_id = data['goal']['id']
+    #         print(f"Goal created successfully via chat: ID {goal_id}")
+    #         return goal_id
+    
+    # print("Completed conversation but no goal was created")
+    return None
 
 def create_subgoal(parent_goal_id):
     """Create a subgoal for a parent goal."""
@@ -413,42 +477,47 @@ def main():
     # Get user profile
     get_user_profile()
     
-    # # Create main goal
-    # goal_id = create_goal()
-    # if not goal_id:
-    #     return
+    # Test both ways to create goals
+    # print("\n===== TESTING BOTH GOAL CREATION METHODS =====")
+    # print("1. Creating a goal programmatically")
+    # direct_goal_id = create_goal()
     
-    # # Create a subgoal
-    # subgoal_id = create_subgoal(goal_id)
+    print("\n2. Creating a goal through chat with AI")
+    chat_goal_id = create_goal_via_chat()
     
-    # # Get all goals
-    # goals = get_goals()
+    # # Compare goals
+    # if direct_goal_id and chat_goal_id:
+    #     print("\nBoth goal creation methods worked successfully!")
+        
+    #     # Get details for both goals
+    #     direct_goal = get_goal_details(direct_goal_id)
+    #     chat_goal = get_goal_details(chat_goal_id)
+        
+    #     # Create a subgoal for the chat-created goal
+    #     if chat_goal:
+    #         subgoal_id = create_subgoal(chat_goal_id)
+    #         if subgoal_id:
+    #             print(f"Created a subgoal for the chat-created goal")
+        
+    #     # Get all goals to see them together
+    #     get_goals()
+        
+    #     # Update progress for the chat-created goal
+    #     if chat_goal_id:
+    #         update_goal_progress(chat_goal_id, 25, "Started working on the first milestone!")
+        
+    #     # Add a reflection to the chat-created goal
+    #     if chat_goal_id:
+    #         add_reflection(chat_goal_id, "strategy", "I should focus on building a practical project to solidify my learning.")
+        
+    #     # Get progress summary
+    #     get_progress_summary()
+        
+    #     # Analyze the chat-created goal
+    #     if chat_goal_id:
+    #         analyze_goal(chat_goal_id)
     
-    # # Get details for the main goal
-    # goal_details = get_goal_details(goal_id)
-    
-    # # Update goal progress
-    # update_goal_progress(goal_id, 25, "Completed the basics tutorial and started working on the CRUD app.")
-    
-    # # Add a reflection
-    # add_reflection(goal_id, "strategy", "I should focus on learning one concept at a time and building small projects to reinforce my understanding.")
-    
-    # # Get progress summary
-    # get_progress_summary()
-    
-    # # Chat with the AI replica
-    # chat_with_replica()
-    
-    # # Analyze the goal
-    # analyze_goal(goal_id)
-    
-    # # Update progress again
-    # update_goal_progress(goal_id, 50, "Finished the CRUD app, now working on deployment.")
-    
-    # # Get final goal details
-    # get_goal_details(goal_id)
-    
-    # print("\n===== TEST COMPLETED SUCCESSFULLY =====")
+    print("\n===== TEST COMPLETED SUCCESSFULLY =====")
 
 if __name__ == "__main__":
     main() 

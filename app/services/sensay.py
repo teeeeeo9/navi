@@ -144,7 +144,7 @@ class SensayAPI:
         """Generate a chat completion from a replica."""
         return self._make_request(
             "POST", 
-            f"/v1/replicas/{replica_id}/chat-completions", 
+            f"/v1/replicas/{replica_id}/chat/completions", 
             data={
                 "content": content,
                 "source": source,

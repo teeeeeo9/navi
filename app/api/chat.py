@@ -1,6 +1,7 @@
 import os
 import logging
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import desc
@@ -32,6 +33,29 @@ helping users navigate their most important priorities. Your expertise is in hel
 6. Reflect on successes and areas for improvement
 
 Be concise, focused, and strategic in your responses. Help users gain clarity and focus on what matters most.
+"""
+
+# New system message for goal creation mode
+GOAL_CREATION_SYSTEM_MESSAGE = """
+You are a strategic planning assistant, helping users define and achieve their goals.
+Your current task is to guide the user through creating a new goal. 
+
+During this conversation, collect the following information from the user through natural dialogue:
+1. Goal title - a clear, concise description of what they want to achieve
+2. Goal description - more details about the goal
+3. Goal importance - why this goal matters to them and how it connects to their values
+4. Target date - when they aim to complete this goal (try to get a specific date)
+5. Milestones - key steps or checkpoints on the way to achieving the goal
+6. Potential obstacles - what might get in their way
+7. Strategies for success - how they can set themselves up for success
+
+For each piece of information, ask follow-up questions to get quality and specific responses.
+Keep the conversation natural while guiding it to collect all necessary information.
+
+After you have gathered sufficient information, you will create a JSON representation of the goal,
+but do not show this to the user - it will be used by the system to create the goal.
+
+Your responses should be concise, focused, and strategic, helping users gain clarity about their goals.
 """
 
 @chat_bp.route('/history', methods=['GET'])
@@ -378,7 +402,331 @@ def analyze_goal(goal_id):
         # Return error response
         return jsonify({'error': f'Failed to analyze goal: {str(e)}'}), 500
 
-def ensure_replica_exists(sensay_client, sensay_user_id):
+@chat_bp.route('/create-goal', methods=['POST'])
+@jwt_required()
+def start_goal_creation():
+    """Start a conversation specifically focused on creating a new goal."""
+    user_id = get_jwt_identity()
+    logger.info(f"Starting goal creation conversation for user ID: {user_id}")
+    
+    user = User.query.get(user_id)
+    
+    if not user:
+        logger.warning(f"Goal creation failed: User not found: {user_id}")
+        return jsonify({'error': 'User not found'}), 404
+    
+    data = request.get_json()
+    
+    # Initial message can be optional, using a default if not provided
+    initial_content = data.get('content', 'I want to create a new goal')
+    logger.debug(f"Initial content: {initial_content}")
+    
+    try:
+        # Initialize Sensay client
+        logger.debug("Initializing Sensay client for goal creation")
+        sensay_client = get_sensay_client()
+        
+        # Get or create the replica
+        try:
+            logger.debug(f"Ensuring replica exists for user: {user.sensay_user_id}")
+            replica_id = ensure_replica_exists(sensay_client, user.sensay_user_id, system_message=GOAL_CREATION_SYSTEM_MESSAGE)
+            logger.debug(f"Using replica ID: {replica_id}")
+        except Exception as e:
+            logger.error(f"Failed to get/create replica: {str(e)}", exc_info=True)
+            return jsonify({'error': f'Failed to initialize AI replica: {str(e)}'}), 500
+        
+        # Create the user message in the database
+        user_message = ChatMessage(
+            user_id=user_id,
+            sender='user',
+            content=initial_content
+        )
+        
+        db.session.add(user_message)
+        db.session.commit()
+        
+        # Send the message to Sensay
+        logger.info(f"Sending goal creation request to Sensay API")
+        try:
+            response = sensay_client.create_chat_completion(
+                replica_id=replica_id,
+                user_id=user.sensay_user_id,
+                content=initial_content,
+                source='web',
+                skip_chat_history=False
+            )
+            logger.debug("Successfully received response from Sensay API")
+        except SensayAPIError as e:
+            logger.error(f"Sensay API error: {str(e)}")
+            return jsonify({'error': f'AI response error: {str(e)}'}), 500
+        
+        # Create the AI response message in the database
+        ai_content = response.get('content', 'Let\'s start creating your goal. What would you like to achieve?')
+        logger.debug(f"AI response length: {len(ai_content)}")
+        
+        ai_message = ChatMessage(
+            user_id=user_id,
+            sender='replica',
+            content=ai_content
+        )
+        
+        db.session.add(ai_message)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Goal creation started',
+            'session_active': True,
+            'user_message': {
+                'id': user_message.id,
+                'sender': user_message.sender,
+                'content': user_message.content,
+                'created_at': user_message.created_at.isoformat()
+            },
+            'ai_response': {
+                'id': ai_message.id,
+                'sender': ai_message.sender,
+                'content': ai_message.content,
+                'created_at': ai_message.created_at.isoformat()
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Unexpected error during goal creation start: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Failed to start goal creation: {str(e)}'}), 500
+
+@chat_bp.route('/goal-chat', methods=['POST'])
+@jwt_required()
+def continue_goal_creation():
+    """Continue the goal creation conversation and potentially create the goal."""
+    user_id = get_jwt_identity()
+    logger.info(f"Continuing goal creation for user ID: {user_id}")
+    
+    user = User.query.get(user_id)
+    
+    if not user:
+        logger.warning(f"Goal creation continuation failed: User not found: {user_id}")
+        return jsonify({'error': 'User not found'}), 404
+    
+    data = request.get_json()
+    
+    # Validate message content
+    if 'content' not in data or not data['content'].strip():
+        logger.warning("Goal chat failed: Empty message content")
+        return jsonify({'error': 'Message content is required'}), 400
+    
+    # Check if user wants to finish goal creation
+    is_finalizing = 'finalize' in data and data['finalize']
+    user_content = data['content']
+    
+    try:
+        # Initialize Sensay client
+        logger.debug("Initializing Sensay client for goal creation continuation")
+        sensay_client = get_sensay_client()
+        
+        # Get or create the replica
+        try:
+            replica_id = ensure_replica_exists(sensay_client, user.sensay_user_id, system_message=GOAL_CREATION_SYSTEM_MESSAGE)
+            logger.debug(f"Using replica ID: {replica_id}")
+        except Exception as e:
+            logger.error(f"Failed to get/create replica: {str(e)}", exc_info=True)
+            return jsonify({'error': f'Failed to initialize AI replica: {str(e)}'}), 500
+        
+        # Create the user message in the database
+        user_message = ChatMessage(
+            user_id=user_id,
+            sender='user',
+            content=user_content
+        )
+        
+        db.session.add(user_message)
+        db.session.commit()
+        
+        content_to_send = user_content
+        if is_finalizing:
+            content_to_send += "\n\nBased on our conversation, please create a JSON representation of the goal with the following structure: {'title': 'Goal Title', 'description': 'Goal Description', 'importance': 'Why this goal is important', 'target_date': 'YYYY-MM-DD', 'milestones': [{'title': 'Milestone 1', 'description': 'Description', 'target_date': 'YYYY-MM-DD'}, ...], 'reflections': {'obstacles': 'Potential obstacles', 'strategy': 'Strategies for success'}}"
+        
+        # Send the message to Sensay
+        logger.info(f"Sending goal creation continuation to Sensay API")
+        try:
+            response = sensay_client.create_chat_completion(
+                replica_id=replica_id,
+                user_id=user.sensay_user_id,
+                content=content_to_send,
+                source='web',
+                skip_chat_history=False
+            )
+            logger.debug("Successfully received response from Sensay API")
+        except SensayAPIError as e:
+            logger.error(f"Sensay API error: {str(e)}")
+            return jsonify({'error': f'AI response error: {str(e)}'}), 500
+        
+        ai_content = response.get('content', 'I\'m sorry, I couldn\'t process that. Let\'s continue with your goal creation.')
+        logger.debug(f"AI response length: {len(ai_content)}")
+        
+        # If finalizing, extract JSON and create the goal
+        goal_data = None
+        display_response = ai_content
+        
+        if is_finalizing:
+            try:
+                # Extract JSON from AI response
+                logger.info("Attempting to extract goal JSON from AI response")
+                goal_data = extract_goal_json(ai_content)
+                
+                if goal_data:
+                    logger.info(f"Successfully extracted goal data: {goal_data.get('title', 'Unknown')}")
+                    # Create a clean response without the JSON
+                    display_response = "Great! I've created your goal based on our conversation. You can now view and track it in your goals dashboard."
+                else:
+                    logger.warning("Failed to extract goal JSON from AI response")
+                    display_response = "I understand the details of your goal, but I'm having trouble formatting it for the system. Let's continue the conversation to clarify a few more details."
+            except Exception as e:
+                logger.error(f"Error extracting goal JSON: {str(e)}", exc_info=True)
+                display_response = "I've noted down your goal details, but I encountered a technical issue creating it. Please try again or contact support if the issue persists."
+        
+        # Create the AI response message in the database (with the display version, not the JSON)
+        ai_message = ChatMessage(
+            user_id=user_id,
+            sender='replica',
+            content=display_response
+        )
+        
+        db.session.add(ai_message)
+        db.session.commit()
+        
+        # If we have goal data, create the goal
+        created_goal = None
+        if goal_data:
+            try:
+                logger.info("Creating goal from extracted data")
+                # Format dates properly
+                if 'target_date' in goal_data and goal_data['target_date']:
+                    try:
+                        datetime.fromisoformat(goal_data['target_date'])
+                    except ValueError:
+                        # Try to parse the date if it's not in ISO format
+                        from dateutil import parser
+                        try:
+                            parsed_date = parser.parse(goal_data['target_date'])
+                            goal_data['target_date'] = parsed_date.isoformat()
+                        except:
+                            # Default to 3 months from now if parsing fails
+                            goal_data['target_date'] = (datetime.utcnow() + timedelta(days=90)).isoformat()
+                
+                # Process milestones
+                if 'milestones' in goal_data and isinstance(goal_data['milestones'], list):
+                    for milestone in goal_data['milestones']:
+                        if 'target_date' in milestone and milestone['target_date']:
+                            try:
+                                datetime.fromisoformat(milestone['target_date'])
+                            except ValueError:
+                                # Try to parse the date
+                                from dateutil import parser
+                                try:
+                                    parsed_date = parser.parse(milestone['target_date'])
+                                    milestone['target_date'] = parsed_date.isoformat()
+                                except:
+                                    # Default to halfway to goal target
+                                    goal_target = datetime.fromisoformat(goal_data['target_date'])
+                                    milestone['target_date'] = (datetime.utcnow() + (goal_target - datetime.utcnow()) / 2).isoformat()
+                
+                # Create the goal using the goals API
+                from app.api.goals import create_goal_internal
+                created_goal = create_goal_internal(user_id, goal_data)
+                logger.info(f"Successfully created goal with ID: {created_goal['id']}")
+            except Exception as e:
+                logger.error(f"Failed to create goal: {str(e)}", exc_info=True)
+        
+        return jsonify({
+            'message': 'Goal creation conversation continued',
+            'goal_created': created_goal is not None,
+            'user_message': {
+                'id': user_message.id,
+                'sender': user_message.sender,
+                'content': user_message.content,
+                'created_at': user_message.created_at.isoformat()
+            },
+            'ai_response': {
+                'id': ai_message.id,
+                'sender': ai_message.sender,
+                'content': display_response,
+                'created_at': ai_message.created_at.isoformat()
+            },
+            'goal': created_goal
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Unexpected error during goal creation continuation: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Failed to continue goal creation: {str(e)}'}), 500
+
+def extract_goal_json(ai_response):
+    """Extract JSON goal data from AI response text."""
+    logger.debug("Extracting goal JSON from AI response")
+    
+    # Try to find JSON in the response using common patterns
+    json_start_markers = [
+        '```json',
+        '```',
+        '{',
+        'Here\'s the JSON representation of your goal:',
+        'JSON representation:'
+    ]
+    
+    json_end_markers = [
+        '```',
+        '}'
+    ]
+    
+    # First try to find JSON blocks with markers
+    for start_marker in json_start_markers:
+        if start_marker in ai_response:
+            start_idx = ai_response.find(start_marker) + len(start_marker)
+            
+            # Find the end of JSON
+            end_idx = None
+            if start_marker != '{':  # If we have a distinct start marker
+                for end_marker in json_end_markers:
+                    if end_marker in ai_response[start_idx:]:
+                        marker_idx = ai_response[start_idx:].find(end_marker)
+                        if end_marker == '}':  # If the end marker is }, we need to include it
+                            marker_idx += 1
+                        end_idx = start_idx + marker_idx
+                        break
+            else:  # If start marker is {, we need to find the matching }
+                # Simple approach - find the last }
+                if '}' in ai_response[start_idx-1:]:
+                    end_idx = ai_response.rfind('}') + 1
+            
+            if end_idx:
+                json_str = ai_response[start_idx:end_idx].strip()
+                try:
+                    # Handle case where the JSON might not start immediately after the marker
+                    if not json_str.startswith('{'):
+                        json_start = json_str.find('{')
+                        if json_start >= 0:
+                            json_str = json_str[json_start:]
+                    
+                    return json.loads(json_str)
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse extracted JSON: {str(e)}")
+                    continue  # Try next marker
+    
+    # If no JSON found with markers, try to find any valid JSON in the response
+    try:
+        # Look for any text between { and }
+        start_idx = ai_response.find('{')
+        if start_idx >= 0:
+            end_idx = ai_response.rfind('}') + 1
+            if end_idx > start_idx:
+                json_str = ai_response[start_idx:end_idx]
+                return json.loads(json_str)
+    except json.JSONDecodeError:
+        pass
+    
+    logger.warning("No valid JSON found in AI response")
+    return None
+
+def ensure_replica_exists(sensay_client, sensay_user_id, system_message=None):
     """Ensure the planning assistant replica exists for the user."""
     logger.info(f"Ensuring replica exists for user: {sensay_user_id}")
     try:
@@ -391,20 +739,35 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
         for replica in replicas:
             if replica.get('slug') == REPLICA_SLUG:
                 logger.info(f"Found existing replica with ID: {replica.get('uuid')}")
+                logger.debug(f"system_message: {system_message}")
+                
+                # # Update system message if provided
+                # if system_message:
+                #     try:
+                #         replica_data = {
+                #             'llm': {
+                #                 'systemMessage': system_message
+                #             }
+                #         }
+                #         sensay_client.update_replica(replica.get('uuid'), sensay_user_id, replica_data)
+                #         logger.info(f"Updated system message for replica: {replica.get('uuid')}")
+                #     except Exception as e:
+                #         logger.warning(f"Failed to update system message: {str(e)}")
+                
                 return replica.get('uuid')
         
         # No replica found, create one
         logger.info(f"No existing replica found, creating new one with slug: {REPLICA_SLUG}")
         replica_data = {
             'name': 'Strategic Planning Assistant',
-            'shortDescription': 'An AI assistant to help with goal setting and strategic planning',
+            'shortDescription': 'A replica to help with strategic planning',
             'greeting': 'Hello! I\'m your strategic planning assistant. I\'m here to help you set meaningful goals, create actionable plans, and track your progress. How can I assist you today?',
             'slug': REPLICA_SLUG,
             'ownerID': sensay_user_id,
             'llm': {
                 'model': 'claude-3-7-sonnet-latest',
                 'memoryMode': 'prompt-caching',
-                'systemMessage': DEFAULT_SYSTEM_MESSAGE
+                'systemMessage': system_message or DEFAULT_SYSTEM_MESSAGE
             }
         }
         
