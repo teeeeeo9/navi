@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script for the Strategist application.
-This script demonstrates the core functionality by interacting with the API.
+Interactive test script for the Strategist application.
+This script allows users to chat directly with the AI replica and test goal management features.
 """
 
 import os
@@ -10,6 +10,7 @@ import logging
 import requests
 from datetime import datetime, timedelta
 import time
+import sys
 
 # Setup basic logging
 logging.basicConfig(
@@ -19,6 +20,10 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
+# Set a lower logging level for the script itself
+logger = logging.getLogger()
+logger.setLevel(logging.WARNING)  # Only show warnings and errors
 
 # Configuration
 BASE_URL = "http://localhost:5000/api"
@@ -91,9 +96,6 @@ def get_user_profile():
     """Get the user's profile."""
     print("\n===== GETTING USER PROFILE =====")
     
-    # Log the auth headers to debug
-    print(f"Authorization header: {auth_headers.get('Authorization', 'MISSING!')}")
-    
     response = requests.get(
         f"{BASE_URL}/auth/profile",
         headers=auth_headers
@@ -102,422 +104,301 @@ def get_user_profile():
     if response.status_code == 200:
         data = response.json()
         print(f"User profile retrieved: {data['user']['username']}")
-        pretty_print(data)
-        return True
+        return data['user']
     else:
         print(f"Failed to get profile: {response.status_code}")
         pretty_print(response.json())
-        return False
-
-def create_goal():
-    """Create a new goal."""
-    print("\n===== CREATING A GOAL =====")
-    
-    # Target date is 3 months from now
-    target_date = (datetime.now() + timedelta(days=90)).isoformat()
-    # print(datetime.now())
-    # print(target_date)
-    
-    response = requests.post(
-        f"{BASE_URL}/goals/",
-        headers=auth_headers,
-        json={
-            "title": "Learn Python Flask",
-            "description": "Develop a strong understanding of Flask web framework for building web applications with Python.",
-            "target_date": target_date,
-            "importance": "Learning Flask will enhance my web development skills and make me more versatile as a developer.",
-            "milestones": [
-                {
-                    "title": "Complete Flask basics tutorial",
-                    "description": "Go through the official Flask documentation and examples.",
-                    "target_date": (datetime.now() + timedelta(days=30)).isoformat()
-                },
-                {
-                    "title": "Build a simple CRUD application",
-                    "description": "Create a basic todo application with Flask.",
-                    "target_date": (datetime.now() + timedelta(days=60)).isoformat()
-                },
-                {
-                    "title": "Deploy Flask app to production",
-                    "description": "Learn how to deploy a Flask application to a production server.",
-                    "target_date": (datetime.now() + timedelta(days=90)).isoformat()
-                }
-            ],
-            "reflections": {
-                "importance": "Flask is widely used in industry and will help me build web applications quickly.",
-                "obstacles": "Time constraints and competing priorities might slow my progress."
-            }
-        }
-    )
-    
-    if response.status_code == 201:
-        data = response.json()
-        print(f"Goal created successfully: {data['goal']['title']}")
-        goal_id = data['goal']['id']
-        print(f"Goal ID: {goal_id}")
-        return goal_id
-    else:
-        print(f"Failed to create goal: {response.status_code}")
-        pretty_print(response.json())
         return None
 
-def create_goal_via_chat():
-    """Create a goal through conversation with the AI replica."""
-    print("\n===== CREATING A GOAL VIA CHAT =====")
-    
-    # Start the goal creation conversation
-    print("Starting goal creation conversation...")
-    response = requests.post(
-        f"{BASE_URL}/chat/create-goal",
-        headers=auth_headers,
-        json={
-            "content": "I want to create a goal to learn machine learning"
-        }
+def get_chat_history(limit=20):
+    """Get recent chat history."""
+    response = requests.get(
+        f"{BASE_URL}/chat/history?limit={limit}",
+        headers=auth_headers
     )
     
-    if response.status_code != 200:
-        print(f"Failed to start goal creation: {response.status_code}")
-        pretty_print(response.json())
-        return None
-    
-    data = response.json()
-    print(f"AI: {data['ai_response']['content']}")
-    
-    # # Continue the conversation with multiple exchanges
-    # conversation_steps = [
-    #     "I want to become proficient in machine learning techniques and be able to build practical ML models for real-world problems.",
-    #     # "I think it's important because machine learning skills are in high demand, and I want to enhance my career prospects. Also, I'm fascinated by how ML can extract insights from data.",
-    #     # "I think 6 months from now would be a reasonable target date.",
-    #     # "For milestones, I'd like to 1) Learn the mathematical foundations, 2) Master Python libraries like scikit-learn and TensorFlow, 3) Build my first prediction model, and 4) Complete an end-to-end ML project.",
-    #     # "Challenges might include the math prerequisites, finding time to practice consistently, and keeping up with the rapidly changing field."
-    # ]
-    
-    # # Simulate a conversation
-    # for i, message in enumerate(conversation_steps):
-    #     print(f"\nUser: {message}")
-        
-    #     # Send message to continue the conversation
-    #     response = requests.post(
-    #         f"{BASE_URL}/chat/goal-chat",
-    #         headers=auth_headers,
-    #         json={
-    #             "content": message,
-    #             "finalize": i == len(conversation_steps) - 1  # Finalize on the last message
-    #         }
-    #     )
-        
-    #     if response.status_code != 200:
-    #         print(f"Failed to continue goal creation: {response.status_code}")
-    #         pretty_print(response.json())
-    #         return None
-        
-    #     data = response.json()
-    #     print(f"AI: {data['ai_response']['content']}")
-        
-    #     # If a goal was created, return its ID
-    #     if data.get('goal_created', False) and 'goal' in data:
-    #         goal_id = data['goal']['id']
-    #         print(f"Goal created successfully via chat: ID {goal_id}")
-    #         return goal_id
-    
-    # print("Completed conversation but no goal was created")
-    return None
-
-def create_subgoal(parent_goal_id):
-    """Create a subgoal for a parent goal."""
-    print("\n===== CREATING A SUBGOAL =====")
-    
-    # Target date is 2 months from now
-    target_date = (datetime.now() + timedelta(days=60)).isoformat()
-    
-    response = requests.post(
-        f"{BASE_URL}/goals/",
-        headers=auth_headers,
-        json={
-            "title": "Master Flask Database Integration",
-            "description": "Learn how to effectively use SQLAlchemy with Flask for database operations.",
-            "target_date": target_date,
-            "parent_goal_id": parent_goal_id,
-            "milestones": [
-                {
-                    "title": "Understand SQLAlchemy basics",
-                    "description": "Learn the core concepts of SQLAlchemy ORM.",
-                    "target_date": (datetime.now() + timedelta(days=20)).isoformat()
-                },
-                {
-                    "title": "Implement database models",
-                    "description": "Create effective database models for a Flask application.",
-                    "target_date": (datetime.now() + timedelta(days=40)).isoformat()
-                },
-                {
-                    "title": "Master migrations and schema updates",
-                    "description": "Learn how to handle database migrations and schema changes.",
-                    "target_date": (datetime.now() + timedelta(days=60)).isoformat()
-                }
-            ]
-        }
-    )
-    
-    if response.status_code == 201:
-        data = response.json()
-        print(f"Subgoal created successfully: {data['goal']['title']}")
-        return data['goal']['id']
+    if response.status_code == 200:
+        return response.json()['messages']
     else:
-        print(f"Failed to create subgoal: {response.status_code}")
+        print(f"Failed to get chat history: {response.status_code}")
+        return []
+
+def send_message(content, related_goal_id=None):
+    """Send a message to the AI replica and get a response."""
+    
+    payload = {"content": content}
+    if related_goal_id:
+        payload["related_goal_id"] = related_goal_id
+    
+    response = requests.post(
+        f"{BASE_URL}/chat/send",
+        headers=auth_headers,
+        json=payload
+    )
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Failed to send message: {response.status_code}")
         pretty_print(response.json())
         return None
 
 def get_goals():
     """Get all goals for the user."""
-    print("\n===== GETTING ALL GOALS =====")
-    
     response = requests.get(
         f"{BASE_URL}/goals/",
         headers=auth_headers
     )
     
     if response.status_code == 200:
-        data = response.json()
-        print(f"Retrieved {len(data['goals'])} goals")
-        for goal in data['goals']:
-            print(f"- {goal['title']} (Progress: {goal['completion_status']}%, Subgoals: {goal['subgoals_count']})")
-        return data['goals']
+        return response.json()['goals']
     else:
         print(f"Failed to get goals: {response.status_code}")
-        pretty_print(response.json())
         return []
 
 def get_goal_details(goal_id):
     """Get detailed information for a specific goal."""
-    print(f"\n===== GETTING GOAL DETAILS (ID: {goal_id}) =====")
-    
     response = requests.get(
         f"{BASE_URL}/goals/{goal_id}",
         headers=auth_headers
     )
     
     if response.status_code == 200:
-        data = response.json()
-        print(f"Goal: {data['goal']['title']}")
-        print(f"Description: {data['goal']['description']}")
-        print(f"Progress: {data['goal']['completion_status']}%")
-        print(f"Status: {data['goal']['status']}")
-        
-        print("\nMilestones:")
-        for milestone in data['goal']['milestones']:
-            print(f"- {milestone['title']} (Due: {milestone['target_date']}, Status: {milestone['status']})")
-        
-        print("\nReflections:")
-        for reflection_type, reflection in data['goal']['reflections'].items():
-            print(f"- {reflection_type}: {reflection['content'][:100]}...")
-        
-        if data['goal']['subgoals']:
-            print("\nSubgoals:")
-            for subgoal in data['goal']['subgoals']:
-                print(f"- {subgoal['title']} (Progress: {subgoal['completion_status']}%)")
-        
-        return data['goal']
+        return response.json()['goal']
     else:
         print(f"Failed to get goal details: {response.status_code}")
-        pretty_print(response.json())
         return None
-
-def update_goal_progress(goal_id, progress_value, notes=""):
-    """Update the progress of a goal."""
-    print(f"\n===== UPDATING GOAL PROGRESS (ID: {goal_id}) =====")
-    
-    response = requests.post(
-        f"{BASE_URL}/progress/goals/{goal_id}/updates",
-        headers=auth_headers,
-        json={
-            "progress_value": progress_value,
-            "notes": notes
-        }
-    )
-    
-    if response.status_code == 201:
-        data = response.json()
-        print(f"Progress updated to {data['progress_update']['progress_value']}%")
-        print(f"Notes: {data['progress_update']['notes']}")
-        return True
-    else:
-        print(f"Failed to update progress: {response.status_code}")
-        pretty_print(response.json())
-        return False
-
-def add_reflection(goal_id, reflection_type, content):
-    """Add a reflection to a goal."""
-    print(f"\n===== ADDING REFLECTION (ID: {goal_id}, Type: {reflection_type}) =====")
-    
-    response = requests.post(
-        f"{BASE_URL}/goals/{goal_id}/reflections",
-        headers=auth_headers,
-        json={
-            "reflection_type": reflection_type,
-            "content": content
-        }
-    )
-    
-    if response.status_code in [200, 201]:
-        data = response.json()
-        print(f"Reflection added: {reflection_type}")
-        return True
-    else:
-        print(f"Failed to add reflection: {response.status_code}")
-        pretty_print(response.json())
-        return False
-
-def chat_with_replica():
-    """Demonstrate chat with the Sensay replica."""
-    print("\n===== CHATTING WITH AI REPLICA =====")
-    
-    # Send an initial message
-    message = "I want to set a goal to learn a new programming language. Can you help me plan this?"
-    
-    response = requests.post(
-        f"{BASE_URL}/chat/send",
-        headers=auth_headers,
-        json={
-            "content": message
-        }
-    )
-    
-    if response.status_code == 200:
-        data = response.json()
-        print(f"User: {data['user_message']['content']}")
-        print(f"AI: {data['ai_response']['content']}")
-        
-        # Send a follow-up message
-        follow_up = "I'm thinking about learning Rust. How long should I give myself to become proficient, and what milestones would be appropriate?"
-        
-        response = requests.post(
-            f"{BASE_URL}/chat/send",
-            headers=auth_headers,
-            json={
-                "content": follow_up
-            }
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            print(f"\nUser: {data['user_message']['content']}")
-            print(f"AI: {data['ai_response']['content']}")
-            return True
-        else:
-            print(f"Failed to send follow-up message: {response.status_code}")
-            pretty_print(response.json())
-            return False
-    else:
-        print(f"Failed to send message: {response.status_code}")
-        pretty_print(response.json())
-        return False
-
-def analyze_goal(goal_id):
-    """Ask the AI to analyze a goal."""
-    print(f"\n===== ANALYZING GOAL (ID: {goal_id}) =====")
-    
-    response = requests.post(
-        f"{BASE_URL}/chat/analyze-goal/{goal_id}",
-        headers=auth_headers,
-        json={
-            "analysis_type": "strategy",
-            "save_as_reflection": True
-        }
-    )
-    
-    if response.status_code == 200:
-        data = response.json()
-        print(f"Analysis: {data['analysis']['content'][:200]}...")
-        return True
-    else:
-        print(f"Failed to analyze goal: {response.status_code}")
-        pretty_print(response.json())
-        return False
 
 def get_progress_summary():
     """Get a summary of the user's goals and progress."""
-    print("\n===== GETTING PROGRESS SUMMARY =====")
-    
     response = requests.get(
         f"{BASE_URL}/progress/summary",
         headers=auth_headers
     )
     
     if response.status_code == 200:
-        data = response.json()
-        summary = data['summary']
-        
-        print(f"Total Goals: {summary['total_goals']}")
-        print(f"Active Goals: {summary['active_goals']}")
-        print(f"Completed Goals: {summary['completed_goals']}")
-        print(f"Average Completion: {summary['avg_completion']:.1f}%")
-        
-        if data['soon_due']:
-            print("\nGoals Due Soon:")
-            for goal in data['soon_due']:
-                print(f"- {goal['title']} (Due in {goal['days_remaining']} days, Progress: {goal['completion_status']}%)")
-        
-        if data['recently_updated']:
-            print("\nRecently Updated Goals:")
-            for update in data['recently_updated']:
-                print(f"- {update['goal_title']} (Progress: {update['progress_value']}%)")
-        
-        return True
+        return response.json()
     else:
         print(f"Failed to get progress summary: {response.status_code}")
-        pretty_print(response.json())
-        return False
+        return None
 
-def main():
-    """Run the full test script."""
-    # Authentication
-    if not register_user():
+def display_goals():
+    """Display all goals in a user-friendly format."""
+    print("\n===== YOUR GOALS =====")
+    goals = get_goals()
+    
+    if not goals:
+        print("You don't have any goals yet. Start chatting with the AI to create one!")
         return
     
-    # Get user profile
-    get_user_profile()
+    for i, goal in enumerate(goals, 1):
+        print(f"{i}. {goal['title']} (Progress: {goal['completion_status']}%, Status: {goal['status']})")
+        print(f"   Target date: {goal['target_date'][:10]}")
+        if goal['milestones']:
+            print(f"   Milestones: {len(goal['milestones'])}")
+        if goal['subgoals_count'] > 0:
+            print(f"   Subgoals: {goal['subgoals_count']}")
+        print()
     
-    # Test both ways to create goals
-    # print("\n===== TESTING BOTH GOAL CREATION METHODS =====")
-    # print("1. Creating a goal programmatically")
-    # direct_goal_id = create_goal()
+    return goals
+
+def display_goal_details(goal_id):
+    """Display detailed information about a specific goal."""
+    goal = get_goal_details(goal_id)
     
-    print("\n2. Creating a goal through chat with AI")
-    chat_goal_id = create_goal_via_chat()
+    if not goal:
+        print("Goal not found.")
+        return
     
-    # # Compare goals
-    # if direct_goal_id and chat_goal_id:
-    #     print("\nBoth goal creation methods worked successfully!")
-        
-    #     # Get details for both goals
-    #     direct_goal = get_goal_details(direct_goal_id)
-    #     chat_goal = get_goal_details(chat_goal_id)
-        
-    #     # Create a subgoal for the chat-created goal
-    #     if chat_goal:
-    #         subgoal_id = create_subgoal(chat_goal_id)
-    #         if subgoal_id:
-    #             print(f"Created a subgoal for the chat-created goal")
-        
-    #     # Get all goals to see them together
-    #     get_goals()
-        
-    #     # Update progress for the chat-created goal
-    #     if chat_goal_id:
-    #         update_goal_progress(chat_goal_id, 25, "Started working on the first milestone!")
-        
-    #     # Add a reflection to the chat-created goal
-    #     if chat_goal_id:
-    #         add_reflection(chat_goal_id, "strategy", "I should focus on building a practical project to solidify my learning.")
-        
-    #     # Get progress summary
-    #     get_progress_summary()
-        
-    #     # Analyze the chat-created goal
-    #     if chat_goal_id:
-    #         analyze_goal(chat_goal_id)
+    print(f"\n===== GOAL: {goal['title']} =====")
+    print(f"Description: {goal['description']}")
+    print(f"Importance: {goal['importance']}")
+    print(f"Progress: {goal['completion_status']}%")
+    print(f"Status: {goal['status']}")
+    print(f"Start date: {goal['start_date'][:10]}")
+    print(f"Target date: {goal['target_date'][:10]}")
     
-    print("\n===== TEST COMPLETED SUCCESSFULLY =====")
+    if goal['milestones']:
+        print("\nMilestones:")
+        for i, milestone in enumerate(goal['milestones'], 1):
+            print(f"{i}. {milestone['title']} (Due: {milestone['target_date'][:10]}, Status: {milestone['status']})")
+    
+    if goal['reflections']:
+        print("\nReflections:")
+        for reflection_type, reflection in goal['reflections'].items():
+            print(f"- {reflection_type.capitalize()}: {reflection['content'][:100]}...")
+    
+    if goal['progress_updates']:
+        print("\nProgress Updates:")
+        for update in goal['progress_updates']:
+            print(f"- {update['created_at'][:10]}: {update['progress_value']}% - {update['notes']}")
+    
+    return goal
+
+def display_progress_summary():
+    """Display a summary of the user's progress."""
+    print("\n===== PROGRESS SUMMARY =====")
+    summary = get_progress_summary()
+    
+    if not summary:
+        print("Unable to get progress summary.")
+        return
+    
+    stats = summary['summary']
+    print(f"Total Goals: {stats['total_goals']}")
+    print(f"Active Goals: {stats['active_goals']}")
+    print(f"Completed Goals: {stats['completed_goals']}")
+    print(f"Average Completion: {stats['avg_completion']:.1f}%")
+    
+    if summary['soon_due']:
+        print("\nGoals Due Soon:")
+        for goal in summary['soon_due']:
+            print(f"- {goal['title']} (Due in {goal['days_remaining']} days, Progress: {goal['completion_status']}%)")
+    
+    if summary['recently_updated']:
+        print("\nRecently Updated Goals:")
+        for update in summary['recently_updated']:
+            print(f"- {update['goal_title']} (Progress: {update['progress_value']}%)")
+
+def clear_screen():
+    """Clear the terminal screen."""
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def display_help():
+    """Display help information about available commands."""
+    print("\n===== AVAILABLE COMMANDS =====")
+    print("/help - Display this help message")
+    print("/exit or /quit - Exit the chat")
+    print("/goals - List all your goals")
+    print("/goal <id> - Show details of a specific goal")
+    print("/summary - Show progress summary")
+    print("/clear - Clear the screen")
+    print("/history - Show recent chat history")
+    print("")
+    print("Any other text will be sent as a message to the AI replica.")
+    print("To discuss a specific goal, use: /chat <goal_id> and then chat normally.")
+    print("To exit goal-specific chat, type /back")
+
+def interactive_chat():
+    """Interactive chat with the AI replica."""
+    clear_screen()
+    print("===== WELCOME TO STRATEGIST INTERACTIVE CHAT =====")
+    print("You are now chatting with your AI strategic planning assistant.")
+    print("Type /help for available commands or just start chatting!")
+    print("=" * 50)
+    
+    active_goal_id = None
+    
+    while True:
+        # Show prompt based on context
+        if active_goal_id:
+            goal = get_goal_details(active_goal_id)
+            prompt = f"[Goal: {goal['title']}] > "
+        else:
+            prompt = "> "
+        
+        # Get user input
+        user_input = input(prompt).strip()
+        
+        # Check for commands
+        if user_input.lower() in ['/exit', '/quit']:
+            print("Goodbye!")
+            break
+            
+        elif user_input.lower() == '/help':
+            display_help()
+            
+        elif user_input.lower() == '/goals':
+            display_goals()
+            
+        elif user_input.lower().startswith('/goal '):
+            try:
+                goal_id = int(user_input[6:].strip())
+                display_goal_details(goal_id)
+            except ValueError:
+                print("Invalid goal ID. Use /goals to see available goals.")
+                
+        elif user_input.lower() == '/summary':
+            display_progress_summary()
+            
+        elif user_input.lower() == '/clear':
+            clear_screen()
+            
+        elif user_input.lower() == '/history':
+            history = get_chat_history()
+            print("\n===== RECENT CHAT HISTORY =====")
+            for msg in history:
+                sender = "You" if msg['sender'] == 'user' else "AI"
+                print(f"{sender}: {msg['content']}")
+            print("=" * 50)
+            
+        elif user_input.lower().startswith('/chat '):
+            try:
+                active_goal_id = int(user_input[6:].strip())
+                goal = get_goal_details(active_goal_id)
+                if goal:
+                    print(f"Now chatting about goal: {goal['title']}")
+                else:
+                    print("Goal not found.")
+                    active_goal_id = None
+            except ValueError:
+                print("Invalid goal ID. Use /goals to see available goals.")
+                
+        elif user_input.lower() == '/back':
+            if active_goal_id:
+                print("Returning to general chat.")
+                active_goal_id = None
+            else:
+                print("You're not in a goal-specific chat.")
+                
+        else:
+            # Send message to AI
+            response = send_message(user_input, active_goal_id)
+            
+            if response:
+                # Display AI response
+                print(f"AI: {response['ai_response']['content']}")
+                
+                # Check if an action was performed
+                if 'action_result' in response:
+                    action = response['action_result']
+                    action_type = action.get('action')
+                    
+                    if action_type == 'create_goal':
+                        print(f"\n[System] Goal created: {action['goal']['title']} (ID: {action['goal']['id']})")
+                        
+                    elif action_type == 'update_progress':
+                        print(f"\n[System] Progress updated to {action['progress_update']['progress_value']}%")
+                        
+                    elif action_type == 'save_reflection':
+                        print(f"\n[System] Reflection saved: {action['reflection']['reflection_type']}")
+                        
+                    elif action_type == 'update_milestone':
+                        print(f"\n[System] Milestone updated: {action['milestone']['status']}")
+
+def main():
+    """Run the interactive chat application."""
+    try:
+        # Authentication
+        if not register_user():
+            print("Failed to authenticate. Exiting.")
+            return
+        
+        # Get user profile to verify everything is working
+        user = get_user_profile()
+        if not user:
+            print("Failed to get user profile. Exiting.")
+            return
+        
+        # Start the interactive chat
+        interactive_chat()
+        
+    except KeyboardInterrupt:
+        print("\nGoodbye!")
+    except Exception as e:
+        print(f"\nAn error occurred: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main() 

@@ -13,6 +13,7 @@ Strategist is a Flask-based backend application that helps users set goals, trac
 - **JWT Authentication**: Handles user authentication and authorization.
 - **Blueprint-based API**: Organizes endpoints into logical groupings.
 - **Sensay AI Integration**: Connects with Sensay API for AI replica functionality.
+- **AI-Driven Interface**: Users primarily interact with the AI replica, which determines what API actions to take.
 
 ### Directory Structure
 
@@ -70,6 +71,28 @@ The application uses a relational database with the following key models:
    - Messages between user and AI replica
    - Many-to-one relationship with user and optional relationship with goal
 
+## AI-Driven Interaction Model
+
+Strategist uses a unique interaction model where users primarily interact with the AI assistant, and the assistant determines what API actions to take based on the conversation:
+
+1. **Unified Chat Interface**
+   - Users communicate with the AI replica through a single chat endpoint
+   - The AI analyzes user intents and responds appropriately
+   - No need for users to directly interact with specific endpoints
+
+2. **Intent Detection**
+   - The AI detects when users want to create goals, track progress, analyze goals, etc.
+   - Based on detected intents, the AI guides the conversation to gather necessary information
+
+3. **Action Execution**
+   - When sufficient information is gathered, the AI formats it into a JSON structure
+   - The system extracts this JSON and performs the appropriate API calls
+   - The AI provides a natural language response about the action taken
+
+4. **Context Awareness**
+   - When discussing specific goals, the system provides context to the AI
+   - This allows for more relevant and helpful responses
+
 ## API Design
 
 The API follows RESTful principles with the following main endpoints:
@@ -77,18 +100,21 @@ The API follows RESTful principles with the following main endpoints:
 1. **Authentication API** (`/api/auth/...`)
    - User registration, login, and profile management
 
-2. **Goals API** (`/api/goals/...`)
+2. **Chat API** (`/api/chat/...`)
+   - Primary user interaction point
+   - Handles all messages between users and the AI replica
+   - Extracts and processes actions requested by the AI
+
+3. **Goals API** (`/api/goals/...`)
    - Goal CRUD operations
    - Milestone management
-   - Reflection management 
+   - Reflection management
+   - Primarily used by the system based on AI-detected actions
 
-3. **Progress API** (`/api/progress/...`)
+4. **Progress API** (`/api/progress/...`)
    - Progress updates
    - Progress summary and statistics
-
-4. **Chat API** (`/api/chat/...`)
-   - AI replica conversation
-   - Goal analysis and recommendations
+   - Primarily used by the system based on AI-detected actions
 
 ## Sensay AI Integration
 
@@ -102,13 +128,15 @@ The application integrates with Sensay AI through the following components:
    - Creates and manages user-specific replicas
    - Configures system messages for the strategic planning focus
 
-3. **Chat Functionality**
-   - Handles messaging between users and the AI replica
-   - Stores conversation history for context
+3. **Unified System Message**
+   - Comprehensive instructions for the AI on how to respond to different user intents
+   - Includes JSON formats for various actions (goal creation, progress updates, etc.)
+   - Guides the AI to provide helpful, goal-focused assistance
 
-4. **Goal Analysis**
-   - Uses AI to analyze goals and provide insights
-   - Generates recommendations for goal improvement
+4. **Action Processing**
+   - Extracts action JSON from AI responses
+   - Validates and processes the actions
+   - Provides confirmation to the user in natural language
 
 ## Security Considerations
 

@@ -5,13 +5,12 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 ## Key Features
 
 - **Goal Setting**: Define clear, meaningful goals with descriptions, timelines, and importance.
-- **Conversational Goal Creation**: Create goals naturally through a guided conversation with the AI assistant.
+- **Conversational Interface**: Interact naturally with an AI assistant that handles all goal-related actions.
 - **Hierarchical Goals**: Create nested goals and subgoals for better organization.
 - **Milestones**: Break goals into achievable milestones with their own deadlines.
 - **Progress Tracking**: Track progress on goals and visualize your journey.
 - **Reflections**: Capture thoughts on the importance of goals, potential obstacles, and strategies.
 - **AI Assistant**: Chat with an AI assistant trained to help with strategic planning.
-- **Goal Analysis**: Get AI-powered insights and suggestions for your goals.
 
 ## Technology Stack
 
@@ -85,7 +84,12 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 - `GET /api/auth/profile` - Get the current user's profile
 - `PUT /api/auth/profile` - Update the current user's profile
 
-### Goals
+### Chat
+
+- `GET /api/chat/history` - Get chat history
+- `POST /api/chat/send` - Send a message to the AI replica (all goal management happens through this endpoint)
+
+### Goals (Direct API - typically used by the replica in the background)
 
 - `GET /api/goals/` - Get all goals
 - `POST /api/goals/` - Create a new goal
@@ -107,48 +111,39 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 - `DELETE /api/progress/goals/<goal_id>/updates/<update_id>` - Delete a progress update
 - `GET /api/progress/summary` - Get a summary of goal progress
 
-### Chat
+## How It Works: AI-Driven Goal Management
 
-- `GET /api/chat/history` - Get chat history
-- `POST /api/chat/send` - Send a message to the AI replica
-- `POST /api/chat/analyze-goal/<goal_id>` - Get AI analysis of a goal
-- `POST /api/chat/create-goal` - Start a goal creation conversation with the AI assistant
-- `POST /api/chat/goal-chat` - Continue a goal creation conversation (add `"finalize": true` to create the goal)
+Strategist uses a unique approach where users interact primarily with the AI assistant, which intelligently determines what actions to take based on the conversation.
 
-## Example: Creating a Goal Through Chat
+### Example Conversation Flow
 
-One of the core features of Strategist is the ability to create goals through natural conversation with the AI assistant. This makes goal setting more intuitive and helps users think through their goals more thoroughly.
-
-Here's how it works:
-
-1. Start a goal creation conversation:
+1. **Creating a Goal Through Conversation**:
    ```
-   POST /api/chat/create-goal
-   {
-     "content": "I want to create a goal to learn machine learning"
-   }
+   User: "I'd like to create a goal to learn Spanish."
+   AI: "That's a great goal! Can you tell me why learning Spanish is important to you?"
+   User: "I'm planning a trip to Spain next year and want to be able to have basic conversations."
+   AI: "Excellent! And when do you want to achieve this goal by?"
+   User: "Ideally within 6 months, so by February next year."
+   AI: "What specific milestones would help you track progress towards this goal?"
+   User: "Maybe learning basic vocabulary, then grammar, then practicing conversations."
+   AI: "I've created your Spanish learning goal with a target date of February 2023 and the milestones you mentioned..."
    ```
 
-2. The AI will guide you through defining your goal with follow-up questions.
+Behind the scenes, the AI formats the goal information into JSON and calls the appropriate API endpoints.
 
-3. Continue the conversation by responding to the AI's questions:
+2. **Updating Progress**:
    ```
-   POST /api/chat/goal-chat
-   {
-     "content": "I want to become proficient enough to build practical ML models"
-   }
-   ```
-
-4. When you've provided all the necessary information, finalize the goal creation:
-   ```
-   POST /api/chat/goal-chat
-   {
-     "content": "I think that covers everything",
-     "finalize": true
-   }
+   User: "I've completed my first Spanish lesson and learned 50 new words."
+   AI: "That's great progress! How far along do you feel you are with your Spanish goal, percentage-wise?"
+   User: "Probably about 10%."
+   AI: "I've updated your progress to 10%. Keep up the great work!"
    ```
 
-5. The AI will create a structured goal based on your conversation, complete with title, description, milestones, and reflections.
+3. **Analyzing Goals**:
+   ```
+   User: "I'm struggling with my Spanish goal. Any suggestions?"
+   AI: "Let me analyze your goal... Based on your timeline and progress, here are some strategies that might help you stay on track..."
+   ```
 
 ## Acknowledgments
 
