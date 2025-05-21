@@ -100,10 +100,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCa
         }`}
       >
         <div className="relative rounded-xl p-4">
-          {/* Status indicator */}
-          <span className={`absolute right-4 top-4 rounded-full px-2 py-0.5 text-xs ${getStatusColor()}`}>
-            {goal.status === 'active' ? (isOverdue ? 'Overdue' : 'Active') : goal.status}
-          </span>
+          {/* Status indicator - only show for completed goals */}
+          {goal.status === 'completed' && (
+            <span className={`absolute right-4 top-4 rounded-full px-2 py-0.5 text-xs ${getStatusColor()}`}>
+              {goal.status}
+            </span>
+          )}
           
           {/* Progress indicator */}
           <div className="absolute -right-4 -top-4">
