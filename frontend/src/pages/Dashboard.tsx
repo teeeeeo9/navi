@@ -33,9 +33,12 @@ const Dashboard = () => {
       const goalsData = await api.getGoals()
       setGoals(goalsData)
       
-      // If we have goals but none selected, select the first one
+      // If we have goals but none selected, select the first one and get its full details
       if (goalsData.length > 0 && !selectedGoal) {
-        setSelectedGoal(goalsData[0])
+        // Get the full goal details for the first goal (including progress updates)
+        const firstGoalDetails = await api.getGoalDetails(goalsData[0].id)
+        console.log('First goal details:', firstGoalDetails)
+        setSelectedGoal(firstGoalDetails)
       }
     } catch (error) {
       console.error('Failed to load goals:', error)
@@ -64,6 +67,11 @@ const Dashboard = () => {
 
     try {
       const updatedGoal = await api.getGoalDetails(selectedGoal.id)
+      
+      // Debug log
+      console.log('Updated goal data:', updatedGoal)
+      console.log('Progress updates:', updatedGoal.progress_updates)
+      
       setSelectedGoal(updatedGoal)
       
       // Also update the goal in the goals list
@@ -94,7 +102,7 @@ const Dashboard = () => {
       {/* Header */}
       <header className="glass-dark z-10 flex justify-between p-4">
         <div className="flex items-center">
-          <h1 className="text-2xl font-bold text-white">Strategist</h1>
+          <h1 className="text-2xl font-bold text-white">Navi</h1>
         </div>
 
         <div className="flex items-center space-x-4">

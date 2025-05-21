@@ -10,6 +10,16 @@ export interface ChatMessage {
   is_system?: boolean
 }
 
+export interface PaginatedResponse<T> {
+  messages: T[]
+  pagination: {
+    total: number
+    offset: number
+    limit: number
+    has_more: boolean
+  }
+}
+
 export interface Goal {
   id: number
   title: string
@@ -34,6 +44,7 @@ export interface Milestone {
   target_date: string
   status: 'pending' | 'completed' | 'missed'
   completion_status: number
+  progress_updates?: ProgressUpdate[]
 }
 
 export interface Reflection {
@@ -55,9 +66,9 @@ export interface ProgressUpdate {
 // API service
 const api = {
   // Chat
-  getChatHistory: async (includeSystem = false, limit = 50): Promise<ChatMessage[]> => {
-    const { data } = await axios.get(`/api/chat/history?include_system=${includeSystem}&limit=${limit}`)
-    return data.messages
+  getChatHistory: async (includeSystem = false, limit = 50, offset = 0): Promise<PaginatedResponse<ChatMessage>> => {
+    const { data } = await axios.get(`/api/chat/history?include_system=${includeSystem}&limit=${limit}&offset=${offset}`)
+    return data
   },
 
   sendMessage: async (content: string, relatedGoalId?: number): Promise<{

@@ -1,6 +1,6 @@
-# Strategist Frontend
+# Navi Frontend
 
-This is the frontend application for the Strategist Goal Setting & Strategic Planning app. It provides a modern, animated, and minimalist interface for interacting with the Strategist backend.
+This is the frontend application for the Navi Goal Setting & Strategic Planning app. It provides a modern, animated, and minimalist interface for interacting with the Navi backend.
 
 ## Features
 
@@ -25,7 +25,7 @@ This is the frontend application for the Strategist Goal Setting & Strategic Pla
 ### Prerequisites
 
 - Node.js 16+ and npm/yarn
-- Running Strategist backend (see main project README)
+- Running Navi backend (see main project README)
 
 ### Installation
 
@@ -93,7 +93,7 @@ frontend/
 
 ## Communication with Backend
 
-The frontend communicates with the Strategist backend API through the services defined in `src/services/api.ts`. All API calls are proxied through Vite to avoid CORS issues during development.
+The frontend communicates with the Navi backend API through the services defined in `src/services/api.ts`. All API calls are proxied through Vite to avoid CORS issues during development.
 
 ## Authentication
 

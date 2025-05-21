@@ -34,7 +34,7 @@ const Login = () => {
         className="glass w-full max-w-md rounded-2xl p-8 shadow-2xl"
       >
         <div className="mb-6 text-center">
-          <h1 className="mb-1 text-3xl font-bold text-white">Strategist</h1>
+          <h1 className="mb-1 text-3xl font-bold text-white">Navi</h1>
           <p className="text-md text-dark-100">Goal Setting & Strategic Planning</p>
         </div>
 

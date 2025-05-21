@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Goal } from '@/services/api'
 import GoalCard from './GoalCard'
+import api from '@/services/api'
 
 interface GoalCarouselProps {
   goals: Goal[]
@@ -36,6 +37,20 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId }: GoalCarouselProps
       })
     }
   }, [activeIndex, goals.length])
+
+  // Handle goal selection with full details
+  const handleGoalSelect = async (goal: Goal, index: number) => {
+    try {
+      setActiveIndex(index)
+      // Fetch full goal details to get all progress updates
+      const fullGoalDetails = await api.getGoalDetails(goal.id)
+      onSelectGoal(fullGoalDetails)
+    } catch (error) {
+      console.error('Failed to get goal details:', error)
+      // Fall back to basic goal data if details fetch fails
+      onSelectGoal(goal)
+    }
+  }
 
   // Handle prev/next navigation
   const goToPrev = () => {
@@ -102,10 +117,7 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId }: GoalCarouselProps
               <GoalCard
                 goal={goal}
                 isSelected={selectedGoalId === goal.id}
-                onClick={() => {
-                  setActiveIndex(index)
-                  onSelectGoal(goal)
-                }}
+                onClick={() => handleGoalSelect(goal, index)}
                 compact
               />
             </motion.div>
@@ -119,10 +131,7 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId }: GoalCarouselProps
           {goals.map((_, index) => (
             <button
               key={index}
-              onClick={() => {
-                setActiveIndex(index)
-                onSelectGoal(goals[index])
-              }}
+              onClick={() => handleGoalSelect(goals[index], index)}
               className={`h-2 w-2 rounded-full transition-all ${
                 index === activeIndex ? 'bg-primary-400 w-4' : 'bg-dark-400'
               }`}

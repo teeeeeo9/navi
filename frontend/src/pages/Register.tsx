@@ -47,7 +47,7 @@ const Register = () => {
       >
         <div className="mb-6 text-center">
           <h1 className="mb-1 text-3xl font-bold text-white">Create Account</h1>
-          <p className="text-md text-dark-100">Join Strategist to plan your success</p>
+          <p className="text-md text-dark-100">Join Navi to plan your success</p>
         </div>
 
         {(error || passwordError) && (

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Goal } from '@/services/api'
+import { Goal, Milestone } from '@/services/api'
+import ProgressChart from './ProgressChart'
 
 // Progress Ring Component
 const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: number, size?: number, strokeWidth?: number }) => {
@@ -50,6 +51,15 @@ interface GoalCardProps {
 }
 
 const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCardProps) => {
+  const [showCharts, setShowCharts] = useState(true) // Set default to true for testing
+  
+  // Debug log to check progress data
+  console.log(`GoalCard for goal "${goal.title}":`, {
+    hasProgressUpdates: !!goal.progress_updates,
+    progressUpdatesCount: goal.progress_updates?.length || 0,
+    progressUpdates: goal.progress_updates
+  })
+  
   // Calculate days remaining
   const targetDate = new Date(goal.target_date)
   const today = new Date()
@@ -120,6 +130,14 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCa
                 {goal.milestones.length} milestone{goal.milestones.length > 1 ? 's' : ''}
               </div>
             )}
+            
+            {/* Show minimal progress chart if there's progress data */}
+            {goal.progress_updates && goal.progress_updates.length > 0 && (
+              <ProgressChart 
+                progressData={goal.progress_updates} 
+                minimal={true}
+              />
+            )}
           </div>
         </div>
       </motion.div>
@@ -134,7 +152,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCa
       transition={{ duration: 0.5 }}
       className="glass h-full overflow-hidden rounded-2xl p-0.5"
     >
-      <div className="relative h-full rounded-2xl p-6">
+      <div className="relative h-full overflow-y-auto rounded-2xl p-6">
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h2 className="mb-2 text-2xl font-bold text-white">{goal.title}</h2>
@@ -175,6 +193,28 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCa
           </div>
         </div>
         
+        {/* Progress chart for goal */}
+        {goal.progress_updates && goal.progress_updates.length > 0 && (
+          <div className="mb-6">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Progress Timeline</h3>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowCharts(!showCharts)}
+                className="rounded-full bg-dark-600 px-3 py-1 text-sm font-medium text-dark-100 hover:bg-dark-500 hover:text-white"
+              >
+                {showCharts ? 'Hide Charts' : 'Show Charts'}
+              </motion.button>
+            </div>
+            
+            <ProgressChart 
+              progressData={goal.progress_updates} 
+              title="Goal Progress"
+            />
+          </div>
+        )}
+        
         {/* Reflections */}
         {goal.reflections && Object.keys(goal.reflections).length > 0 && (
           <div className="mb-6">
@@ -196,44 +236,70 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCa
         {goal.milestones && goal.milestones.length > 0 && (
           <div>
             <h3 className="mb-2 text-lg font-semibold text-white">Milestones</h3>
-            <div className="space-y-2">
+            <div className="space-y-4">
               {goal.milestones.map((milestone) => (
-                <div 
+                <MilestoneCard 
                   key={milestone.id} 
-                  className={`rounded-lg p-3 ${
-                    milestone.status === 'completed' 
-                      ? 'bg-green-500/10 text-green-200' 
-                      : milestone.status === 'missed'
-                      ? 'bg-red-500/10 text-red-200'
-                      : 'bg-dark-700/40'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{milestone.title}</div>
-                      <div className="text-sm opacity-80">
-                        {milestone.description || 'No description'}
-                      </div>
-                      <div className="mt-1 text-xs">
-                        Due: {formatDate(milestone.target_date)}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="rounded-full bg-dark-700/50 px-2 py-0.5 text-xs">
-                        {milestone.status}
-                      </div>
-                      <div className="mt-1 text-sm font-bold">
-                        {milestone.completion_status}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  milestone={milestone} 
+                  formatDate={formatDate}
+                  showChart={showCharts}
+                />
               ))}
             </div>
           </div>
         )}
       </div>
     </motion.div>
+  )
+}
+
+// Milestone component
+interface MilestoneCardProps {
+  milestone: Milestone;
+  formatDate: (date: string) => string;
+  showChart: boolean;
+}
+
+const MilestoneCard = ({ milestone, formatDate, showChart }: MilestoneCardProps) => {
+  const getStatusColor = () => {
+    switch(milestone.status) {
+      case 'completed': return 'bg-green-500/10 text-green-200'
+      case 'missed': return 'bg-red-500/10 text-red-200'
+      default: return 'bg-dark-700/40'
+    }
+  }
+
+  return (
+    <div className={`rounded-lg p-3 ${getStatusColor()}`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-medium">{milestone.title}</div>
+          <div className="text-sm opacity-80">
+            {milestone.description || 'No description'}
+          </div>
+          <div className="mt-1 text-xs">
+            Due: {formatDate(milestone.target_date)}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="rounded-full bg-dark-700/50 px-2 py-0.5 text-xs">
+            {milestone.status}
+          </div>
+          <div className="mt-1 text-sm font-bold">
+            {milestone.completion_status}%
+          </div>
+        </div>
+      </div>
+      
+      {/* Progress chart for milestone if we get it from the backend */}
+      {showChart && milestone.progress_updates && milestone.progress_updates.length > 0 && (
+        <ProgressChart 
+          progressData={milestone.progress_updates} 
+          height={150}
+          minimal={false}
+        />
+      )}
+    </div>
   )
 }
 

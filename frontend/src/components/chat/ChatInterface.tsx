@@ -13,28 +13,91 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
+  const messagesPerPage = 20
 
   // Load chat history on component mount
   useEffect(() => {
     loadChatHistory()
-  }, [relatedGoalId])
+  }, []) // No relatedGoalId dependency to keep chat global
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when new messages are added (but not when loading older messages)
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    if (!isLoadingMore) {
+      scrollToBottom()
+    }
+  }, [messages, isLoadingMore])
+
+  // Handle scroll events to implement infinite scrolling
+  useEffect(() => {
+    const container = chatContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      // When user scrolls near the top, load more messages
+      if (container.scrollTop < 100 && !isLoadingMore && hasMore) {
+        loadMoreMessages()
+      }
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [isLoadingMore, hasMore, page])
 
   const loadChatHistory = async () => {
     try {
       setIsLoading(true)
-      const history = await api.getChatHistory(false)
-      setMessages(history.filter(msg => !relatedGoalId || msg.related_goal_id === relatedGoalId))
+      setPage(1) // Reset pagination
+      const response = await api.getChatHistory(false, messagesPerPage, 0)
+      setMessages(response.messages)
+      setHasMore(response.pagination?.has_more || false)
     } catch (error) {
       console.error('Failed to load chat history:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadMoreMessages = async () => {
+    if (isLoadingMore || !hasMore) return
+
+    try {
+      setIsLoadingMore(true)
+      const nextPage = page + 1
+      // Calculate how many messages to skip
+      const offset = page * messagesPerPage
+      
+      // Use backend pagination
+      const response = await api.getChatHistory(false, messagesPerPage, offset)
+      
+      if (response.messages.length > 0) {
+        // Save scroll position
+        const container = chatContainerRef.current
+        const scrollHeight = container?.scrollHeight || 0
+        
+        // Add older messages to the beginning of the array
+        setMessages(prev => [...response.messages, ...prev])
+        setPage(nextPage)
+        
+        // Restore scroll position
+        if (container) {
+          const newScrollHeight = container.scrollHeight
+          container.scrollTop = newScrollHeight - scrollHeight
+        }
+        
+        // Update hasMore flag
+        setHasMore(response.pagination?.has_more || false)
+      } else {
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error('Failed to load more messages:', error)
+    } finally {
+      setIsLoadingMore(false)
     }
   }
 
@@ -95,6 +158,15 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
   return (
     <div className={`flex h-full flex-col rounded-2xl ${className}`}>
       <div className="glass-dark flex-1 overflow-hidden rounded-2xl">
+        {isLoadingMore && (
+          <div className="flex justify-center p-2">
+            <div className="flex space-x-2 rounded-full bg-dark-700/70 px-4 py-2">
+              <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400"></div>
+              <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400" style={{ animationDelay: '0.2s' }}></div>
+              <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          </div>
+        )}
         <div 
           ref={chatContainerRef} 
           className="flex h-full flex-col overflow-y-auto p-4 scrollbar-thin"
@@ -161,7 +233,7 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={compact ? "Type here..." : "Ask anything about your goals, planning, or strategy..."}
+            placeholder={compact ? "Type here..." : "What's on your mind?"}
             className="flex-1 bg-transparent px-4 py-3 text-white outline-none"
             disabled={isLoading}
           />

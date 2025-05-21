@@ -37,10 +37,11 @@ def get_chat_history():
     
     # Get query parameters
     limit = request.args.get('limit', 50, type=int)
+    offset = request.args.get('offset', 0, type=int)
     goal_id = request.args.get('goal_id', type=int)
     include_system = request.args.get('include_system', 'false').lower() == 'true'
     
-    logger.debug(f"Chat history query params - limit: {limit}, goal_id: {goal_id}, include_system: {include_system}")
+    logger.debug(f"Chat history query params - limit: {limit}, offset: {offset}, goal_id: {goal_id}, include_system: {include_system}")
     
     # Build query
     query = ChatMessage.query.filter_by(user_id=user_id)
@@ -55,13 +56,16 @@ def get_chat_history():
         query = query.filter(ChatMessage.sender != 'system')
         logger.debug("Filtering out system messages from chat history")
     
-    # Order by creation date (newest first) and limit
-    messages = query.order_by(desc(ChatMessage.created_at)).limit(limit).all()
+    # Count total matching messages for pagination info
+    total_messages = query.count()
+    
+    # Order by creation date (newest first), apply offset and limit
+    messages = query.order_by(desc(ChatMessage.created_at)).offset(offset).limit(limit).all()
     
     # Reverse to get chronological order
     messages.reverse()
     
-    logger.info(f"Retrieved {len(messages)} chat messages for user {user_id}")
+    logger.info(f"Retrieved {len(messages)} chat messages for user {user_id} (offset: {offset}, limit: {limit})")
     
     messages_data = []
     for message in messages:
@@ -73,7 +77,18 @@ def get_chat_history():
             'created_at': message.created_at.isoformat()
         })
     
-    return jsonify({'messages': messages_data}), 200
+    # Include pagination info in response
+    response = {
+        'messages': messages_data,
+        'pagination': {
+            'total': total_messages,
+            'offset': offset,
+            'limit': limit,
+            'has_more': offset + len(messages) < total_messages
+        }
+    }
+    
+    return jsonify(response), 200
 
 @chat_bp.route('/send', methods=['POST'])
 @jwt_required()

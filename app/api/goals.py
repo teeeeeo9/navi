@@ -117,6 +117,28 @@ def get_goal(goal_id):
     # Get milestones
     milestones_data = []
     for milestone in goal.milestones:
+        # For now, we'll simulate milestone progress updates by using milestone creation
+        # and if status updates happened
+        milestone_progress = []
+        
+        # Initial progress entry at creation time
+        milestone_progress.append({
+            'id': -1,  # Simulated ID
+            'progress_value': 0,  # Initial progress
+            'notes': "Milestone created",
+            'created_at': milestone.created_at.isoformat()
+        })
+        
+        # Add an entry for status changes if milestone is not pending
+        if milestone.status != 'pending':
+            progress_value = 100 if milestone.status == 'completed' else milestone.completion_status
+            milestone_progress.append({
+                'id': -2,  # Simulated ID
+                'progress_value': progress_value,
+                'notes': f"Status changed to {milestone.status}",
+                'created_at': milestone.updated_at.isoformat()
+            })
+        
         milestones_data.append({
             'id': milestone.id,
             'title': milestone.title,
@@ -125,7 +147,8 @@ def get_goal(goal_id):
             'completion_status': milestone.completion_status,
             'status': milestone.status,
             'created_at': milestone.created_at.isoformat(),
-            'updated_at': milestone.updated_at.isoformat()
+            'updated_at': milestone.updated_at.isoformat(),
+            'progress_updates': milestone_progress
         })
     
     # Get reflections
@@ -148,28 +171,17 @@ def get_goal(goal_id):
             'created_at': update.created_at.isoformat()
         })
     
-    # Get subgoals 
+    # Get subgoals
     subgoals = []
     for subgoal in Goal.query.filter_by(parent_goal_id=goal.id).all():
         subgoals.append({
             'id': subgoal.id,
             'title': subgoal.title,
-            'description': subgoal.description,
             'completion_status': subgoal.completion_status,
-            'status': subgoal.status,
-            'target_date': subgoal.target_date.isoformat()
+            'status': subgoal.status
         })
     
-    # Get parent goal if exists
-    parent_goal = None
-    if goal.parent_goal_id:
-        parent = Goal.query.get(goal.parent_goal_id)
-        if parent:
-            parent_goal = {
-                'id': parent.id,
-                'title': parent.title
-            }
-    
+    # Assemble the full goal data
     goal_data = {
         'id': goal.id,
         'title': goal.title,
@@ -180,7 +192,6 @@ def get_goal(goal_id):
         'completion_status': goal.completion_status,
         'status': goal.status,
         'parent_goal_id': goal.parent_goal_id,
-        'parent_goal': parent_goal,
         'milestones': milestones_data,
         'reflections': reflections_data,
         'progress_updates': progress_updates,
@@ -189,7 +200,6 @@ def get_goal(goal_id):
         'updated_at': goal.updated_at.isoformat()
     }
     
-    logger.info(f"Successfully retrieved goal details for ID: {goal_id}")
     return jsonify({'goal': goal_data}), 200
 
 @goals_bp.route('/', methods=['POST'])
