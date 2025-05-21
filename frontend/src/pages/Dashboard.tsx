@@ -83,6 +83,20 @@ const Dashboard = () => {
     }
   }
 
+  // Handle goal updates from the UI
+  const handleGoalUpdate = (updatedGoal: Goal) => {
+    // Update the selected goal if it's the one that was updated
+    if (selectedGoal && selectedGoal.id === updatedGoal.id) {
+      // Need to get full details to ensure we have all data
+      refreshSelectedGoal()
+    }
+    
+    // Update the goal in the goals list
+    setGoals(prev => 
+      prev.map(g => g.id === updatedGoal.id ? {...g, ...updatedGoal} : g)
+    )
+  }
+
   // Layout animation variants
   const layoutVariants = {
     chatExpanded: {
@@ -151,13 +165,17 @@ const Dashboard = () => {
                 goals={goals}
                 selectedGoalId={selectedGoal?.id}
                 onSelectGoal={setSelectedGoal}
+                onGoalUpdate={handleGoalUpdate}
               />
             </div>
 
             {/* Selected goal details */}
             <div className="mt-4 flex-1 overflow-auto">
               {selectedGoal && (
-                <GoalCard goal={selectedGoal} />
+                <GoalCard 
+                  goal={selectedGoal} 
+                  onGoalUpdate={handleGoalUpdate}
+                />
               )}
             </div>
           </motion.div>

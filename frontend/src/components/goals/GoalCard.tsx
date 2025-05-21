@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Goal, Milestone } from '@/services/api'
 import ProgressChart from './ProgressChart'
+import api from '@/services/api'
 
 // Progress Ring Component
 const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: number, size?: number, strokeWidth?: number }) => {
@@ -48,10 +49,22 @@ interface GoalCardProps {
   isSelected?: boolean
   onClick?: () => void
   compact?: boolean
+  onGoalUpdate?: (updatedGoal: Goal) => void
 }
 
-const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCardProps) => {
+const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUpdate }: GoalCardProps) => {
   const [showCharts, setShowCharts] = useState(true) // Set default to true for testing
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [titleValue, setTitleValue] = useState(goal.title)
+  const titleInputRef = useRef<HTMLInputElement>(null)
+  
+  // When editing starts, focus the input
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus()
+      titleInputRef.current.select()
+    }
+  }, [isEditingTitle])
   
   // Debug log to check progress data
   console.log(`GoalCard for goal "${goal.title}":`, {
@@ -88,6 +101,55 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCa
     }
   }
 
+  // Handle title edit start
+  const handleTitleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent triggering the card click
+    setIsEditingTitle(true)
+  }
+
+  // Handle saving the edited title
+  const handleTitleSave = async () => {
+    // Don't save if the title is empty or unchanged
+    if (!titleValue.trim() || titleValue === goal.title) {
+      setTitleValue(goal.title) // Reset to original if empty
+      setIsEditingTitle(false)
+      return
+    }
+
+    try {
+      // Update the goal in the API
+      const updatedGoal = await api.updateGoal(goal.id, { title: titleValue })
+      console.log('Goal title updated:', updatedGoal)
+      
+      // Notify parent component if onGoalUpdate is provided
+      if (onGoalUpdate) {
+        onGoalUpdate(updatedGoal)
+      }
+      
+      setIsEditingTitle(false)
+    } catch (error) {
+      console.error('Failed to update goal title:', error)
+      // Reset to original title on error
+      setTitleValue(goal.title)
+      setIsEditingTitle(false)
+    }
+  }
+
+  // Handle input keydown events
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSave()
+    } else if (e.key === 'Escape') {
+      setTitleValue(goal.title) // Reset to original
+      setIsEditingTitle(false)
+    }
+  }
+
+  // Handle clicks outside the input
+  const handleInputBlur = () => {
+    handleTitleSave()
+  }
+
   if (compact) {
     // Compact view of goal card (for carousel or list)
     return (
@@ -116,7 +178,25 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCa
           </div>
           
           <div className="pr-12">
-            <h3 className="mb-1 text-xl font-bold text-white">{goal.title}</h3>
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                type="text"
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onBlur={handleInputBlur}
+                onKeyDown={handleTitleKeyDown}
+                className="mb-1 w-full bg-transparent text-xl font-bold text-white outline-none focus:border-b focus:border-primary-400/50"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <h3 
+                className="mb-1 text-xl font-bold text-white"
+                onDoubleClick={handleTitleDoubleClick}
+              >
+                {goal.title}
+              </h3>
+            )}
             
             <div className="flex items-center space-x-2 text-xs text-dark-100">
               <span>Target: {formatDate(goal.target_date)}</span>
@@ -157,7 +237,24 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false }: GoalCa
       <div className="relative h-full overflow-y-auto rounded-2xl p-6">
         <div className="mb-6 flex items-start justify-between">
           <div>
-            <h2 className="mb-2 text-2xl font-bold text-white">{goal.title}</h2>
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                type="text"
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onBlur={handleInputBlur}
+                onKeyDown={handleTitleKeyDown}
+                className="mb-2 w-full bg-transparent text-2xl font-bold text-white outline-none focus:border-b focus:border-primary-400/50"
+              />
+            ) : (
+              <h2 
+                className="mb-2 text-2xl font-bold text-white"
+                onDoubleClick={handleTitleDoubleClick}
+              >
+                {goal.title}
+              </h2>
+            )}
             <p className="text-dark-100">{goal.description || 'No description'}</p>
           </div>
           

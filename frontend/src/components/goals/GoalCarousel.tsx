@@ -8,9 +8,10 @@ interface GoalCarouselProps {
   goals: Goal[]
   onSelectGoal: (goal: Goal) => void
   selectedGoalId?: number
+  onGoalUpdate?: (updatedGoal: Goal) => void
 }
 
-const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId }: GoalCarouselProps) => {
+const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: GoalCarouselProps) => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [showNav, setShowNav] = useState(false)
   const carouselRef = useRef<HTMLDivElement>(null)
@@ -56,6 +57,13 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId }: GoalCarouselProps
       console.error('Failed to get goal details:', error)
       // Fall back to basic goal data if details fetch fails
       onSelectGoal(goal)
+    }
+  }
+
+  // Handle goal updates from child components
+  const handleGoalUpdate = (updatedGoal: Goal) => {
+    if (onGoalUpdate) {
+      onGoalUpdate(updatedGoal)
     }
   }
 
@@ -146,6 +154,7 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId }: GoalCarouselProps
                 goal={goal}
                 isSelected={selectedGoalId === goal.id}
                 onClick={() => handleGoalSelect(goal, index)}
+                onGoalUpdate={handleGoalUpdate}
                 compact
               />
             </motion.div>
