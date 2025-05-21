@@ -1,6 +1,6 @@
-# Strategist - Goal Setting & Strategic Planning App
+# Navi - Goal Setting & Strategic Planning App
 
-Strategist is a minimalistic app that helps users set meaningful goals, create strategic plans, and track their progress. The app uses Sensay AI technology to provide personalized guidance and assistance throughout the goal-setting and planning process.
+Navi is a minimalistic app that helps users set meaningful goals, create strategic plans, and track their progress. The app uses Sensay AI technology to provide personalized guidance and assistance throughout the goal-setting and planning process.
 
 ## Key Features
 
@@ -8,31 +8,46 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 - **Conversational Interface**: Interact naturally with an AI assistant that handles all goal-related actions.
 - **Hierarchical Goals**: Create nested goals and subgoals for better organization.
 - **Milestones**: Break goals into achievable milestones with their own deadlines.
-- **Progress Tracking**: Track progress on goals and visualize your journey.
+- **Progress Tracking**: Track progress on goals and visualize your journey with charts.
 - **Reflections**: Capture thoughts on the importance of goals, potential obstacles, and strategies.
 - **AI Assistant**: Chat with an AI assistant trained to help with strategic planning.
 - **Dual UI Interaction**: Interact through both chat interface and traditional UI elements, with the AI being aware of changes made in either interface.
+- **Animated Visualizations**: Beautiful, animated displays of your goals, milestones, and progress.
+- **Glass Morphism UI**: Modern transparent/glass UI elements that create depth and visual appeal.
+- **Carousel Goal Navigation**: Intuitive carousel-based navigation for goals.
+- **Responsive Design**: Works on all device sizes from mobile to desktop.
 
 ## Technology Stack
 
-- **Backend**: Python Flask
+### Backend
+- **Framework**: Python Flask
 - **Database**: SQLAlchemy (with SQLite for development)
 - **AI Integration**: Sensay API for AI replica creation and interaction
 - **Authentication**: JWT-based auth system
+
+### Frontend
+- **Framework**: React with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **Animations**: Framer Motion
+- **Routing**: React Router
+- **Data Fetching**: Axios
+- **Data Visualization**: Recharts
 
 ## Setup Instructions
 
 ### Prerequisites
 
 - Python 3.8 or higher
+- Node.js 16+ and npm/yarn
 - Sensay API key (from [Sensay API](https://sensay.io))
 
-### Installation
+### Backend Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/strategist.git
-   cd strategist
+   git clone https://github.com/yourusername/navi.git
+   cd navi
    ```
 
 2. Create a virtual environment and activate it:
@@ -53,8 +68,8 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
    SECRET_KEY=your_secret_key_here
    JWT_SECRET_KEY=your_jwt_secret_key_here
    SENSAY_API_KEY=your_sensay_api_key_here
-   SENSAY_USER_ID_PREFIX=strategist_
-   SENSAY_REPLICA_SLUG=strategist_planning_assistant
+   SENSAY_USER_ID_PREFIX=navi_
+   SENSAY_REPLICA_SLUG=navi_planning_assistant
    ```
 
 5. Initialize the database:
@@ -62,19 +77,42 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
    python app.py create_db
    ```
 
+### Frontend Installation
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
 ### Running the Application
 
-1. Start the Flask development server:
+1. Start the Flask backend server:
    ```
    flask run
    ```
 
-2. The API will be available at `http://localhost:5000/api/`.
+2. In a separate terminal, start the frontend development server:
+   ```bash
+   cd frontend
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-3. To test the application functionality, run the test script:
+3. The backend API will be available at `http://localhost:5000/api/`.
+4. The frontend will be available at `http://localhost:5173`.
+5. To test the backend functionality directly, run the test script:
    ```
    python test_app.py
    ```
+
 
 ## API Documentation
 
@@ -115,7 +153,7 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 
 ## How It Works: AI-Driven Goal Management
 
-Strategist uses a unique approach where users interact primarily with the AI assistant, which intelligently determines what actions to take based on the conversation.
+Navi uses a unique approach where users interact primarily with the AI assistant, which intelligently determines what actions to take based on the conversation.
 
 ### Example Conversation Flow
 
@@ -169,10 +207,11 @@ When users make changes through the UI instead of chat:
 
 This dual-interaction model ensures that whether users interact through chat or traditional UI elements, the AI assistant maintains context and provides consistent, helpful responses.
 
-## Directory Structure
+## Project Structure
 
+### Backend Structure
 ```
-strategist/
+navi/
 ├── app/                        # Main application package
 │   ├── __init__.py             # Application factory
 │   ├── models.py               # Database models
@@ -189,9 +228,31 @@ strategist/
 ├── app.py                      # Application entry point
 ├── test_app.py                 # Application test script
 ├── requirements.txt            # Python dependencies
-├── env.example                 # Example environment variables
-└── README.md                   # Documentation
+└── env.example                 # Example environment variables
 ```
+
+### Frontend Structure
+```
+frontend/
+├── public/              # Static assets
+├── src/
+│   ├── assets/          # Images and other assets
+│   ├── components/      # Reusable UI components
+│   │   ├── chat/        # Chat interface components
+│   │   ├── goals/       # Goal visualization components
+│   │   └── ui/          # Basic UI components
+│   ├── context/         # React Context providers
+│   ├── pages/           # Main page components
+│   ├── services/        # API and service functions
+│   ├── styles/          # Global styles
+│   ├── App.tsx          # Main app component
+│   └── main.tsx         # Entry point
+├── index.html           # HTML template
+├── package.json         # Dependencies and scripts
+├── tailwind.config.js   # Tailwind CSS configuration
+└── vite.config.ts       # Vite configuration
+```
+
 
 ## Acknowledgments
 
