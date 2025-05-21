@@ -1,0 +1,162 @@
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { useAuth } from '@/context/AuthContext'
+import api, { Goal } from '@/services/api'
+
+// Components
+import ChatInterface from '@/components/chat/ChatInterface'
+import GoalCard from '@/components/goals/GoalCard'
+import GoalCarousel from '@/components/goals/GoalCarousel'
+
+const Dashboard = () => {
+  const { user, logout } = useAuth()
+  const [goals, setGoals] = useState<Goal[]>([])
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isChatExpanded, setIsChatExpanded] = useState(true)
+
+  // Load goals on component mount
+  useEffect(() => {
+    loadGoals()
+  }, [])
+
+  // If no goals are present, expand the chat by default
+  useEffect(() => {
+    if (goals.length === 0) {
+      setIsChatExpanded(true)
+    }
+  }, [goals])
+
+  const loadGoals = async () => {
+    try {
+      setIsLoading(true)
+      const goalsData = await api.getGoals()
+      setGoals(goalsData)
+      
+      // If we have goals but none selected, select the first one
+      if (goalsData.length > 0 && !selectedGoal) {
+        setSelectedGoal(goalsData[0])
+      }
+    } catch (error) {
+      console.error('Failed to load goals:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle chat message actions (like goal creation)
+  const handleMessageAction = (action: any) => {
+    if (action.action === 'create_goal' && action.goal) {
+      // Refresh goals to include the newly created one
+      loadGoals()
+    } else if (
+      (action.action === 'update_progress' || action.action === 'update_milestone') && 
+      selectedGoal
+    ) {
+      // Refresh the current goal to see the updates
+      refreshSelectedGoal()
+    }
+  }
+
+  // Refresh the details of the selected goal
+  const refreshSelectedGoal = async () => {
+    if (!selectedGoal) return
+
+    try {
+      const updatedGoal = await api.getGoalDetails(selectedGoal.id)
+      setSelectedGoal(updatedGoal)
+      
+      // Also update the goal in the goals list
+      setGoals(prev => 
+        prev.map(g => g.id === updatedGoal.id ? updatedGoal : g)
+      )
+    } catch (error) {
+      console.error('Failed to refresh goal:', error)
+    }
+  }
+
+  // Layout animation variants
+  const layoutVariants = {
+    chatExpanded: {
+      chatWidth: '100%',
+      goalsWidth: '0%',
+      opacity: 1
+    },
+    split: {
+      chatWidth: '35%',
+      goalsWidth: '65%',
+      opacity: 1
+    }
+  }
+
+  return (
+    <div className="flex h-screen flex-col">
+      {/* Header */}
+      <header className="glass-dark z-10 flex justify-between p-4">
+        <div className="flex items-center">
+          <h1 className="text-2xl font-bold text-white">Strategist</h1>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          {user && (
+            <span className="text-sm text-dark-100">
+              Logged in as <span className="text-primary-400">{user.username}</span>
+            </span>
+          )}
+          <button
+            onClick={logout}
+            className="rounded-full bg-dark-700/70 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-dark-600"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {/* Main content area */}
+      <main className="flex flex-1 overflow-hidden p-4">
+        {/* Chat section */}
+        <motion.div
+          animate={{
+            width: goals.length > 0 ? layoutVariants.split.chatWidth : layoutVariants.chatExpanded.chatWidth
+          }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="flex h-full"
+        >
+          <ChatInterface 
+            className="w-full" 
+            relatedGoalId={selectedGoal?.id}
+            onMessageAction={handleMessageAction}
+          />
+        </motion.div>
+        
+        {/* Goals section - visible only when there are goals */}
+        {goals.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, width: layoutVariants.split.goalsWidth }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="ml-4 flex h-full flex-col"
+          >
+            {/* Carousel for compact view of goals */}
+            <div className="h-40">
+              <GoalCarousel 
+                goals={goals}
+                selectedGoalId={selectedGoal?.id}
+                onSelectGoal={setSelectedGoal}
+              />
+            </div>
+
+            {/* Selected goal details */}
+            <div className="mt-4 flex-1 overflow-auto">
+              {selectedGoal && (
+                <GoalCard goal={selectedGoal} />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </main>
+    </div>
+  )
+}
+
+export default Dashboard 
