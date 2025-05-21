@@ -111,6 +111,7 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 - `POST /api/progress/goals/<goal_id>/updates` - Create a progress update
 - `DELETE /api/progress/goals/<goal_id>/updates/<update_id>` - Delete a progress update
 - `GET /api/progress/summary` - Get a summary of goal progress
+- `GET /api/progress/achievements` - Get user achievements (completed goals, milestones, and lessons learned)
 
 ## How It Works: AI-Driven Goal Management
 

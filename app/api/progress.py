@@ -1,10 +1,10 @@
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy import desc
+from sqlalchemy import desc, and_, or_
 
 from app import db
-from app.models import Goal, ProgressUpdate, User
+from app.models import Goal, ProgressUpdate, User, Milestone, Reflection
 
 progress_bp = Blueprint('progress', __name__)
 
@@ -215,4 +215,108 @@ def get_progress_summary():
         },
         'soon_due': soon_due,
         'recently_updated': recently_updated
+    }), 200
+
+@progress_bp.route('/achievements', methods=['GET'])
+@jwt_required()
+def get_user_achievements():
+    """
+    Get user achievements including completed goals, milestones, and positive reflections.
+    This endpoint is used to celebrate progress and boost user confidence.
+    """
+    user_id = get_jwt_identity()
+    
+    # Get query parameters
+    limit = request.args.get('limit', 20, type=int)
+    
+    # Get completed goals
+    completed_goals = Goal.query.filter_by(
+        user_id=user_id, 
+        status='completed'
+    ).order_by(desc(Goal.updated_at)).all()
+    
+    # Get completed milestones (even for goals that aren't fully completed)
+    completed_milestones = (Milestone.query
+                           .join(Goal, Goal.id == Milestone.goal_id)
+                           .filter(Goal.user_id == user_id, Milestone.status == 'completed')
+                           .order_by(desc(Milestone.updated_at))
+                           .all())
+    
+    # Get "learned lessons" (positive reflections and improvements)
+    positive_reflections = (Reflection.query
+                           .join(Goal, Goal.id == Reflection.goal_id)
+                           .filter(
+                               Goal.user_id == user_id,
+                               or_(
+                                   Reflection.reflection_type == 'review_positive',
+                                   Reflection.reflection_type == 'review_improve'
+                               )
+                           )
+                           .order_by(desc(Reflection.updated_at))
+                           .all())
+    
+    # Combine into chronologically ordered achievements
+    achievements = []
+    
+    # Add completed goals
+    for goal in completed_goals:
+        achievements.append({
+            'type': 'goal',
+            'id': goal.id,
+            'title': goal.title,
+            'description': goal.description,
+            'completion_date': goal.updated_at.isoformat(),
+            'target_date': goal.target_date.isoformat(),
+            'importance': goal.importance
+        })
+    
+    # Add completed milestones
+    for milestone in completed_milestones:
+        goal = Goal.query.get(milestone.goal_id)
+        achievements.append({
+            'type': 'milestone',
+            'id': milestone.id,
+            'goal_id': milestone.goal_id,
+            'goal_title': goal.title,
+            'title': milestone.title,
+            'description': milestone.description,
+            'completion_date': milestone.updated_at.isoformat(),
+            'target_date': milestone.target_date.isoformat()
+        })
+    
+    # Add positive reflections
+    for reflection in positive_reflections:
+        goal = Goal.query.get(reflection.goal_id)
+        reflection_type_display = {
+            'review_positive': 'Positive Reflection',
+            'review_improve': 'Lesson Learned'
+        }.get(reflection.reflection_type, reflection.reflection_type)
+        
+        achievements.append({
+            'type': 'reflection',
+            'id': reflection.id,
+            'goal_id': reflection.goal_id,
+            'goal_title': goal.title,
+            'reflection_type': reflection.reflection_type,
+            'reflection_type_display': reflection_type_display,
+            'content': reflection.content,
+            'date': reflection.updated_at.isoformat()
+        })
+    
+    # Sort all achievements by date (newest first)
+    achievements.sort(key=lambda x: x.get('completion_date') or x.get('date'), reverse=True)
+    
+    # Apply limit
+    achievements = achievements[:limit]
+    
+    # Get stats
+    stats = {
+        'total_completed_goals': len(completed_goals),
+        'total_completed_milestones': len(completed_milestones),
+        'total_reflections': len(positive_reflections)
+    }
+    
+    return jsonify({
+        'achievements': achievements,
+        'stats': stats
     }), 200 

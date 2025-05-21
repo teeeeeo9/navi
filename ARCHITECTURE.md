@@ -144,6 +144,7 @@ The API follows RESTful principles with the following main endpoints:
 4. **Progress API** (`/api/progress/...`)
    - Progress updates
    - Progress summary and statistics
+   - User achievements tracking (completed goals, milestones, and reflections)
    - Primarily used by the system based on AI-detected actions
    - Sends system updates to the AI when changes are made via API
 
