@@ -121,7 +121,7 @@ class ChatMessage(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    sender = db.Column(db.String(20), nullable=False)  # 'user' or 'replica'
+    sender = db.Column(db.String(20), nullable=False)  # 'user', 'replica', or 'system'
     content = db.Column(db.Text, nullable=False)
     related_goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

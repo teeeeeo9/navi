@@ -110,10 +110,14 @@ def get_user_profile():
         pretty_print(response.json())
         return None
 
-def get_chat_history(limit=20):
+def get_chat_history(limit=20, include_system=False):
     """Get recent chat history."""
+    endpoint = f"{BASE_URL}/chat/history?limit={limit}"
+    if include_system:
+        endpoint += "&include_system=true"
+        
     response = requests.get(
-        f"{BASE_URL}/chat/history?limit={limit}",
+        endpoint,
         headers=auth_headers
     )
     
@@ -123,10 +127,13 @@ def get_chat_history(limit=20):
         print(f"Failed to get chat history: {response.status_code}")
         return []
 
-def send_message(content, related_goal_id=None):
+def send_message(content, related_goal_id=None, is_system_message=False):
     """Send a message to the AI replica and get a response."""
     
-    payload = {"content": content}
+    payload = {
+        "content": content,
+        "is_system_message": is_system_message
+    }
     if related_goal_id:
         payload["related_goal_id"] = related_goal_id
     
@@ -274,6 +281,7 @@ def display_help():
     print("/summary - Show progress summary")
     print("/clear - Clear the screen")
     print("/history - Show recent chat history")
+    print("/history all - Show full chat history including system messages")
     print("")
     print("Any other text will be sent as a message to the AI replica.")
     print("To discuss a specific goal, use: /chat <goal_id> and then chat normally.")
@@ -325,10 +333,32 @@ def interactive_chat():
             clear_screen()
             
         elif user_input.lower() == '/history':
+            # Default to not showing system messages
             history = get_chat_history()
             print("\n===== RECENT CHAT HISTORY =====")
             for msg in history:
-                sender = "You" if msg['sender'] == 'user' else "AI"
+                if msg['sender'] == 'user':
+                    sender = "You"
+                elif msg['sender'] == 'replica':
+                    sender = "AI"
+                else:
+                    continue  # Skip system messages in normal view
+                print(f"{sender}: {msg['content']}")
+            print("=" * 50)
+            
+        elif user_input.lower() == '/history all':
+            # Show all messages including system messages
+            history = get_chat_history(include_system=True)
+            print("\n===== FULL CHAT HISTORY (INCLUDING SYSTEM MESSAGES) =====")
+            for msg in history:
+                if msg['sender'] == 'user':
+                    sender = "You"
+                elif msg['sender'] == 'replica':
+                    sender = "AI"
+                elif msg['sender'] == 'system':
+                    sender = "[SYSTEM]"
+                else:
+                    sender = f"[{msg['sender']}]"
                 print(f"{sender}: {msg['content']}")
             print("=" * 50)
             

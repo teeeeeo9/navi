@@ -14,6 +14,7 @@ Strategist is a Flask-based backend application that helps users set goals, trac
 - **Blueprint-based API**: Organizes endpoints into logical groupings.
 - **Sensay AI Integration**: Connects with Sensay API for AI replica functionality.
 - **AI-Driven Interface**: Users primarily interact with the AI replica, which determines what API actions to take.
+- **Dual Interaction Model**: Supports both chat-based and UI-based interactions with the AI maintaining context.
 
 ### Directory Structure
 
@@ -71,6 +72,7 @@ The application uses a relational database with the following key models:
 7. **ChatMessage**
    - Messages between user and AI replica
    - Many-to-one relationship with user and optional relationship with goal
+   - Message types include 'user', 'replica', and 'system' messages
 
 ## AI-Driven Interaction Model
 
@@ -94,6 +96,32 @@ Strategist uses a unique interaction model where users primarily interact with t
    - When discussing specific goals, the system provides context to the AI
    - This allows for more relevant and helpful responses
 
+## Dual Interface Interaction
+
+The application supports both chat-based and UI-based interactions, with the AI maintaining context across both modes:
+
+1. **System Update Messages**
+   - When users make changes through the UI, system update messages are sent to the AI replica
+   - These messages are prefixed with "SYSTEM_UPDATE:" to distinguish them from user messages
+   - The AI is trained to understand these updates and maintain context for future conversations
+   - System messages can be filtered from chat history for UI display
+
+2. **Change Tracking**
+   - The backend tracks specific changes made to goals, milestones, and progress
+   - Detailed change descriptions are included in system update messages
+   - For example: "User updated title from 'Learn Spanish' to 'Learn Spanish and Portuguese'"
+
+3. **Replica Response Handling**
+   - The AI acknowledges UI-based changes with brief, relevant comments
+   - Responses to system updates are concise and contextually appropriate
+   - Users see a coherent interaction history regardless of how changes are made
+
+4. **Implementation Details**
+   - System updates use the `send_system_update` function in `chat.py`
+   - The `ChatMessage` model stores messages with sender type 'system'
+   - API endpoints for goal/milestone/progress updates integrate system update calls
+   - Chat history API supports filtering system messages with the `include_system` parameter
+
 ## API Design
 
 The API follows RESTful principles with the following main endpoints:
@@ -111,11 +139,13 @@ The API follows RESTful principles with the following main endpoints:
    - Milestone management
    - Reflection management
    - Primarily used by the system based on AI-detected actions
+   - Sends system updates to the AI when changes are made via API
 
 4. **Progress API** (`/api/progress/...`)
    - Progress updates
    - Progress summary and statistics
    - Primarily used by the system based on AI-detected actions
+   - Sends system updates to the AI when changes are made via API
 
 ## Sensay AI Integration
 
@@ -133,6 +163,7 @@ The application integrates with Sensay AI through the following components:
    - Comprehensive instructions for the AI on how to respond to different user intents
    - Includes JSON formats for various actions (goal creation, progress updates, etc.)
    - Guides the AI to provide helpful, goal-focused assistance
+   - Includes instructions for handling system update messages
 
 4. **Action Processing**
    - Extracts action JSON from AI responses
@@ -182,11 +213,13 @@ The application centralizes AI system prompts in the `prompts.py` file for easie
    - Confident tone with appropriate critical feedback when needed
    - Emphasis on proactive suggestions based on user history
    - Clear JSON format instructions for system integration
+   - Instructions for handling system update messages from UI interactions
 
 2. **Adaptive Interaction**
    - The AI adapts its interaction style based on user history
    - More suggestions for known users, more questions for new users
    - Automatic title and milestone generation to simplify user experience
+   - Context-aware responses to both direct user messages and system update messages
 
 3. **Prompt Maintenance**
    - All system prompts are centralized for easier updates

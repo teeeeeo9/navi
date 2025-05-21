@@ -11,6 +11,7 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 - **Progress Tracking**: Track progress on goals and visualize your journey.
 - **Reflections**: Capture thoughts on the importance of goals, potential obstacles, and strategies.
 - **AI Assistant**: Chat with an AI assistant trained to help with strategic planning.
+- **Dual UI Interaction**: Interact through both chat interface and traditional UI elements, with the AI being aware of changes made in either interface.
 
 ## Technology Stack
 
@@ -86,7 +87,7 @@ Strategist is a minimalistic app that helps users set meaningful goals, create s
 
 ### Chat
 
-- `GET /api/chat/history` - Get chat history
+- `GET /api/chat/history` - Get chat history (add `?include_system=true` to include system messages)
 - `POST /api/chat/send` - Send a message to the AI replica (all goal management happens through this endpoint)
 
 ### Goals (Direct API - typically used by the replica in the background)
@@ -144,6 +145,28 @@ Behind the scenes, the AI formats the goal information into JSON and calls the a
    User: "I'm struggling with my Spanish goal. Any suggestions?"
    AI: "Let me analyze your goal... Based on your timeline and progress, here are some strategies that might help you stay on track..."
    ```
+
+### UI-Driven Updates
+
+When users make changes through the UI instead of chat:
+
+1. **Updating a Goal via UI**:
+   The user updates the goal title from "Learn Spanish" to "Learn Spanish and Portuguese" using UI controls.
+   
+   Behind the scenes:
+   - The API updates the goal in the database
+   - A system message is sent to the AI: "SYSTEM_UPDATE: User updated title from 'Learn Spanish' to 'Learn Spanish and Portuguese'"
+   - AI responds: "Noted your expanded language learning goal. This is ambitious but achievable with the right strategy."
+
+2. **Updating Progress via UI**:
+   The user updates progress to 25% using a progress slider.
+   
+   Behind the scenes:
+   - The API updates the progress in the database
+   - A system message is sent to the AI: "SYSTEM_UPDATE: User updated progress for goal 'Learn Spanish and Portuguese' to 25%"
+   - AI responds: "Great progress on your language learning journey!"
+
+This dual-interaction model ensures that whether users interact through chat or traditional UI elements, the AI assistant maintains context and provides consistent, helpful responses.
 
 ## Directory Structure
 

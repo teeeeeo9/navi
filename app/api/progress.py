@@ -65,15 +65,34 @@ def create_progress_update(goal_id):
         notes=data.get('notes', '')
     )
     
+    # Determine if status changed
+    status_changed = False
+    old_status = goal.status
+    
     # Update goal completion status
     goal.completion_status = progress_value
     
     # If progress is 100%, mark goal as completed
     if progress_value == 100 and goal.status == 'active':
         goal.status = 'completed'
+        status_changed = True
     
     db.session.add(update)
     db.session.commit()
+    
+    # Send system update to the replica
+    update_message = f"User updated progress for goal '{goal.title}' to {progress_value}%"
+    if status_changed:
+        update_message += f" and status changed from '{old_status}' to '{goal.status}'"
+    
+    if data.get('notes'):
+        update_message += f" with note: '{data['notes']}'"
+    
+    # Import here to avoid circular imports
+    from app.api.chat import send_system_update
+    
+    # Send the system update
+    system_update_result = send_system_update(user_id, update_message, goal_id)
     
     return jsonify({
         'message': 'Progress update created successfully',

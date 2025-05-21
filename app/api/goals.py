@@ -349,31 +349,44 @@ def update_goal(goal_id):
     data = request.get_json()
     logger.debug(f"Update data: {data}")
     
+    # Keep track of changes for system update message
+    changes = []
+    
     # Update goal fields if provided
-    if 'title' in data:
+    if 'title' in data and data['title'] != goal.title:
+        old_title = goal.title
         goal.title = data['title']
+        changes.append(f"title from '{old_title}' to '{goal.title}'")
         logger.debug(f"Updated title: {goal.title}")
     
-    if 'description' in data:
+    if 'description' in data and data['description'] != goal.description:
         goal.description = data['description']
+        changes.append("description")
         logger.debug(f"Updated description")
     
-    if 'importance' in data:
+    if 'importance' in data and data['importance'] != goal.importance:
         goal.importance = data['importance']
+        changes.append("importance")
         logger.debug(f"Updated importance")
     
     if 'start_date' in data:
         try:
-            goal.start_date = datetime.fromisoformat(data['start_date'])
-            logger.debug(f"Updated start_date: {goal.start_date}")
+            new_start_date = datetime.fromisoformat(data['start_date'])
+            if new_start_date != goal.start_date:
+                goal.start_date = new_start_date
+                changes.append(f"start date to {goal.start_date.strftime('%Y-%m-%d')}")
+                logger.debug(f"Updated start_date: {goal.start_date}")
         except ValueError:
             logger.warning(f"Invalid start_date format: {data['start_date']}")
             return jsonify({'error': 'Invalid start_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
     
     if 'target_date' in data:
         try:
-            goal.target_date = datetime.fromisoformat(data['target_date'])
-            logger.debug(f"Updated target_date: {goal.target_date}")
+            new_target_date = datetime.fromisoformat(data['target_date'])
+            if new_target_date != goal.target_date:
+                goal.target_date = new_target_date
+                changes.append(f"target date to {goal.target_date.strftime('%Y-%m-%d')}")
+                logger.debug(f"Updated target_date: {goal.target_date}")
         except ValueError:
             logger.warning(f"Invalid target_date format: {data['target_date']}")
             return jsonify({'error': 'Invalid target_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
@@ -381,8 +394,9 @@ def update_goal(goal_id):
     if 'completion_status' in data:
         try:
             completion_status = float(data['completion_status'])
-            if 0 <= completion_status <= 100:
+            if 0 <= completion_status <= 100 and completion_status != goal.completion_status:
                 goal.completion_status = completion_status
+                changes.append(f"completion status to {goal.completion_status}%")
                 logger.debug(f"Updated completion_status: {goal.completion_status}%")
             else:
                 logger.warning(f"Invalid completion_status range: {completion_status}")
@@ -391,16 +405,18 @@ def update_goal(goal_id):
             logger.warning(f"Invalid completion_status format: {data['completion_status']}")
             return jsonify({'error': 'Invalid completion_status format. Must be a number between 0 and 100'}), 400
     
-    if 'status' in data:
+    if 'status' in data and data['status'] != goal.status:
         valid_statuses = ['active', 'completed', 'abandoned', 'deferred']
         if data['status'] in valid_statuses:
+            old_status = goal.status
             goal.status = data['status']
+            changes.append(f"status from '{old_status}' to '{goal.status}'")
             logger.debug(f"Updated status: {goal.status}")
         else:
             logger.warning(f"Invalid status: {data['status']}")
             return jsonify({'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}), 400
     
-    if 'parent_goal_id' in data:
+    if 'parent_goal_id' in data and data['parent_goal_id'] != goal.parent_goal_id:
         # Verify that the parent goal exists and belongs to the user
         if data['parent_goal_id'] is not None:
             parent_goal = Goal.query.filter_by(id=data['parent_goal_id'], user_id=user_id).first()
@@ -413,8 +429,10 @@ def update_goal(goal_id):
                 logger.warning(f"Circular dependency detected: Goal {goal.id} cannot be its own parent")
                 return jsonify({'error': 'A goal cannot be its own parent'}), 400
             
+            changes.append(f"parent goal to '{parent_goal.title}'")
             logger.debug(f"Updated parent_goal_id: {data['parent_goal_id']}")
         else:
+            changes.append("removed parent goal")
             logger.debug("Removed parent_goal_id (set to None)")
         
         goal.parent_goal_id = data['parent_goal_id']
@@ -430,10 +448,12 @@ def update_goal(goal_id):
             ).first()
             
             if reflection:
-                # Update existing reflection
-                reflection.content = content
-                reflection.updated_at = datetime.utcnow()
-                logger.debug(f"Updated reflection: {reflection_type}")
+                # Update existing reflection if content changed
+                if reflection.content != content:
+                    reflection.content = content
+                    reflection.updated_at = datetime.utcnow()
+                    changes.append(f"reflection on '{reflection_type}'")
+                    logger.debug(f"Updated reflection: {reflection_type}")
             else:
                 # Create new reflection
                 reflection = Reflection(
@@ -442,10 +462,27 @@ def update_goal(goal_id):
                     content=content
                 )
                 db.session.add(reflection)
+                changes.append(f"added new reflection on '{reflection_type}'")
                 logger.debug(f"Created new reflection: {reflection_type}")
     
     db.session.commit()
     logger.info(f"Goal updated successfully: {goal.id}")
+    
+    # Send system update to the replica if changes were made
+    if changes:
+        # Format the changes for the update message
+        if len(changes) == 1:
+            update_message = f"User updated {changes[0]} for goal '{goal.title}'"
+        else:
+            formatted_changes = ", ".join(changes[:-1]) + f" and {changes[-1]}"
+            update_message = f"User updated {formatted_changes} for goal '{goal.title}'"
+        
+        # Import here to avoid circular imports
+        from app.api.chat import send_system_update
+        
+        # Send the system update
+        system_update_result = send_system_update(user_id, update_message, goal.id)
+        logger.debug(f"System update sent for goal update: {goal.id}")
     
     return jsonify({
         'message': 'Goal updated successfully',
@@ -598,37 +635,65 @@ def update_milestone(goal_id, milestone_id):
     
     data = request.get_json()
     
-    # Update milestone fields if provided
-    if 'title' in data:
-        milestone.title = data['title']
+    # Keep track of changes for system update message
+    changes = []
     
-    if 'description' in data:
+    # Update milestone fields if provided
+    if 'title' in data and data['title'] != milestone.title:
+        old_title = milestone.title
+        milestone.title = data['title']
+        changes.append(f"title from '{old_title}' to '{milestone.title}'")
+    
+    if 'description' in data and data['description'] != milestone.description:
         milestone.description = data['description']
+        changes.append("description")
     
     if 'target_date' in data:
         try:
-            milestone.target_date = datetime.fromisoformat(data['target_date'])
+            new_target_date = datetime.fromisoformat(data['target_date'])
+            if new_target_date != milestone.target_date:
+                milestone.target_date = new_target_date
+                changes.append(f"target date to {milestone.target_date.strftime('%Y-%m-%d')}")
         except ValueError:
             return jsonify({'error': 'Invalid target_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)'}), 400
     
     if 'completion_status' in data:
         try:
             completion_status = float(data['completion_status'])
-            if 0 <= completion_status <= 100:
+            if 0 <= completion_status <= 100 and completion_status != milestone.completion_status:
                 milestone.completion_status = completion_status
+                changes.append(f"completion status to {milestone.completion_status}%")
             else:
                 return jsonify({'error': 'Completion status must be between 0 and 100'}), 400
         except ValueError:
             return jsonify({'error': 'Invalid completion_status format. Must be a number between 0 and 100'}), 400
     
-    if 'status' in data:
+    if 'status' in data and data['status'] != milestone.status:
         valid_statuses = ['pending', 'completed', 'missed']
         if data['status'] in valid_statuses:
+            old_status = milestone.status
             milestone.status = data['status']
+            changes.append(f"status from '{old_status}' to '{milestone.status}'")
         else:
             return jsonify({'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}), 400
     
     db.session.commit()
+    
+    # Send system update to the replica if changes were made
+    if changes:
+        # Format the changes for the update message
+        if len(changes) == 1:
+            update_message = f"User updated {changes[0]} for milestone '{milestone.title}' in goal '{goal.title}'"
+        else:
+            formatted_changes = ", ".join(changes[:-1]) + f" and {changes[-1]}"
+            update_message = f"User updated {formatted_changes} for milestone '{milestone.title}' in goal '{goal.title}'"
+        
+        # Import here to avoid circular imports
+        from app.api.chat import send_system_update
+        
+        # Send the system update
+        system_update_result = send_system_update(user_id, update_message, goal.id)
+        logger.debug(f"System update sent for milestone update: {milestone.id}")
     
     return jsonify({
         'message': 'Milestone updated successfully',

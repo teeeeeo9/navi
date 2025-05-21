@@ -9,7 +9,6 @@ from sqlalchemy import desc
 from app import db
 from app.models import User, ChatMessage, Goal, Reflection, ProgressUpdate, Milestone
 from app.services.sensay import get_sensay_client, SensayAPIError
-from app.api.goals import create_goal_internal
 from app.prompts import STRATEGIST_SYSTEM_MESSAGE, STRATEGIST_GREETING
 
 # Get logger
@@ -20,6 +19,8 @@ chat_bp = Blueprint('chat', __name__)
 # Constants
 REPLICA_SLUG = os.environ.get('SENSAY_REPLICA_SLUG', 'strategist_planning_assistant')
 
+# System update message prefix
+SYSTEM_UPDATE_PREFIX = "SYSTEM_UPDATE:"
 
 @chat_bp.route('/history', methods=['GET'])
 @jwt_required()
@@ -37,8 +38,9 @@ def get_chat_history():
     # Get query parameters
     limit = request.args.get('limit', 50, type=int)
     goal_id = request.args.get('goal_id', type=int)
+    include_system = request.args.get('include_system', 'false').lower() == 'true'
     
-    logger.debug(f"Chat history query params - limit: {limit}, goal_id: {goal_id}")
+    logger.debug(f"Chat history query params - limit: {limit}, goal_id: {goal_id}, include_system: {include_system}")
     
     # Build query
     query = ChatMessage.query.filter_by(user_id=user_id)
@@ -47,6 +49,11 @@ def get_chat_history():
     if goal_id:
         query = query.filter_by(related_goal_id=goal_id)
         logger.debug(f"Filtering chat history by goal_id: {goal_id}")
+    
+    # Filter out system messages unless explicitly included
+    if not include_system:
+        query = query.filter(ChatMessage.sender != 'system')
+        logger.debug("Filtering out system messages from chat history")
     
     # Order by creation date (newest first) and limit
     messages = query.order_by(desc(ChatMessage.created_at)).limit(limit).all()
@@ -105,10 +112,14 @@ def send_message():
             return jsonify({'error': 'Related goal not found'}), 404
         logger.debug(f"Message related to goal: {goal.title}")
     
-    # Create the user message in the database
+    # Determine if this is a system message (for development/testing purposes)
+    is_system_message = data.get('is_system_message', False)
+    sender = 'system' if is_system_message else 'user'
+    
+    # Create the message in the database
     user_message = ChatMessage(
         user_id=user_id,
-        sender='user',
+        sender=sender,
         content=data['content'],
         related_goal_id=related_goal_id
     )
@@ -116,10 +127,10 @@ def send_message():
     try:
         db.session.add(user_message)
         db.session.commit()
-        logger.debug(f"User message saved to database, ID: {user_message.id}")
+        logger.debug(f"{sender.capitalize()} message saved to database, ID: {user_message.id}")
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Failed to save user message: {str(e)}", exc_info=True)
+        logger.error(f"Failed to save {sender} message: {str(e)}", exc_info=True)
         return jsonify({'error': f'Database error: {str(e)}'}), 500
     
     try:
@@ -203,14 +214,16 @@ def send_message():
                 'sender': user_message.sender,
                 'content': user_message.content,
                 'related_goal_id': user_message.related_goal_id,
-                'created_at': user_message.created_at.isoformat()
+                'created_at': user_message.created_at.isoformat(),
+                'is_system': user_message.sender == 'system'  # Flag for frontend
             },
             'ai_response': {
                 'id': ai_message.id,
                 'sender': ai_message.sender,
                 'content': display_content,
                 'related_goal_id': ai_message.related_goal_id,
-                'created_at': ai_message.created_at.isoformat()
+                'created_at': ai_message.created_at.isoformat(),
+                'is_system': False  # AI responses are never system messages
             }
         }
         
@@ -380,6 +393,9 @@ def process_action(action_data, user_id, related_goal_id=None):
                                 # Default to halfway to goal target
                                 goal_target = datetime.fromisoformat(data['target_date'])
                                 milestone['target_date'] = (datetime.utcnow() + (goal_target - datetime.utcnow()) / 2).isoformat()
+            
+            # Import here to avoid circular imports
+            from app.api.goals import create_goal_internal
             
             # Create the goal
             goal = create_goal_internal(user_id, data)
@@ -640,4 +656,118 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
     except Exception as e:
         logger.error(f"Error ensuring replica exists: {str(e)}", exc_info=True)
         current_app.logger.error(f"Error ensuring replica exists: {str(e)}")
-        raise 
+        raise
+
+# Function to send system updates about UI changes to the replica
+def send_system_update(user_id, update_message, related_goal_id=None, save_message=True):
+    """
+    Send a system update message to the replica when the user makes changes through the UI.
+    
+    Args:
+        user_id (int): The ID of the user
+        update_message (str): The system update message (without the prefix)
+        related_goal_id (int, optional): The ID of the related goal if applicable
+        save_message (bool, optional): Whether to save the system message in chat history
+                                      (default is True, but some updates may not need to be saved)
+    
+    Returns:
+        dict: The replica's response or None if an error occurred
+    """
+    logger.info(f"Sending system update for user {user_id}: {update_message}")
+    
+    user = User.query.get(user_id)
+    if not user:
+        logger.warning(f"User not found: {user_id}")
+        return None
+    
+    # Format the system update message
+    system_message = f"{SYSTEM_UPDATE_PREFIX} {update_message}"
+    
+    # Optionally save the system message to the database
+    # Note: System messages might be hidden in the UI but stored for context
+    if save_message:
+        # Mark the sender as 'system' instead of 'user'
+        system_chat_message = ChatMessage(
+            user_id=user_id,
+            sender='system',
+            content=system_message,
+            related_goal_id=related_goal_id
+        )
+        
+        try:
+            db.session.add(system_chat_message)
+            db.session.commit()
+            logger.debug(f"System message saved to database, ID: {system_chat_message.id}")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to save system message: {str(e)}", exc_info=True)
+            # Continue even if saving fails
+    
+    try:
+        # Initialize Sensay client
+        sensay_client = get_sensay_client()
+        
+        # Get or create the replica
+        try:
+            replica_id = ensure_replica_exists(sensay_client, user.sensay_user_id)
+            logger.debug(f"Using replica ID: {replica_id}")
+        except Exception as e:
+            logger.error(f"Failed to get/create replica: {str(e)}", exc_info=True)
+            return None
+        
+        # Enhance message with goal context if related to a goal
+        content_to_send = system_message
+        if related_goal_id:
+            goal = Goal.query.get(related_goal_id)
+            if goal:
+                goal_context = get_goal_context(goal)
+                content_to_send = f"{goal_context}\n\n{content_to_send}"
+        
+        # Send the system update to Sensay
+        logger.info(f"Sending system update to Sensay API, content: {content_to_send}")
+        try:
+            response = sensay_client.create_chat_completion(
+                replica_id=replica_id,
+                user_id=user.sensay_user_id,
+                content=content_to_send,
+                source='system',  # Mark as coming from the system, not the user
+                skip_chat_history=False
+            )
+            logger.debug("Successfully received response from Sensay API")
+        except SensayAPIError as e:
+            logger.error(f"Sensay API error: {str(e)}")
+            return None
+        
+        # Get the AI response content
+        ai_content = response.get('content', 'Noted the update.')
+        logger.debug(f"AI response to system update: {ai_content}")
+        
+        # Save the AI response to the database
+        ai_message = ChatMessage(
+            user_id=user_id,
+            sender='replica',
+            content=ai_content,
+            related_goal_id=related_goal_id
+        )
+        
+        try:
+            db.session.add(ai_message)
+            db.session.commit()
+            logger.debug(f"AI response to system update saved to database, ID: {ai_message.id}")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to save AI response: {str(e)}", exc_info=True)
+            # Continue even if saving fails
+        
+        return {
+            'message': 'System update sent successfully',
+            'ai_response': {
+                'id': ai_message.id,
+                'content': ai_content,
+                'created_at': ai_message.created_at.isoformat()
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Unexpected error during system update: {str(e)}", exc_info=True)
+        return None 
