@@ -85,16 +85,27 @@ const Dashboard = () => {
 
   // Handle goal updates from the UI
   const handleGoalUpdate = (updatedGoal: Goal) => {
-    // Update the selected goal if it's the one that was updated
+    // Always refresh the goal to get the complete data with all nested objects
     if (selectedGoal && selectedGoal.id === updatedGoal.id) {
-      // Need to get full details to ensure we have all data
-      refreshSelectedGoal()
+      refreshSelectedGoal();
+    } else {
+      // If it's not the selected goal, we still update our list
+      // but also trigger a background refresh to get full details
+      setGoals(prev => 
+        prev.map(g => g.id === updatedGoal.id ? {...g, ...updatedGoal} : g)
+      );
+      
+      // Background refresh of this goal to ensure all data is up to date
+      api.getGoalDetails(updatedGoal.id)
+        .then(fullGoalData => {
+          setGoals(prev => 
+            prev.map(g => g.id === fullGoalData.id ? fullGoalData : g)
+          );
+        })
+        .catch(error => {
+          console.error('Background goal refresh failed:', error);
+        });
     }
-    
-    // Update the goal in the goals list
-    setGoals(prev => 
-      prev.map(g => g.id === updatedGoal.id ? {...g, ...updatedGoal} : g)
-    )
   }
 
   // Layout animation variants
