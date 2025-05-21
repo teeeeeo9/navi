@@ -7,6 +7,7 @@ from app import db
 from app.models import User, UserPreference
 from app.services.sensay import get_sensay_client, SensayAPIError
 from app.utils import get_user_id_from_jwt
+from app.api.chat import ensure_replica_exists, send_system_update
 
 # Get logger
 logger = logging.getLogger('strategist.auth')
@@ -84,6 +85,18 @@ def register():
     try:
         db.session.commit()
         logger.info(f"User registered successfully: {user.username} (ID: {user.id})")
+        
+        # Create a new replica for this user
+        try:
+            replica_id = ensure_replica_exists(sensay_client, sensay_user_id)
+            logger.info(f"Created new replica with ID: {replica_id} for user: {user.username}")
+            
+            # Send an initial hello message to the replica
+            send_system_update(user.id, "Hello", save_message=True)
+            logger.info(f"Sent initial hello message to replica for user: {user.username}")
+        except Exception as e:
+            logger.error(f"Failed to create replica or send initial message: {str(e)}", exc_info=True)
+            # Continue with registration even if replica creation fails
     except Exception as e:
         db.session.rollback()
         logger.error(f"Database error during user registration: {str(e)}", exc_info=True)

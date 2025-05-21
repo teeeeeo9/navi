@@ -622,40 +622,68 @@ def process_action(action_data, user_id, related_goal_id=None):
         return None, None
 
 def ensure_replica_exists(sensay_client, sensay_user_id):
-    """Ensure the planning assistant replica exists for the user."""
+    """Ensure the planning assistant replica exists for the user.
+    
+    This function will:
+    1. Check if the user already has a replica in the database
+    2. If they do, return that replica ID
+    3. If they don't, create a new replica and store its ID
+    """
     logger.info(f"Ensuring replica exists for user: {sensay_user_id}")
+    
     try:
-        # Get list of replicas for the user
-        logger.debug(f"Fetching existing replicas for user: {sensay_user_id}")
+        # Check if we have a user with this Sensay user ID
+        user = User.query.filter_by(sensay_user_id=sensay_user_id).first()
+        if not user:
+            logger.warning(f"No local user found for Sensay user ID: {sensay_user_id}")
+            raise ValueError(f"No user found for Sensay user ID: {sensay_user_id}")
+        
+        # Check if the user already has a replica_id stored
+        if hasattr(user, 'replica_id') and user.replica_id:
+            logger.info(f"User already has a replica ID stored: {user.replica_id}")
+            
+            # Verify the replica still exists in Sensay
+            try:
+                sensay_client.get_replica(user.replica_id, sensay_user_id)
+                logger.info(f"Confirmed replica exists in Sensay: {user.replica_id}")
+                return user.replica_id
+            except Exception as e:
+                logger.warning(f"Stored replica ID {user.replica_id} not found in Sensay: {str(e)}")
+                # If verification fails, we'll create a new replica below
+        
+        # Get list of existing replicas for the user from Sensay
+        logger.debug(f"Checking for existing replicas for user: {sensay_user_id}")
         replicas_response = sensay_client.list_replicas(sensay_user_id)
         replicas = replicas_response.get('items', [])
         
-        # Look for existing replica with our slug
-        for replica in replicas:
-            if replica.get('slug') == REPLICA_SLUG:
-                logger.info(f"Found existing replica with ID: {replica.get('uuid')}")
-                
-                # # Update system message
-                # try:
-                #     replica_data = {
-                #         'llm': {
-                #             'systemMessage': system_message or UNIFIED_SYSTEM_MESSAGE
-                #         }
-                #     }
-                #     sensay_client.update_replica(replica.get('uuid'), sensay_user_id, replica_data)
-                #     logger.info(f"Updated system message for replica: {replica.get('uuid')}")
-                # except Exception as e:
-                #     logger.warning(f"Failed to update system message: {str(e)}")
-                
-                return replica.get('uuid')
+        # If user has any replicas, use the first one
+        if replicas:
+            replica_id = replicas[0].get('uuid')
+            logger.info(f"Found existing replica with ID: {replica_id}")
+            
+            # Store this replica ID with the user if we have a replica_id field
+            if hasattr(user, 'replica_id'):
+                user.replica_id = replica_id
+                try:
+                    db.session.commit()
+                    logger.info(f"Updated user record with replica ID: {replica_id}")
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error(f"Failed to update user with replica ID: {str(e)}")
+                    
+            return replica_id
         
-        # No replica found, create one
-        logger.info(f"No existing replica found, creating new one with slug: {REPLICA_SLUG}")
+        # No replica found, create one with a unique slug
+        from datetime import datetime
+        unique_timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        unique_slug = f"{REPLICA_SLUG}_{unique_timestamp}"
+        
+        logger.info(f"Creating new replica with unique slug: {unique_slug}")
         replica_data = {
             'name': 'Strategic Planning Assistant',
             'shortDescription': 'A replica to help with strategic planning',
             'greeting': STRATEGIST_GREETING,
-            'slug': REPLICA_SLUG,
+            'slug': unique_slug,
             'ownerID': sensay_user_id,
             'llm': {
                 'model': 'claude-3-7-sonnet-latest',
@@ -665,8 +693,20 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
         }
         
         new_replica = sensay_client.create_replica(sensay_user_id, replica_data)
-        logger.info(f"Created new replica with ID: {new_replica.get('uuid')}")
-        return new_replica.get('uuid')
+        replica_id = new_replica.get('uuid')
+        logger.info(f"Created new replica with ID: {replica_id}")
+        
+        # Store this replica ID with the user if we have a replica_id field
+        if hasattr(user, 'replica_id'):
+            user.replica_id = replica_id
+            try:
+                db.session.commit()
+                logger.info(f"Updated user record with new replica ID: {replica_id}")
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Failed to update user with new replica ID: {str(e)}")
+        
+        return replica_id
         
     except Exception as e:
         logger.error(f"Error ensuring replica exists: {str(e)}", exc_info=True)
@@ -696,15 +736,22 @@ def send_system_update(user_id, update_message, related_goal_id=None, save_messa
         return None
     
     # Format the system update message
+    # Handle special case for initial "Hello" message
+    if update_message == "Hello":
+        is_initial_message = True
+        # system_message = update_message  # Don't add prefix for initial Hello message
+    else:
+        is_initial_message = False
     system_message = f"{SYSTEM_UPDATE_PREFIX} {update_message}"
     
     # Optionally save the system message to the database
     # Note: System messages might be hidden in the UI but stored for context
     if save_message:
-        # Mark the sender as 'system' instead of 'user'
+        # For initial hello message, make sender 'user' so it appears in the chat
+        sender = 'user' if is_initial_message else 'system'
         system_chat_message = ChatMessage(
             user_id=user_id,
-            sender='system',
+            sender=sender,
             content=system_message,
             related_goal_id=related_goal_id
         )
@@ -745,7 +792,7 @@ def send_system_update(user_id, update_message, related_goal_id=None, save_messa
                 replica_id=replica_id,
                 user_id=user.sensay_user_id,
                 content=content_to_send,
-                source='system',  # Mark as coming from the system, not the user
+                source='web',  # Mark as coming from the system, not the user
                 skip_chat_history=False
             )
             logger.debug("Successfully received response from Sensay API")

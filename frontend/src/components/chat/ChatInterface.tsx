@@ -9,6 +9,9 @@ interface ChatInterfaceProps {
   compact?: boolean;
 }
 
+// Constants
+const SYSTEM_UPDATE_PREFIX = "SYSTEM_UPDATE:";
+
 const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact = false }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -155,6 +158,12 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
     }
   }
 
+  // Filter messages to hide system updates in the interface
+  const filteredMessages = messages.filter(message => {
+    // Hide any message that starts with SYSTEM_UPDATE prefix, regardless of sender
+    return !message.content.startsWith(SYSTEM_UPDATE_PREFIX);
+  });
+
   return (
     <div className={`flex h-full flex-col rounded-2xl ${className}`}>
       <div className="glass-dark flex-1 overflow-hidden rounded-2xl">
@@ -171,14 +180,14 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
           ref={chatContainerRef} 
           className="flex h-full flex-col overflow-y-auto p-4 scrollbar-thin"
         >
-          {messages.length === 0 && !isLoading ? (
+          {filteredMessages.length === 0 && !isLoading ? (
             <div className="flex h-full flex-col items-center justify-center text-dark-100">
               <p className="text-center">No messages yet. Start a conversation!</p>
             </div>
           ) : (
             <div className="flex flex-col space-y-4">
               <AnimatePresence>
-                {messages.map((message) => (
+                {filteredMessages.map((message) => (
                   <motion.div
                     key={message.id}
                     initial={{ opacity: 0, y: 10 }}
