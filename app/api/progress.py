@@ -32,15 +32,8 @@ def get_progress_updates(goal_id):
     # Get progress updates
     updates = query.order_by(desc(ProgressUpdate.created_at)).all()
     
-    updates_data = []
-    for update in updates:
-        updates_data.append({
-            'id': update.id,
-            'progress_value': update.progress_value,
-            'type': update.type,
-            'notes': update.notes,
-            'created_at': update.created_at.isoformat()
-        })
+    # Convert to dictionaries using the to_dict method
+    updates_data = [update.to_dict() for update in updates]
     
     return jsonify({'progress_updates': updates_data}), 200
 
@@ -115,13 +108,7 @@ def create_progress_update(goal_id):
     
     return jsonify({
         'message': f'{update_type.capitalize()} update created successfully',
-        'progress_update': {
-            'id': update.id,
-            'progress_value': update.progress_value,
-            'type': update.type,
-            'notes': update.notes,
-            'created_at': update.created_at.isoformat()
-        },
+        'progress_update': update.to_dict(),
         'goal': {
             'id': goal.id,
             'completion_status': goal.completion_status,

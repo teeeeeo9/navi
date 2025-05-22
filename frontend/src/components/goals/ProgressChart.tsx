@@ -9,7 +9,6 @@ import {
   Tooltip, 
   ResponsiveContainer,
   Area,
-  AreaChart,
   ComposedChart
 } from 'recharts'
 import { ProgressUpdate } from '@/services/api'
@@ -19,12 +18,6 @@ interface ProgressChartProps {
   title?: string
   height?: number
   minimal?: boolean
-}
-
-// Format time for display in tooltip
-const formatTimeForTooltip = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }
 
 // Format date for x-axis
@@ -46,13 +39,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         {payload.map((entry: any, index: number) => {
           if (entry.value === undefined) return null
           
+          // Set appropriate label based on dataKey
+          const label = entry.dataKey === 'progress' ? 'Progress' : 'Effort'
+          
           return (
             <p key={index} className="text-base font-bold text-white">
               <span 
                 className={`inline-block w-3 h-3 rounded-full mr-2`}
                 style={{ backgroundColor: entry.color }}
               ></span>
-              {entry.name === 'progress' ? 'Progress' : 'Effort'}: {entry.value}
+              {label}: {entry.value}
             </p>
           )
         })}
@@ -74,6 +70,14 @@ const ProgressChart = ({
   minimal = false
 }: ProgressChartProps) => {
   const [expanded, setExpanded] = useState(false)
+  
+  // Split data by type
+  const progressUpdates = progressData.filter(update => !update.type || update.type === 'progress')
+  const effortUpdates = progressData.filter(update => update.type === 'effort')
+  
+  console.log(`Chart data: ${progressData.length} total updates`)
+  console.log(`Progress updates: ${progressUpdates.length}`)
+  console.log(`Effort updates: ${effortUpdates.length}`)
 
   // Process data for the chart
   const chartData = progressData.map(update => {
@@ -81,15 +85,16 @@ const ProgressChart = ({
     
     // Create data point with timestamp as x-axis value
     const dataPoint: any = {
-      timestamp, // Use the timestamp as x-axis value for better distribution
+      timestamp,
       notes: update.notes
     }
     
-    // Add data based on type
-    if (update.type === 'progress' || !update.type) {
-      dataPoint.progress = update.progress_value / 10 // Convert to 0-10 scale
-    } else if (update.type === 'effort') {
+    // Set property based on update type
+    if (update.type === 'effort') {
       dataPoint.effort = update.progress_value / 10 // Convert to 0-10 scale
+    } else {
+      // Default to progress type if not specified or is 'progress'
+      dataPoint.progress = update.progress_value / 10 // Convert to 0-10 scale
     }
     
     return dataPoint
@@ -117,10 +122,6 @@ const ProgressChart = ({
                 <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8} />
                 <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.1} />
               </linearGradient>
-              <linearGradient id="effortGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#4ade80" stopOpacity={0.1} />
-              </linearGradient>
             </defs>
             <XAxis 
               dataKey="timestamp" 
@@ -129,24 +130,32 @@ const ProgressChart = ({
               hide 
             />
             <Tooltip content={<CustomTooltip />} />
-            <Area 
-              type="monotone" 
-              dataKey="progress" 
-              stroke="#38bdf8" 
-              fillOpacity={1} 
-              fill="url(#progressGradient)" 
-              strokeWidth={2}
-              connectNulls
-            />
-            <Line 
-              type="monotone" 
-              dataKey="effort" 
-              stroke="#4ade80" 
-              strokeWidth={2}
-              dot={{ r: 3, fill: "#4ade80" }}
-              activeDot={{ r: 5 }}
-              connectNulls
-            />
+            
+            {/* Progress Area */}
+            {progressUpdates.length > 0 && (
+              <Area 
+                type="monotone" 
+                dataKey="progress" 
+                stroke="#38bdf8" 
+                fillOpacity={1} 
+                fill="url(#progressGradient)" 
+                strokeWidth={2}
+                connectNulls
+              />
+            )}
+            
+            {/* Effort Line */}
+            {effortUpdates.length > 0 && (
+              <Line 
+                type="monotone" 
+                dataKey="effort" 
+                stroke="#4ade80" 
+                strokeWidth={2}
+                dot={{ r: 3, fill: "#4ade80" }}
+                activeDot={{ r: 5 }}
+                connectNulls
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -197,28 +206,36 @@ const ProgressChart = ({
             axisLine={{ stroke: '#2e3142' }}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Area 
-            type="monotone" 
-            dataKey="progress" 
-            stroke="#38bdf8" 
-            fillOpacity={1} 
-            fill="url(#progressGradientFull)" 
-            strokeWidth={3}
-            dot={{ r: 6, fill: '#0ea5e9', strokeWidth: 2, stroke: '#0c4a6e' }}
-            activeDot={{ r: 8, fill: '#0ea5e9' }}
-            name="Progress"
-            connectNulls
-          />
-          <Line 
-            type="monotone" 
-            dataKey="effort" 
-            stroke="#4ade80" 
-            strokeWidth={3}
-            dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#166534' }}
-            activeDot={{ r: 8, fill: '#22c55e' }}
-            name="Effort"
-            connectNulls
-          />
+          
+          {/* Progress Area */}
+          {progressUpdates.length > 0 && (
+            <Area 
+              type="monotone" 
+              dataKey="progress" 
+              stroke="#38bdf8" 
+              fillOpacity={1} 
+              fill="url(#progressGradientFull)" 
+              strokeWidth={3}
+              dot={{ r: 6, fill: '#0ea5e9', strokeWidth: 2, stroke: '#0c4a6e' }}
+              activeDot={{ r: 8, fill: '#0ea5e9' }}
+              name="Progress"
+              connectNulls
+            />
+          )}
+          
+          {/* Effort Line */}
+          {effortUpdates.length > 0 && (
+            <Line 
+              type="monotone" 
+              dataKey="effort" 
+              stroke="#4ade80" 
+              strokeWidth={3}
+              dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#166534' }}
+              activeDot={{ r: 8, fill: '#22c55e' }}
+              name="Effort"
+              connectNulls
+            />
+          )}
         </ComposedChart>
       </ResponsiveContainer>
     </motion.div>

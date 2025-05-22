@@ -98,7 +98,18 @@ class ProgressUpdate(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f'<ProgressUpdate type={self.type} for goal_id {self.goal_id}: {self.progress_value}%>'
+        return f'<ProgressUpdate type={self.type} value={self.progress_value}% for goal_id {self.goal_id}>'
+    
+    def to_dict(self):
+        """Convert to dictionary for API responses"""
+        return {
+            'id': self.id,
+            'goal_id': self.goal_id,
+            'progress_value': self.progress_value,
+            'type': self.type,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat()
+        }
 
 class Reflection(db.Model):
     """User reflections on goals, prompted by the replica."""

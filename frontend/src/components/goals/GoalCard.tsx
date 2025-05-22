@@ -191,43 +191,66 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
 
   // Function to handle submitting progress updates
   const handleProgressUpdate = async (type: 'progress' | 'effort', value: number) => {
-    console.log(`Updating ${type} with value: ${value}/10`);
+    console.log(`Submitting ${type} update with value: ${value}/10`);
     
     try {
       // Convert from 0-10 scale to 0-100 for backend
-      const scaledValue = value * 10
-      console.log(`Scaled value for backend: ${scaledValue}/100`);
+      const scaledValue = value * 10;
       
       // Use appropriate API function based on type
-      let update: ProgressUpdate
+      let update: ProgressUpdate;
       if (type === 'progress') {
-        console.log('Calling createProgressUpdate API method');
-        update = await api.createProgressUpdate(goal.id, scaledValue, progressNotes)
-        console.log('Progress update response:', update);
+        console.log(`Creating progress update: ${scaledValue}/100, notes: "${progressNotes}"`);
+        update = await api.createProgressUpdate(goal.id, scaledValue, progressNotes);
+        console.log('Progress update created:', update);
         
         // Update local goal data if progress state was updated
         setLocalGoalData(prev => ({
           ...prev,
           status: scaledValue === 100 && prev.status === 'active' ? 'completed' : prev.status
-        }))
+        }));
+      } else if (type === 'effort') {
+        console.log(`Creating effort update: ${scaledValue}/100, notes: "${progressNotes}"`);
+        update = await api.createEffortUpdate(goal.id, scaledValue, progressNotes);
+        console.log('Effort update created:', update);
       } else {
-        console.log('Calling createEffortUpdate API method');
-        update = await api.createEffortUpdate(goal.id, scaledValue, progressNotes)
-        console.log('Effort update response:', update);
+        console.error('Unknown update type:', type);
+        return;
+      }
+      
+      // Verify the update has the correct type
+      if (update.type !== type) {
+        console.error(`Error: Update type mismatch. Expected "${type}", got "${update.type}"`);
       }
       
       // Refresh the goal to get updated progress data
       if (onGoalUpdate) {
         console.log('Refreshing goal data');
-        const updatedGoal = await api.getGoalDetails(goal.id)
-        onGoalUpdate(updatedGoal)
+        const updatedGoal = await api.getGoalDetails(goal.id);
+        
+        // Check for progress updates in the refreshed goal
+        if (updatedGoal.progress_updates && updatedGoal.progress_updates.length > 0) {
+          const lastUpdate = updatedGoal.progress_updates[updatedGoal.progress_updates.length - 1];
+          console.log('Latest update in goal:', lastUpdate);
+          
+          // Log types of all updates
+          const progressTypes = updatedGoal.progress_updates.map(u => u.type || 'unknown');
+          console.log('All update types:', progressTypes);
+          
+          // Count by type
+          const progressCount = updatedGoal.progress_updates.filter(u => !u.type || u.type === 'progress').length;
+          const effortCount = updatedGoal.progress_updates.filter(u => u.type === 'effort').length;
+          console.log(`Update counts: ${progressCount} progress, ${effortCount} effort`);
+        }
+        
+        onGoalUpdate(updatedGoal);
       }
       
       // Clear notes after submission
-      setProgressNotes('')
+      setProgressNotes('');
       
     } catch (error) {
-      console.error(`Failed to update ${type}:`, error)
+      console.error(`Failed to update ${type}:`, error);
     }
   }
 

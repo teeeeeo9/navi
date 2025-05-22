@@ -121,7 +121,9 @@ def get_goal(goal_id):
         # Initial progress entry at creation time
         milestone_progress.append({
             'id': -1,  # Simulated ID
+            'goal_id': goal_id,
             'progress_value': 0,  # Initial progress
+            'type': 'progress',  # Add default type for milestone progress
             'notes': "Milestone created",
             'created_at': milestone.created_at.isoformat()
         })
@@ -131,7 +133,9 @@ def get_goal(goal_id):
             progress_value = 100 if milestone.status == 'completed' else milestone.completion_status
             milestone_progress.append({
                 'id': -2,  # Simulated ID
+                'goal_id': goal_id,
                 'progress_value': progress_value,
+                'type': 'progress',  # Add default type for milestone progress
                 'notes': f"Status changed to {milestone.status}",
                 'created_at': milestone.updated_at.isoformat()
             })
@@ -160,12 +164,7 @@ def get_goal(goal_id):
     # Get progress updates
     progress_updates = []
     for update in goal.progress_updates:
-        progress_updates.append({
-            'id': update.id,
-            'progress_value': update.progress_value,
-            'notes': update.notes,
-            'created_at': update.created_at.isoformat()
-        })
+        progress_updates.append(update.to_dict())
     
     # Get subgoals
     subgoals = []
@@ -480,6 +479,11 @@ def update_goal(goal_id):
             'updated_at': reflection.updated_at.isoformat()
         }
     
+    # Get progress updates
+    progress_updates = []
+    for update in goal.progress_updates:
+        progress_updates.append(update.to_dict())
+    
     # Send system update to the replica if changes were made
     if changes:
         # Format the changes for the update message
@@ -508,6 +512,7 @@ def update_goal(goal_id):
             'parent_goal_id': goal.parent_goal_id,
             'milestones': milestones_data,
             'reflections': reflections_data,
+            'progress_updates': progress_updates,
             'created_at': goal.created_at.isoformat(),
             'updated_at': goal.updated_at.isoformat()
         }
