@@ -52,7 +52,7 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
 
 2. Create a virtual environment and activate it:
    ```
-   python -m venv venv
+   python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
@@ -70,6 +70,7 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
    SENSAY_API_KEY=your_sensay_api_key_here
    SENSAY_USER_ID_PREFIX=navi_
    SENSAY_REPLICA_SLUG=navi_planning_assistant
+   LOG_LEVEL=INFO
    ```
 
 5. Initialize the database:

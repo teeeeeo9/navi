@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import api, { Goal } from '@/services/api'
@@ -14,6 +14,7 @@ const Dashboard = () => {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isChatExpanded, setIsChatExpanded] = useState(true)
+  const chatInterfaceRef = useRef<{ handleSystemUpdate: (updateType: string, entity: string, changes: any) => Promise<void> } | null>(null)
 
   // Load goals on component mount
   useEffect(() => {
@@ -84,28 +85,40 @@ const Dashboard = () => {
   }
 
   // Handle goal updates from the UI
-  const handleGoalUpdate = (updatedGoal: Goal) => {
-    // Always refresh the goal to get the complete data with all nested objects
-    if (selectedGoal && selectedGoal.id === updatedGoal.id) {
-      refreshSelectedGoal();
-    } else {
-      // If it's not the selected goal, we still update our list
-      // but also trigger a background refresh to get full details
-      setGoals(prev => 
-        prev.map(g => g.id === updatedGoal.id ? {...g, ...updatedGoal} : g)
-      );
-      
-      // Background refresh of this goal to ensure all data is up to date
-      api.getGoalDetails(updatedGoal.id)
-        .then(fullGoalData => {
-          setGoals(prev => 
-            prev.map(g => g.id === fullGoalData.id ? fullGoalData : g)
-          );
-        })
-        .catch(error => {
-          console.error('Background goal refresh failed:', error);
-        });
+  const handleGoalUpdate = (updatedGoal: Goal, updateType?: string) => {
+    // Notify the chat interface about the system update immediately
+    if (updateType && chatInterfaceRef.current) {
+      chatInterfaceRef.current.handleSystemUpdate(
+        updateType, 
+        `goal:${updatedGoal.id}`, 
+        { goalId: updatedGoal.id }
+      )
     }
+    
+    // Continue with updating the local state after the animation has started
+    setTimeout(() => {
+      // Always refresh the goal to get the complete data with all nested objects
+      if (selectedGoal && selectedGoal.id === updatedGoal.id) {
+        refreshSelectedGoal();
+      } else {
+        // If it's not the selected goal, we still update our list
+        // but also trigger a background refresh to get full details
+        setGoals(prev => 
+          prev.map(g => g.id === updatedGoal.id ? {...g, ...updatedGoal} : g)
+        );
+        
+        // Background refresh of this goal to ensure all data is up to date
+        api.getGoalDetails(updatedGoal.id)
+          .then(fullGoalData => {
+            setGoals(prev => 
+              prev.map(g => g.id === fullGoalData.id ? fullGoalData : g)
+            );
+          })
+          .catch(error => {
+            console.error('Background goal refresh failed:', error);
+          });
+      }
+    }, 0); // Using setTimeout with 0ms delay to ensure animation starts first
   }
 
   // Layout animation variants
@@ -160,6 +173,7 @@ const Dashboard = () => {
             relatedGoalId={selectedGoal?.id}
             onMessageAction={handleMessageAction}
             compact={goals.length > 0}
+            ref={chatInterfaceRef}
           />
         </motion.div>
         
@@ -177,7 +191,7 @@ const Dashboard = () => {
                 goals={goals}
                 selectedGoalId={selectedGoal?.id}
                 onSelectGoal={setSelectedGoal}
-                onGoalUpdate={handleGoalUpdate}
+                onGoalUpdate={(goal) => handleGoalUpdate(goal)}
               />
             </div>
 

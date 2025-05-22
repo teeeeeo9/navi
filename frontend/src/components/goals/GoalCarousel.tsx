@@ -8,7 +8,7 @@ interface GoalCarouselProps {
   goals: Goal[]
   onSelectGoal: (goal: Goal) => void
   selectedGoalId?: number
-  onGoalUpdate?: (updatedGoal: Goal) => void
+  onGoalUpdate?: (updatedGoal: Goal, updateType?: string) => void
 }
 
 const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: GoalCarouselProps) => {
@@ -61,9 +61,9 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
   }
 
   // Handle goal updates from child components
-  const handleGoalUpdate = (updatedGoal: Goal) => {
+  const handleGoalUpdate = (updatedGoal: Goal, updateType?: string) => {
     if (onGoalUpdate) {
-      onGoalUpdate(updatedGoal)
+      onGoalUpdate(updatedGoal, updateType)
     }
   }
 

@@ -54,7 +54,7 @@ interface GoalCardProps {
   isSelected?: boolean
   onClick?: () => void
   compact?: boolean
-  onGoalUpdate?: (updatedGoal: Goal) => void
+  onGoalUpdate?: (updatedGoal: Goal, updateType: string) => void
 }
 
 const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUpdate }: GoalCardProps) => {
@@ -242,7 +242,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       
       // Call the update handler to refresh the UI immediately
       if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal);
+        onGoalUpdate(updatedGoal, type);
       }
     }
     
@@ -287,7 +287,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           console.log(`Update counts: ${progressCount} progress, ${effortCount} effort`);
         }
         
-        onGoalUpdate(updatedGoal);
+        onGoalUpdate(updatedGoal, type);
       }
       
       // Clear the appropriate notes field based on the update type
@@ -302,7 +302,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       // In case of error, refresh the goal to ensure UI is in sync with server
       if (onGoalUpdate) {
         const updatedGoal = await api.getGoalDetails(goal.id);
-        onGoalUpdate(updatedGoal);
+        onGoalUpdate(updatedGoal, type);
       }
     }
   }
@@ -326,7 +326,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
     try {
       const updatedGoal = await api.updateGoal(goal.id, { title: newTitle })
       if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal)
+        onGoalUpdate(updatedGoal, 'title_update')
       }
     } catch (error) {
       console.error('Failed to update goal title:', error)
@@ -364,7 +364,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
     try {
       const updatedGoal = await api.updateGoal(goal.id, { start_date: formattedDate })
       if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal)
+        onGoalUpdate(updatedGoal, 'start_date_update')
       }
     } catch (error) {
       console.error('Failed to update goal start date:', error)
@@ -396,7 +396,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
     try {
       const updatedGoal = await api.updateGoal(goal.id, { target_date: formattedDate })
       if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal)
+        onGoalUpdate(updatedGoal, 'target_date_update')
       }
     } catch (error) {
       console.error('Failed to update goal target date:', error)
@@ -428,7 +428,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
     try {
       const updatedGoal = await api.updateGoal(goal.id, { status: newStatus })
       if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal)
+        onGoalUpdate(updatedGoal, 'status_update')
       }
     } catch (error) {
       console.error('Failed to update goal status:', error)
@@ -487,7 +487,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       const updatedGoal = await api.updateGoal(goal.id, updateData as any)
       
       if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal)
+        onGoalUpdate(updatedGoal, 'reflection_update')
       }
     } catch (error) {
       console.error('Failed to update reflection:', error)
@@ -870,10 +870,10 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   )
 }
 
-const refreshGoal = async (goalId: number, onGoalUpdate: (goal: Goal) => void) => {
+const refreshGoal = async (goalId: number, onGoalUpdate: (goal: Goal, updateType: string) => void) => {
   try {
     const updatedGoal = await api.getGoalDetails(goalId)
-    onGoalUpdate(updatedGoal)
+    onGoalUpdate(updatedGoal, 'refresh')
   } catch (error) {
     console.error('Failed to refresh goal:', error)
   }
@@ -893,7 +893,7 @@ interface MilestoneCardProps {
   milestone: Milestone;
   formatDate: (date: string) => string;
   showChart: boolean;
-  onMilestoneUpdate?: (updatedGoal: Goal) => void;
+  onMilestoneUpdate?: (updatedGoal: Goal, updateType: string) => void;
   goalId: number;
 }
 
@@ -1062,7 +1062,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       // Refresh the parent goal to get updated milestone data
       if (onMilestoneUpdate) {
         const updatedGoal = await api.getGoalDetails(goalId);
-        onMilestoneUpdate(updatedGoal);
+        onMilestoneUpdate(updatedGoal, `milestone_${type}_update`);
       }
       
       // Clear the appropriate notes field based on the update type
@@ -1104,7 +1104,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       if (onMilestoneUpdate) {
         // Refresh the entire goal to update all milestone data
         const updatedGoal = await api.getGoalDetails(goalId);
-        onMilestoneUpdate(updatedGoal);
+        onMilestoneUpdate(updatedGoal, 'milestone_title_update');
       }
     } catch (error) {
       console.error('Failed to update milestone title:', error);
@@ -1145,7 +1145,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       if (onMilestoneUpdate) {
         // Refresh the entire goal to update all milestone data
         const updatedGoal = await api.getGoalDetails(goalId);
-        onMilestoneUpdate(updatedGoal);
+        onMilestoneUpdate(updatedGoal, 'milestone_target_date_update');
       }
     } catch (error) {
       console.error('Failed to update milestone target date:', error);
@@ -1185,7 +1185,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       if (onMilestoneUpdate) {
         // Refresh the entire goal to update all milestone data
         const updatedGoal = await api.getGoalDetails(goalId);
-        onMilestoneUpdate(updatedGoal);
+        onMilestoneUpdate(updatedGoal, 'milestone_status_update');
       }
     } catch (error) {
       console.error('Failed to update milestone status:', error);

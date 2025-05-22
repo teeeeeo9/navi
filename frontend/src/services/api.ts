@@ -83,6 +83,34 @@ const api = {
     return data
   },
 
+  // New method to notify chat interface about system updates
+  handleSystemUpdate: async (updateType: string, entity: string, changes: any): Promise<{
+    system_message: ChatMessage
+    ai_response: ChatMessage
+  }> => {
+    // This method doesn't actually make an API call - the system update is sent by the backend
+    // when the entity is updated. This method is used to track that a system update is in progress
+    // so the UI can show a loading animation
+    
+    // Return a dummy object that mimics the structure of the sendMessage response
+    // The actual system message and AI response will come through the WebSocket
+    // or when the user refreshes the chat history
+    return {
+      system_message: {
+        id: Math.random(),
+        sender: 'system',
+        content: `SYSTEM_UPDATE: ${updateType} ${entity}`,
+        created_at: new Date().toISOString()
+      },
+      ai_response: {
+        id: Math.random(),
+        sender: 'replica',
+        content: 'Processing your update...',
+        created_at: new Date().toISOString()
+      }
+    }
+  },
+
   // Goals
   getGoals: async (): Promise<Goal[]> => {
     const { data } = await axios.get('/api/goals/')
