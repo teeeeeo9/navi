@@ -98,10 +98,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   const [targetDateValue, setTargetDateValue] = useState(goal.target_date.split('T')[0])
   const targetDateInputRef = useRef<HTMLInputElement>(null)
   
-  const [isEditingStatus, setIsEditingStatus] = useState(false)
-  const [statusValue, setStatusValue] = useState(goal.status)
-  const statusSelectRef = useRef<HTMLSelectElement>(null)
-  
   const [editingReflectionId, setEditingReflectionId] = useState<string | null>(null)
   const [reflectionValues, setReflectionValues] = useState<Record<string, string>>({})
   const reflectionInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
@@ -154,14 +150,11 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
     if (isEditingTargetDate && targetDateInputRef.current) {
       targetDateInputRef.current.focus()
     }
-    if (isEditingStatus && statusSelectRef.current) {
-      statusSelectRef.current.focus()
-    }
     if (editingReflectionId && reflectionInputRefs.current[editingReflectionId]) {
       reflectionInputRefs.current[editingReflectionId]?.focus()
       reflectionInputRefs.current[editingReflectionId]?.select()
     }
-  }, [isEditingTitle, isEditingStartDate, isEditingTargetDate, isEditingStatus, editingReflectionId])
+  }, [isEditingTitle, isEditingStartDate, isEditingTargetDate, editingReflectionId])
   
   console.log(`GoalCard for goal "${goal.title}":`, {
     hasProgressUpdates: !!goal.progress_updates,
@@ -407,43 +400,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
     }
   }
 
-  /* Unused status functions
-  const handleStatusDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setStatusValue(localGoalData.status)
-    setIsEditingStatus(true)
-  }
-
-  const handleStatusSave = async () => {
-    if (statusValue === localGoalData.status) {
-      setIsEditingStatus(false)
-      return
-    }
-
-    const newStatus = statusValue
-    setLocalGoalData(prev => ({ ...prev, status: newStatus }))
-    setIsEditingStatus(false)
-    
-    setIsOverdue(daysRemaining < 0 && newStatus === 'active')
-
-    try {
-      const updatedGoal = await api.updateGoal(goal.id, { status: newStatus })
-      if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal, 'status_update')
-      }
-    } catch (error) {
-      console.error('Failed to update goal status:', error)
-      setLocalGoalData(prev => ({ ...prev, status: goal.status }))
-      
-      setIsOverdue(daysRemaining < 0 && goal.status === 'active')
-    }
-  }
-
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStatusValue(e.target.value as 'active' | 'completed')
-  }
-  */
-
   const handleReflectionDoubleClick = (type: string, e: React.MouseEvent) => {
     e.stopPropagation()
     setEditingReflectionId(type)
@@ -612,8 +568,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
               )}
               
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dark-100">
-                {/* Status selector removed */}
-                
                 <span>
                   Start: {
                     isEditingStartDate ? (
@@ -962,10 +916,6 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
   const [targetDateValue, setTargetDateValue] = useState(milestone.target_date.split('T')[0]);
   const targetDateInputRef = useRef<HTMLInputElement>(null);
   
-  const [isEditingStatus, setIsEditingStatus] = useState(false);
-  const [statusValue, setStatusValue] = useState(milestone.status);
-  const statusSelectRef = useRef<HTMLSelectElement>(null);
-  
   useEffect(() => {
     if (isEditingTitle && titleInputRef.current) {
       titleInputRef.current.focus();
@@ -974,10 +924,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
     if (isEditingTargetDate && targetDateInputRef.current) {
       targetDateInputRef.current.focus();
     }
-    if (isEditingStatus && statusSelectRef.current) {
-      statusSelectRef.current.focus();
-    }
-  }, [isEditingTitle, isEditingTargetDate, isEditingStatus]);
+  }, [isEditingTitle, isEditingTargetDate]);
   
   // Function to handle submitting progress updates for milestones
   const handleMilestoneProgressUpdate = async (type: 'progress' | 'effort', value: number) => {
@@ -1156,44 +1103,6 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
     }
   };
   
-  /* Unused status functions
-  const handleStatusDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setStatusValue(localMilestone.status);
-    setIsEditingStatus(true);
-  };
-  
-  const handleStatusSave = async () => {
-    if (statusValue === localMilestone.status) {
-      setIsEditingStatus(false);
-      return;
-    }
-    
-    const newStatus = statusValue;
-    setLocalMilestone(prev => ({ ...prev, status: newStatus }));
-    setIsEditingStatus(false);
-    
-    try {
-      const updatedMilestone = await api.updateMilestone(goalId, milestone.id, {
-        status: newStatus
-      });
-      
-      if (onMilestoneUpdate) {
-        // Refresh the entire goal to update all milestone data
-        const updatedGoal = await api.getGoalDetails(goalId);
-        onMilestoneUpdate(updatedGoal, 'milestone_status_update');
-      }
-    } catch (error) {
-      console.error('Failed to update milestone status:', error);
-      setLocalMilestone(prev => ({ ...prev, status: milestone.status }));
-    }
-  };
-  
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStatusValue(e.target.value as 'active' | 'completed');
-  };
-  */
-
   // Convert from 0-100 to 0-10 scale for display
   const progressValue10 = Math.round(milestone.completion_status / 10);
   
@@ -1222,8 +1131,6 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
             )}
             
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-dark-100">
-              {/* Status selector removed */}
-              
               <span>
                 Target: {
                   isEditingTargetDate ? (
