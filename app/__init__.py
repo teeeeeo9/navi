@@ -46,7 +46,13 @@ def create_app(test_config=None):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    CORS(app)
+    
+    # Configure CORS to allow requests from the frontend domain
+    CORS(app, resources={r"/api/*": {"origins": [
+        "http://localhost:5173",  # Local development
+        "https://navi-i412.onrender.com",  # Production frontend domain
+        os.environ.get("FRONTEND_URL", "*")  # Configurable frontend URL
+    ]}})
     
     # Setup JWT error handlers
     @jwt.invalid_token_loader
