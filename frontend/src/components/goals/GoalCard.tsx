@@ -194,25 +194,65 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   const handleProgressUpdate = async (type: 'progress' | 'effort', value: number) => {
     console.log(`Submitting ${type} update with value: ${value}/10`);
     
+    // Convert from 0-10 scale to 0-100 for backend
+    const scaledValue = value * 10;
+    
+    // Use appropriate notes based on the update type
+    const notes = type === 'progress' ? progressNotes : effortNotes;
+    
+    // Create an optimistic update to show immediately
+    const tempUpdate: ProgressUpdate = {
+      id: -1, // Temporary ID that will be replaced when the server responds
+      goal_id: goal.id,
+      progress_value: scaledValue,
+      type: type,
+      created_at: new Date().toISOString()
+    };
+    
+    // Add type-specific notes
+    if (type === 'progress') {
+      tempUpdate.progress_notes = notes;
+      
+      // Update local goal data if progress state was updated
+      setLocalGoalData(prev => ({
+        ...prev,
+        status: scaledValue === 100 && prev.status === 'active' ? 'completed' : prev.status
+      }));
+      
+      // Immediately update local progress value
+      setProgressValue(value);
+    } else {
+      tempUpdate.effort_notes = notes;
+      
+      // Immediately update local effort value
+      setEffortValue(value);
+    }
+    
+    // Immediately add the update to the UI
+    if (goal.progress_updates) {
+      // Create a new array with the optimistic update at the beginning
+      const updatedProgressUpdates = [tempUpdate, ...goal.progress_updates];
+      
+      // Update the goal with the new progress updates
+      const updatedGoal = {
+        ...goal,
+        progress_updates: updatedProgressUpdates,
+        completion_status: type === 'progress' ? scaledValue : goal.completion_status
+      };
+      
+      // Call the update handler to refresh the UI immediately
+      if (onGoalUpdate) {
+        onGoalUpdate(updatedGoal);
+      }
+    }
+    
     try {
-      // Convert from 0-10 scale to 0-100 for backend
-      const scaledValue = value * 10;
-      
-      // Use appropriate notes based on the update type
-      const notes = type === 'progress' ? progressNotes : effortNotes;
-      
       // Use appropriate API function based on type
       let update: ProgressUpdate;
       if (type === 'progress') {
         console.log(`Creating progress update: ${scaledValue}/100, notes: "${notes}"`);
         update = await api.createProgressUpdate(goal.id, scaledValue, notes);
         console.log('Progress update created:', update);
-        
-        // Update local goal data if progress state was updated
-        setLocalGoalData(prev => ({
-          ...prev,
-          status: scaledValue === 100 && prev.status === 'active' ? 'completed' : prev.status
-        }));
       } else if (type === 'effort') {
         console.log(`Creating effort update: ${scaledValue}/100, notes: "${notes}"`);
         update = await api.createEffortUpdate(goal.id, scaledValue, notes);
@@ -259,6 +299,11 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       
     } catch (error) {
       console.error(`Failed to update ${type}:`, error);
+      // In case of error, refresh the goal to ensure UI is in sync with server
+      if (onGoalUpdate) {
+        const updatedGoal = await api.getGoalDetails(goal.id);
+        onGoalUpdate(updatedGoal);
+      }
     }
   }
 
@@ -943,13 +988,47 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   const handleMilestoneProgressUpdate = async (type: 'progress' | 'effort', value: number) => {
     console.log(`Submitting ${type} update for milestone with value: ${value}/10`);
     
+    // Convert from 0-10 scale to 0-100 for backend
+    const scaledValue = value * 10;
+    
+    // Use the appropriate notes field based on the update type
+    const notes = type === 'progress' ? progressNotes : effortNotes;
+    
+    // Create an optimistic update to show immediately
+    const tempUpdate: ProgressUpdate = {
+      id: -1, // Temporary ID that will be replaced when the server responds
+      goal_id: goalId,
+      milestone_id: milestone.id,
+      progress_value: scaledValue,
+      type: type,
+      created_at: new Date().toISOString()
+    };
+    
+    // Add type-specific notes
+    if (type === 'progress') {
+      tempUpdate.progress_notes = notes;
+      
+      // Update local milestone status if needed
+      if (scaledValue === 100 && localMilestone.status === 'pending') {
+        setLocalMilestone(prev => ({
+          ...prev,
+          status: 'completed'
+        }));
+      }
+      
+      // Update local progress value
+      setProgressValue(value);
+    } else {
+      tempUpdate.effort_notes = notes;
+      
+      // Update local effort value
+      setEffortValue(value);
+    }
+    
+    // Immediately add the update to the UI
+    setMilestoneProgressUpdates(prevUpdates => [tempUpdate, ...prevUpdates]);
+    
     try {
-      // Convert from 0-10 scale to 0-100 for backend
-      const scaledValue = value * 10;
-      
-      // Use the appropriate notes field based on the update type
-      const notes = type === 'progress' ? progressNotes : effortNotes;
-      
       // Use the new API method to create a progress update for the milestone
       const update = await api.createMilestoneProgressUpdate(
         goalId,
@@ -967,21 +1046,12 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       
       // If this is a progress update, update the milestone's completion status
       if (type === 'progress') {
-        // Update local progress value
-        setProgressValue(value);
-        
         // Only update if this milestone has its status changed
         if (scaledValue === 100 && localMilestone.status === 'pending') {
           await api.updateMilestone(goalId, milestone.id, {
             status: 'completed',
             completion_status: scaledValue
           });
-          
-          // Update local state
-          setLocalMilestone(prev => ({
-            ...prev,
-            status: 'completed'
-          }));
         } else {
           await api.updateMilestone(goalId, milestone.id, {
             completion_status: scaledValue
@@ -1004,6 +1074,9 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       
     } catch (error) {
       console.error(`Failed to update milestone ${type}:`, error);
+      // In case of error, refresh the milestone data to ensure UI is in sync with server
+      const refreshedUpdates = await refreshMilestoneProgress(goalId, milestone.id);
+      setMilestoneProgressUpdates(refreshedUpdates);
     }
   };
   
