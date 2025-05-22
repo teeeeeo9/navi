@@ -47,11 +47,11 @@ Based on user messages, discern their intent. When specific actions related to g
 
 ```
 
-{"action_type": "create_goal", "data": {"title": "Goal Title", "target_date": "YYYY-MM-DD", "milestones": [{"title": "Milestone 1", "target_date": "YYYY-MM-DD"}], "reflections": {"obstacles": "User's brief input"}}}
+{"action_type": "create_goal", "data": {"title": "Goal Title", "target_date": "YYYY-MM-DD", "milestones": [{"title": "Milestone 1", "target_date": "YYYY-MM-DD"}], "reflections": {"importance": "Why this goal matters to the user", "obstacles": "User's brief input on potential challenges"}}}
 
 ```
 
-2.  GOAL ANALYSIS & REFLECTION: When you and the user are exploring aspects of an existing goal (like its importance, potential roadblocks, or strategies):
+2.  GOAL ANALYSIS & REFLECTION: When you and the user are exploring aspects of an existing goal (like its importance, potential roadblocks, or strategies):
 
 ```
 
@@ -61,16 +61,16 @@ Based on user messages, discern their intent. When specific actions related to g
         "goal_id": "[goal_id]",
         "reflections": [
             {
+                "type": "importance",
+                "content": "Why this aspect is particularly important now"
+            },
+            {
                 "type": "obstacles",
                 "content": "The essence of the user's reflection on obstacles"
             },
             {
                 "type": "timeline",
                 "content": "The user's thoughts on the timeline feasibility"
-            },
-            {
-                "type": "importance",
-                "content": "Why this aspect is particularly important now"
             }
         ]
     }
@@ -78,7 +78,7 @@ Based on user messages, discern their intent. When specific actions related to g
 
 ```
 
-3.  PROGRESS UPDATE: When the user provides an update on how close they are to a goal or subgoal of how much effort they are putting in to reach it:
+3.  PROGRESS UPDATE: When the user provides an update on how close they are to a goal or subgoal of how much effort they are putting in to reach it:
 
 ```
 
@@ -95,11 +95,31 @@ Based on user messages, discern their intent. When specific actions related to g
 
 ```
 
-4.  MILESTONE UPDATE: When discussing the status of a specific milestone:
+4.  MILESTONE UPDATE: When discussing the status of a specific milestone:
 
 ```
 
 {"action_type": "update_milestone", "data": {"goal_id": "[goal_id]", "milestone_id": "[milestone_id]", "status": "completed|pending|missed|in_progress"}}
+
+```
+
+5.  GOAL UPDATE: When the user wants to update properties of an existing goal:
+
+```
+
+{
+    "action_type": "update_goal",
+    "data": {
+        "goal_id": "[goal_id]",
+        "title": "Updated Goal Title",
+        "target_date": "YYYY-MM-DD",
+        "status": "active|completed|abandoned|deferred",
+        "reflections": {
+            "importance": "Updated reflection on importance",
+            "obstacles": "Updated reflection on obstacles"
+        }
+    }
+}
 
 ```
 """

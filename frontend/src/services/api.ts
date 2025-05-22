@@ -23,7 +23,6 @@ export interface PaginatedResponse<T> {
 export interface Goal {
   id: number
   title: string
-  importance: number
   status: 'active' | 'completed' | 'abandoned'
   start_date: string
   target_date: string

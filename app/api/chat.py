@@ -118,6 +118,7 @@ def send_message():
     related_goal_id = data.get('related_goal_id')
     
     logger.debug(f"Message params - content length: {len(data['content'])}, related_goal_id: {related_goal_id}")
+    logger.debug(f"Incoming message content: {data['content']}")
     
     # If related_goal_id is provided, verify it exists and belongs to the user
     if related_goal_id:
@@ -263,7 +264,6 @@ def get_goal_context(goal):
         f"[GOAL CONTEXT]\n"
         f"Goal ID: {goal.id}\n"
         f"Title: {goal.title}\n"
-        f"Description: {goal.description or 'No description'}\n"
         f"Start date: {goal.start_date.strftime('%Y-%m-%d')}\n"
         f"Target date: {goal.target_date.strftime('%Y-%m-%d')}\n"
         f"Current progress: {goal.completion_status}%\n"
@@ -342,6 +342,7 @@ def extract_action_json(ai_content):
                     data = json.loads(json_str)
                     # Validate that it contains an action_type
                     if 'action_type' in data:
+                        logger.debug(f"Successfully extracted action JSON: {json.dumps(data, indent=2)}")
                         return data
                 except json.JSONDecodeError as e:
                     logger.warning(f"Failed to parse extracted JSON: {str(e)}")
@@ -357,11 +358,17 @@ def extract_action_json(ai_content):
                 json_str = ai_content[start_idx:end_idx]
                 data = json.loads(json_str)
                 if 'action_type' in data:
+                    logger.debug(f"Successfully extracted action JSON from full content: {json.dumps(data, indent=2)}")
                     return data
     except json.JSONDecodeError:
         pass
     
     logger.debug("No action JSON found in AI response")
+    # Log a truncated version of the response for debugging
+    if len(ai_content) > 200:
+        logger.debug(f"Response content (truncated): {ai_content[:100]}...{ai_content[-100:]}")
+    else:
+        logger.debug(f"Response content: {ai_content}")
     return None
 
 def process_action(action_data, user_id, related_goal_id=None):
@@ -369,7 +376,10 @@ def process_action(action_data, user_id, related_goal_id=None):
     action_type = action_data.get('action_type')
     data = action_data.get('data', {})
     
+    # Add detailed logging of the action JSON
     logger.info(f"Processing action: {action_type}")
+    logger.debug(f"Full action JSON data: {json.dumps(action_data, indent=2)}")
+    logger.debug(f"User ID: {user_id}, Related Goal ID: {related_goal_id}")
     
     # Strip the JSON part from the display message
     display_content = None
@@ -421,10 +431,12 @@ def process_action(action_data, user_id, related_goal_id=None):
             # Return the created goal and a user-friendly message
             display_content = action_data.get('display_message', 'Great! I\'ve created your goal. You can now view and track it in your goals dashboard.')
             
-            return {
+            result = {
                 'action': 'create_goal',
                 'goal': goal
-            }, display_content
+            }
+            logger.debug(f"create_goal action completed successfully: {json.dumps({'goal_id': goal['id'], 'title': goal['title']})}")
+            return result, display_content
             
         except Exception as e:
             logger.error(f"Failed to create goal: {str(e)}", exc_info=True)
@@ -482,14 +494,16 @@ def process_action(action_data, user_id, related_goal_id=None):
             # Return the reflection info
             display_content = action_data.get('display_message')
             
-            return {
+            result = {
                 'action': 'save_reflection',
                 'reflection': {
                     'id': reflection_id,
                     'goal_id': goal_id,
                     'reflection_type': reflection_type
                 }
-            }, display_content
+            }
+            logger.debug(f"save_reflection action completed successfully: {json.dumps({'reflection_id': reflection_id, 'type': reflection_type})}")
+            return result, display_content
             
         except Exception as e:
             logger.error(f"Failed to save reflection: {str(e)}", exc_info=True)
@@ -538,7 +552,7 @@ def process_action(action_data, user_id, related_goal_id=None):
             # Return the progress update info
             display_content = action_data.get('display_message')
             
-            return {
+            result = {
                 'action': 'update_progress',
                 'progress_update': {
                     'id': update.id,
@@ -546,7 +560,9 @@ def process_action(action_data, user_id, related_goal_id=None):
                     'progress_value': progress_value,
                     'notes': notes
                 }
-            }, display_content
+            }
+            logger.debug(f"update_progress action completed successfully: {json.dumps({'goal_id': goal_id, 'progress_value': progress_value})}")
+            return result, display_content
             
         except Exception as e:
             logger.error(f"Failed to update progress: {str(e)}", exc_info=True)
@@ -601,7 +617,7 @@ def process_action(action_data, user_id, related_goal_id=None):
             # Return the milestone info
             display_content = action_data.get('display_message')
             
-            return {
+            result = {
                 'action': 'update_milestone',
                 'milestone': {
                     'id': milestone.id,
@@ -609,7 +625,9 @@ def process_action(action_data, user_id, related_goal_id=None):
                     'status': milestone.status,
                     'completion_status': milestone.completion_status
                 }
-            }, display_content
+            }
+            logger.debug(f"update_milestone action completed successfully: {json.dumps({'goal_id': goal_id, 'milestone_id': milestone.id, 'status': milestone.status})}")
+            return result, display_content
             
         except Exception as e:
             logger.error(f"Failed to update milestone: {str(e)}", exc_info=True)
@@ -618,8 +636,207 @@ def process_action(action_data, user_id, related_goal_id=None):
                 'error': str(e)
             }, None
     
+    elif action_type == 'save_reflections':
+        # Save multiple reflections on a goal
+        try:
+            goal_id = data.get('goal_id') or related_goal_id
+            if not goal_id:
+                raise ValueError("Goal ID is required for saving reflections")
+            
+            reflections = data.get('reflections', [])
+            if not reflections or not isinstance(reflections, list):
+                raise ValueError("Reflections data is required and must be a list")
+            
+            # Verify goal exists and belongs to user
+            goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
+            if not goal:
+                raise ValueError(f"Goal not found: {goal_id}")
+            
+            saved_reflections = []
+            
+            # Process each reflection
+            for reflection_data in reflections:
+                reflection_type = reflection_data.get('type')
+                content = reflection_data.get('content')
+                
+                if not reflection_type or not content:
+                    logger.warning(f"Skipping reflection with missing type or content: {reflection_data}")
+                    continue
+                
+                # Check if reflection type already exists
+                existing_reflection = Reflection.query.filter_by(
+                    goal_id=goal_id, 
+                    reflection_type=reflection_type
+                ).first()
+                
+                if existing_reflection:
+                    # Update existing reflection
+                    existing_reflection.content = content
+                    existing_reflection.updated_at = datetime.utcnow()
+                    reflection_id = existing_reflection.id
+                    logger.info(f"Updated existing reflection ID: {reflection_id}")
+                else:
+                    # Create new reflection
+                    reflection = Reflection(
+                        goal_id=goal_id,
+                        reflection_type=reflection_type,
+                        content=content
+                    )
+                    db.session.add(reflection)
+                    db.session.flush()  # To get the ID
+                    reflection_id = reflection.id
+                    logger.info(f"Created new reflection ID: {reflection_id}")
+                
+                saved_reflections.append({
+                    'id': reflection_id,
+                    'goal_id': goal_id,
+                    'reflection_type': reflection_type
+                })
+            
+            db.session.commit()
+            
+            # Return the reflections info
+            display_content = action_data.get('display_message')
+            
+            result = {
+                'action': 'save_reflections',
+                'reflections': saved_reflections
+            }
+            logger.debug(f"save_reflections action completed successfully: {json.dumps({'goal_id': goal_id, 'reflection_count': len(saved_reflections)})}")
+            return result, display_content
+            
+        except Exception as e:
+            logger.error(f"Failed to save reflections: {str(e)}", exc_info=True)
+            return {
+                'action': 'save_reflections',
+                'error': str(e)
+            }, None
+    
+    elif action_type == 'update_goal':
+        # Update an existing goal
+        try:
+            goal_id = data.get('goal_id') or related_goal_id
+            if not goal_id:
+                raise ValueError("Goal ID is required for updating a goal")
+            
+            # Verify goal exists and belongs to user
+            goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
+            if not goal:
+                raise ValueError(f"Goal not found: {goal_id}")
+            
+            # Track changes
+            changes = []
+            
+            # Update title if provided
+            if 'title' in data and data['title'] != goal.title:
+                old_title = goal.title
+                goal.title = data['title']
+                changes.append(f"title from '{old_title}' to '{goal.title}'")
+            
+            # Update target_date if provided
+            if 'target_date' in data:
+                try:
+                    new_target_date = datetime.fromisoformat(data['target_date'])
+                    if new_target_date != goal.target_date:
+                        goal.target_date = new_target_date
+                        changes.append(f"target date to {goal.target_date.strftime('%Y-%m-%d')}")
+                except ValueError:
+                    raise ValueError("Invalid target_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS)")
+            
+            # Update status if provided
+            if 'status' in data and data['status'] != goal.status:
+                valid_statuses = ['active', 'completed', 'abandoned', 'deferred']
+                if data['status'] in valid_statuses:
+                    old_status = goal.status
+                    goal.status = data['status']
+                    changes.append(f"status from '{old_status}' to '{goal.status}'")
+                else:
+                    raise ValueError(f"Invalid status: {data['status']}. Must be one of: {', '.join(valid_statuses)}")
+            
+            # Update reflections if provided
+            if 'reflections' in data and isinstance(data['reflections'], dict):
+                for reflection_type, content in data['reflections'].items():
+                    if not content:
+                        continue
+                        
+                    # Find existing reflection of this type
+                    reflection = Reflection.query.filter_by(
+                        goal_id=goal_id, 
+                        reflection_type=reflection_type
+                    ).first()
+                    
+                    if reflection:
+                        # Update existing reflection if content changed
+                        if reflection.content != content:
+                            reflection.content = content
+                            reflection.updated_at = datetime.utcnow()
+                            changes.append(f"reflection on '{reflection_type}'")
+                    else:
+                        # Create new reflection
+                        reflection = Reflection(
+                            goal_id=goal_id,
+                            reflection_type=reflection_type,
+                            content=content
+                        )
+                        db.session.add(reflection)
+                        changes.append(f"added new reflection on '{reflection_type}'")
+            
+            db.session.commit()
+            
+            logger.info(f"Updated goal ID {goal_id}: {', '.join(changes)}")
+            
+            # Get updated goal data for response
+            # Get milestone data
+            milestones_data = []
+            for milestone in goal.milestones:
+                milestones_data.append({
+                    'id': milestone.id,
+                    'title': milestone.title,
+                    'target_date': milestone.target_date.isoformat(),
+                    'completion_status': milestone.completion_status,
+                    'status': milestone.status
+                })
+            
+            # Get reflection data
+            reflections_data = {}
+            for reflection in goal.reflections:
+                reflections_data[reflection.reflection_type] = {
+                    'id': reflection.id,
+                    'content': reflection.content,
+                    'created_at': reflection.created_at.isoformat(),
+                    'updated_at': reflection.updated_at.isoformat()
+                }
+            
+            # Return the goal info
+            display_content = action_data.get('display_message')
+            
+            result = {
+                'action': 'update_goal',
+                'goal': {
+                    'id': goal.id,
+                    'title': goal.title,
+                    'start_date': goal.start_date.isoformat(),
+                    'target_date': goal.target_date.isoformat(),
+                    'completion_status': goal.completion_status,
+                    'status': goal.status,
+                    'milestones': milestones_data,
+                    'reflections': reflections_data,
+                    'updated_at': goal.updated_at.isoformat()
+                }
+            }
+            logger.debug(f"update_goal action completed successfully: {json.dumps({'goal_id': goal.id, 'title': goal.title, 'changes': changes})}")
+            return result, display_content
+            
+        except Exception as e:
+            logger.error(f"Failed to update goal: {str(e)}", exc_info=True)
+            return {
+                'action': 'update_goal',
+                'error': str(e)
+            }, None
+    
     else:
         logger.warning(f"Unknown action type: {action_type}")
+        logger.debug(f"Unknown action JSON: {json.dumps(action_data)}")
         return None, None
 
 def ensure_replica_exists(sensay_client, sensay_user_id):

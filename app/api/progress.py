@@ -264,10 +264,8 @@ def get_user_achievements():
             'type': 'goal',
             'id': goal.id,
             'title': goal.title,
-            'description': goal.description,
             'completion_date': goal.updated_at.isoformat(),
-            'target_date': goal.target_date.isoformat(),
-            'importance': goal.importance
+            'target_date': goal.target_date.isoformat()
         })
     
     # Add completed milestones
@@ -279,7 +277,6 @@ def get_user_achievements():
             'goal_id': milestone.goal_id,
             'goal_title': goal.title,
             'title': milestone.title,
-            'description': milestone.description,
             'completion_date': milestone.updated_at.isoformat(),
             'target_date': milestone.target_date.isoformat()
         })

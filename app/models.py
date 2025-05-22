@@ -53,8 +53,6 @@ class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    importance = db.Column(db.Text, nullable=True)  # Why this goal is important
     start_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     target_date = db.Column(db.DateTime, nullable=False)
     completion_status = db.Column(db.Float, default=0.0)  # Percentage of completion (0-100)
@@ -79,7 +77,6 @@ class Milestone(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, nullable=True)
     target_date = db.Column(db.DateTime, nullable=False)
     completion_status = db.Column(db.Float, default=0.0)  # Percentage of completion (0-100)
     status = db.Column(db.String(20), default='pending')  # pending, completed, missed
@@ -108,7 +105,7 @@ class Reflection(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'), nullable=False)
-    reflection_type = db.Column(db.String(50), nullable=False)  # importance, obstacles, environment, success, improvement
+    reflection_type = db.Column(db.String(50), nullable=False)  # importance, obstacles, environment, timeline, backups, review_positive, review_improve
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

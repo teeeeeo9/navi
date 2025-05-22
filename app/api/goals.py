@@ -58,7 +58,6 @@ def get_goals():
             milestones_data.append({
                 'id': milestone.id,
                 'title': milestone.title,
-                'description': milestone.description,
                 'target_date': milestone.target_date.isoformat(),
                 'completion_status': milestone.completion_status,
                 'status': milestone.status,
@@ -83,8 +82,6 @@ def get_goals():
         goals_data.append({
             'id': goal.id,
             'title': goal.title,
-            'description': goal.description,
-            'importance': goal.importance,
             'start_date': goal.start_date.isoformat(),
             'target_date': goal.target_date.isoformat(),
             'completion_status': goal.completion_status,
@@ -142,7 +139,6 @@ def get_goal(goal_id):
         milestones_data.append({
             'id': milestone.id,
             'title': milestone.title,
-            'description': milestone.description,
             'target_date': milestone.target_date.isoformat(),
             'completion_status': milestone.completion_status,
             'status': milestone.status,
@@ -185,8 +181,6 @@ def get_goal(goal_id):
     goal_data = {
         'id': goal.id,
         'title': goal.title,
-        'description': goal.description,
-        'importance': goal.importance,
         'start_date': goal.start_date.isoformat(),
         'target_date': goal.target_date.isoformat(),
         'completion_status': goal.completion_status,
@@ -250,8 +244,6 @@ def create_goal_internal(user_id, data):
     goal = Goal(
         user_id=user_id,
         title=data['title'],
-        description=data.get('description', ''),
-        importance=data.get('importance', ''),
         start_date=start_date,
         target_date=target_date,
         status=data.get('status', 'active'),
@@ -280,7 +272,6 @@ def create_goal_internal(user_id, data):
             milestone = Milestone(
                 goal_id=goal.id,
                 title=milestone_data['title'],
-                description=milestone_data.get('description', ''),
                 target_date=milestone_target_date
             )
             
@@ -288,7 +279,6 @@ def create_goal_internal(user_id, data):
             milestones_data.append({
                 'id': milestone.id,
                 'title': milestone.title,
-                'description': milestone.description,
                 'target_date': milestone.target_date.isoformat(),
                 'completion_status': milestone.completion_status,
                 'status': milestone.status
@@ -330,8 +320,6 @@ def create_goal_internal(user_id, data):
     return {
         'id': goal.id,
         'title': goal.title,
-        'description': goal.description,
-        'importance': goal.importance,
         'start_date': goal.start_date.isoformat(),
         'target_date': goal.target_date.isoformat(),
         'completion_status': goal.completion_status,
@@ -368,16 +356,6 @@ def update_goal(goal_id):
         goal.title = data['title']
         changes.append(f"title from '{old_title}' to '{goal.title}'")
         logger.debug(f"Updated title: {goal.title}")
-    
-    if 'description' in data and data['description'] != goal.description:
-        goal.description = data['description']
-        changes.append("description")
-        logger.debug(f"Updated description")
-    
-    if 'importance' in data and data['importance'] != goal.importance:
-        goal.importance = data['importance']
-        changes.append("importance")
-        logger.debug(f"Updated importance")
     
     if 'start_date' in data:
         try:
@@ -478,6 +456,30 @@ def update_goal(goal_id):
     db.session.commit()
     logger.info(f"Goal updated successfully: {goal.id}")
     
+    # Prepare response with updated goal data
+    # Get milestones
+    milestones_data = []
+    for milestone in goal.milestones:
+        milestones_data.append({
+            'id': milestone.id,
+            'title': milestone.title,
+            'target_date': milestone.target_date.isoformat(),
+            'completion_status': milestone.completion_status,
+            'status': milestone.status,
+            'created_at': milestone.created_at.isoformat(),
+            'updated_at': milestone.updated_at.isoformat()
+        })
+    
+    # Get reflections
+    reflections_data = {}
+    for reflection in goal.reflections:
+        reflections_data[reflection.reflection_type] = {
+            'id': reflection.id,
+            'content': reflection.content,
+            'created_at': reflection.created_at.isoformat(),
+            'updated_at': reflection.updated_at.isoformat()
+        }
+    
     # Send system update to the replica if changes were made
     if changes:
         # Format the changes for the update message
@@ -499,13 +501,14 @@ def update_goal(goal_id):
         'goal': {
             'id': goal.id,
             'title': goal.title,
-            'description': goal.description,
-            'importance': goal.importance,
             'start_date': goal.start_date.isoformat(),
             'target_date': goal.target_date.isoformat(),
             'completion_status': goal.completion_status,
             'status': goal.status,
             'parent_goal_id': goal.parent_goal_id,
+            'milestones': milestones_data,
+            'reflections': reflections_data,
+            'created_at': goal.created_at.isoformat(),
             'updated_at': goal.updated_at.isoformat()
         }
     }), 200
@@ -559,7 +562,6 @@ def get_milestones(goal_id):
         milestones_data.append({
             'id': milestone.id,
             'title': milestone.title,
-            'description': milestone.description,
             'target_date': milestone.target_date.isoformat(),
             'completion_status': milestone.completion_status,
             'status': milestone.status,
@@ -604,7 +606,6 @@ def create_milestone(goal_id):
     milestone = Milestone(
         goal_id=goal_id,
         title=data['title'],
-        description=data.get('description', ''),
         target_date=target_date,
         status=data.get('status', 'pending')
     )
@@ -618,7 +619,6 @@ def create_milestone(goal_id):
         'milestone': {
             'id': milestone.id,
             'title': milestone.title,
-            'description': milestone.description,
             'target_date': milestone.target_date.isoformat(),
             'completion_status': milestone.completion_status,
             'status': milestone.status,
@@ -653,10 +653,6 @@ def update_milestone(goal_id, milestone_id):
         old_title = milestone.title
         milestone.title = data['title']
         changes.append(f"title from '{old_title}' to '{milestone.title}'")
-    
-    if 'description' in data and data['description'] != milestone.description:
-        milestone.description = data['description']
-        changes.append("description")
     
     if 'target_date' in data:
         try:
@@ -710,7 +706,6 @@ def update_milestone(goal_id, milestone_id):
         'milestone': {
             'id': milestone.id,
             'title': milestone.title,
-            'description': milestone.description,
             'target_date': milestone.target_date.isoformat(),
             'completion_status': milestone.completion_status,
             'status': milestone.status,
