@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Goal, Milestone, Reflection, ProgressUpdate } from '@/services/api'
+import { Goal, Milestone, ProgressUpdate } from '@/services/api'
 import ProgressChart from './ProgressChart'
 import api from '@/services/api'
 import Modal from '@/components/ui/Modal'
@@ -407,6 +407,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
     }
   }
 
+  /* Unused status functions
   const handleStatusDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setStatusValue(localGoalData.status)
@@ -441,6 +442,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStatusValue(e.target.value as 'active' | 'completed')
   }
+  */
 
   const handleReflectionDoubleClick = (type: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -829,9 +831,8 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                   <MilestoneCard 
                     key={milestone.id} 
                     milestone={milestone} 
-                    formatDate={formatDate} 
-                    _showChart={showCharts}
-                    onMilestoneUpdate={(updatedGoal) => {
+                    formatDate={formatDate}
+                    onMilestoneUpdate={() => {
                       if (onGoalUpdate) {
                         refreshGoal(goal.id, onGoalUpdate)
                       }
@@ -895,12 +896,11 @@ const refreshMilestoneProgress = async (goalId: number, milestoneId: number): Pr
 interface MilestoneCardProps {
   milestone: Milestone;
   formatDate: (date: string) => string;
-  _showChart?: boolean;
   onMilestoneUpdate?: (updatedGoal: Goal, updateType: string) => void;
   goalId: number;
 }
 
-const MilestoneCard = ({ milestone, formatDate, _showChart, onMilestoneUpdate, goalId }: MilestoneCardProps) => {
+const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: MilestoneCardProps) => {
   const [localMilestone, setLocalMilestone] = useState({
     title: milestone.title,
     targetDate: milestone.target_date,
@@ -978,13 +978,6 @@ const MilestoneCard = ({ milestone, formatDate, _showChart, onMilestoneUpdate, g
       statusSelectRef.current.focus();
     }
   }, [isEditingTitle, isEditingTargetDate, isEditingStatus]);
-  
-  const getStatusColor = () => {
-    switch(localMilestone.status) {
-      case 'completed': return 'bg-green-500/20 text-green-300';
-      default: return 'bg-blue-500/20 text-blue-300';
-    }
-  };
   
   // Function to handle submitting progress updates for milestones
   const handleMilestoneProgressUpdate = async (type: 'progress' | 'effort', value: number) => {
@@ -1099,7 +1092,7 @@ const MilestoneCard = ({ milestone, formatDate, _showChart, onMilestoneUpdate, g
     setIsEditingTitle(false);
     
     try {
-      const updatedMilestone = await api.updateMilestone(goalId, milestone.id, {
+      await api.updateMilestone(goalId, milestone.id, {
         title: newTitle
       });
       
@@ -1140,7 +1133,7 @@ const MilestoneCard = ({ milestone, formatDate, _showChart, onMilestoneUpdate, g
     setIsEditingTargetDate(false);
     
     try {
-      const updatedMilestone = await api.updateMilestone(goalId, milestone.id, {
+      await api.updateMilestone(goalId, milestone.id, {
         target_date: formattedDate
       });
       
@@ -1163,6 +1156,7 @@ const MilestoneCard = ({ milestone, formatDate, _showChart, onMilestoneUpdate, g
     }
   };
   
+  /* Unused status functions
   const handleStatusDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setStatusValue(localMilestone.status);
@@ -1198,6 +1192,7 @@ const MilestoneCard = ({ milestone, formatDate, _showChart, onMilestoneUpdate, g
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setStatusValue(e.target.value as 'active' | 'completed');
   };
+  */
 
   // Convert from 0-100 to 0-10 scale for display
   const progressValue10 = Math.round(milestone.completion_status / 10);
