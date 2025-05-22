@@ -59,11 +59,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Fetch user profile from API
   const fetchUserProfile = async () => {
+    console.log('=== Fetching User Profile ===');
+    console.log('Current axios defaults:', axios.defaults);
+    console.log('Making request to /api/auth/profile');
     try {
-      const { data } = await axios.get('/api/auth/profile')
+      console.log('Request URL:', '/api/auth/profile');
+      const { data } = await axios.get('/api/auth/profile');
+      console.log('Profile data received:', data);
       setUser(data.user)
       setIsAuthenticated(true)
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Error fetching profile:', err);
+      console.error('Error details:', err.response?.data);
+      console.error('Request URL that failed:', err.config?.url);
+      console.error('Full request that failed:', err.config);
+      
       // If token is invalid, clear it
       localStorage.removeItem('token')
       axios.defaults.headers.common['Authorization'] = ''
