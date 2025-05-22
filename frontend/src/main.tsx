@@ -10,6 +10,12 @@ import axios from 'axios'
 axios.defaults.baseURL = 'https://f180-46-101-149-73.ngrok-free.app';
 console.log('Explicitly setting axios.defaults.baseURL to:', axios.defaults.baseURL);
 
+// Add request interceptor to include ngrok-skip-browser-warning header
+axios.interceptors.request.use(config => {
+  config.headers['ngrok-skip-browser-warning'] = '69420';
+  return config;
+});
+
 // Log API configuration on startup to help debug API URL issues
 logApiConfiguration();
 
