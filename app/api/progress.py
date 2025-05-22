@@ -22,8 +22,8 @@ def get_progress_updates(goal_id):
     # Get optional type filter
     update_type = request.args.get('type')
     
-    # Build query based on filters
-    query = ProgressUpdate.query.filter_by(goal_id=goal_id)
+    # Build query based on filters - only include updates without a milestone_id
+    query = ProgressUpdate.query.filter_by(goal_id=goal_id, milestone_id=None)
     
     # Filter by type if specified
     if update_type in ['progress', 'effort']:
@@ -67,13 +67,18 @@ def create_progress_update(goal_id):
     except ValueError:
         return jsonify({'error': 'Invalid progress_value format. Must be a number between 0 and 100'}), 400
     
-    # Create progress update
+    # Create progress update with type-specific notes
     update = ProgressUpdate(
         goal_id=goal_id,
         progress_value=progress_value,
-        type=update_type,
-        notes=data.get('notes', '')
+        type=update_type
     )
+    
+    # Set type-specific notes if provided
+    if update_type == 'progress' and 'progress_notes' in data:
+        update.progress_notes = data['progress_notes']
+    elif update_type == 'effort' and 'effort_notes' in data:
+        update.effort_notes = data['effort_notes']
     
     # Determine if status changed
     status_changed = False
@@ -97,8 +102,11 @@ def create_progress_update(goal_id):
     if status_changed:
         update_message += f" and status changed from '{old_status}' to '{goal.status}'"
     
-    if data.get('notes'):
-        update_message += f" with note: '{data['notes']}'"
+    # Add notes to message if present
+    if update_type == 'progress' and update.progress_notes:
+        update_message += f" with note: '{update.progress_notes}'"
+    elif update_type == 'effort' and update.effort_notes:
+        update_message += f" with note: '{update.effort_notes}'"
     
     # Import here to avoid circular imports
     from app.api.chat import send_system_update
@@ -213,12 +221,20 @@ def get_progress_summary():
     
     for update in recent_updates:
         goal = Goal.query.get(update.goal_id)
+        
+        # Get the appropriate notes field based on update type
+        notes = None
+        if update.type == 'progress' and update.progress_notes:
+            notes = update.progress_notes
+        elif update.type == 'effort' and update.effort_notes:
+            notes = update.effort_notes
+            
         recently_updated.append({
             'goal_id': goal.id,
             'goal_title': goal.title,
             'progress_value': update.progress_value,
             'type': update.type,
-            'notes': update.notes,
+            'notes': notes,
             'created_at': update.created_at.isoformat()
         })
     

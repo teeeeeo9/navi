@@ -238,7 +238,14 @@ def display_goal_details(goal_id):
     if goal['progress_updates']:
         print("\nProgress Updates:")
         for update in goal['progress_updates']:
-            print(f"- {update['created_at'][:10]}: {update['progress_value']}% - {update['notes']}")
+            # Get appropriate notes based on update type
+            note_text = "No notes"
+            if update.get('type') == 'progress' and update.get('progress_notes'):
+                note_text = update['progress_notes']
+            elif update.get('type') == 'effort' and update.get('effort_notes'):
+                note_text = update['effort_notes']
+                
+            print(f"- {update['created_at'][:10]}: {update['progress_value']}% - {note_text}")
     
     return goal
 

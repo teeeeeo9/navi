@@ -111,34 +111,44 @@ def get_goal(goal_id):
     
     logger.debug(f"Found goal: {goal.title}, status: {goal.status}")
     
+    # Get progress updates
+    progress_updates = []
+    for update in ProgressUpdate.query.filter_by(goal_id=goal_id, milestone_id=None).order_by(desc(ProgressUpdate.created_at)).all():
+        progress_updates.append(update.to_dict())
+    
     # Get milestones
     milestones_data = []
     for milestone in goal.milestones:
-        # For now, we'll simulate milestone progress updates by using milestone creation
-        # and if status updates happened
+        # Get real milestone progress updates
         milestone_progress = []
+        for update in ProgressUpdate.query.filter_by(goal_id=goal_id, milestone_id=milestone.id).order_by(desc(ProgressUpdate.created_at)).all():
+            milestone_progress.append(update.to_dict())
         
-        # Initial progress entry at creation time
-        milestone_progress.append({
-            'id': -1,  # Simulated ID
-            'goal_id': goal_id,
-            'progress_value': 0,  # Initial progress
-            'type': 'progress',  # Add default type for milestone progress
-            'notes': "Milestone created",
-            'created_at': milestone.created_at.isoformat()
-        })
-        
-        # Add an entry for status changes if milestone is not pending
-        if milestone.status != 'pending':
-            progress_value = 100 if milestone.status == 'completed' else milestone.completion_status
+        # If no real updates exist, add simulated ones
+        if not milestone_progress:
+            # Initial progress entry at creation time
             milestone_progress.append({
-                'id': -2,  # Simulated ID
+                'id': -1,  # Simulated ID
                 'goal_id': goal_id,
-                'progress_value': progress_value,
+                'milestone_id': milestone.id,
+                'progress_value': 0,  # Initial progress
                 'type': 'progress',  # Add default type for milestone progress
-                'notes': f"Status changed to {milestone.status}",
-                'created_at': milestone.updated_at.isoformat()
+                'progress_notes': "Milestone created",
+                'created_at': milestone.created_at.isoformat()
             })
+            
+            # Add an entry for status changes if milestone is not pending
+            if milestone.status != 'pending':
+                progress_value = 100 if milestone.status == 'completed' else milestone.completion_status
+                milestone_progress.append({
+                    'id': -2,  # Simulated ID
+                    'goal_id': goal_id,
+                    'milestone_id': milestone.id,
+                    'progress_value': progress_value,
+                    'type': 'progress',  # Add default type for milestone progress
+                    'progress_notes': f"Status changed to {milestone.status}",
+                    'created_at': milestone.updated_at.isoformat()
+                })
         
         milestones_data.append({
             'id': milestone.id,
@@ -160,11 +170,6 @@ def get_goal(goal_id):
             'created_at': reflection.created_at.isoformat(),
             'updated_at': reflection.updated_at.isoformat()
         }
-    
-    # Get progress updates
-    progress_updates = []
-    for update in goal.progress_updates:
-        progress_updates.append(update.to_dict())
     
     # Get subgoals
     subgoals = []
@@ -481,7 +486,7 @@ def update_goal(goal_id):
     
     # Get progress updates
     progress_updates = []
-    for update in goal.progress_updates:
+    for update in ProgressUpdate.query.filter_by(goal_id=goal_id, milestone_id=None).order_by(desc(ProgressUpdate.created_at)).all():
         progress_updates.append(update.to_dict())
     
     # Send system update to the replica if changes were made
@@ -865,15 +870,19 @@ def create_milestone_progress(goal_id, milestone_id):
     except ValueError:
         return jsonify({'error': 'Invalid progress_value format. Must be a number between 0 and 100'}), 400
     
-    # Create progress update for milestone
-    # We use the same ProgressUpdate model but link it to the milestone instead of directly to the goal
+    # Create progress update for milestone - always set milestone_id to ensure clear separation from goal progress
     update = ProgressUpdate(
         goal_id=goal_id,  # Still link to parent goal
         milestone_id=milestone_id,  # Link to the milestone
         progress_value=progress_value,
-        type=update_type,
-        notes=data.get('notes', '')
+        type=update_type
     )
+    
+    # Set type-specific notes if provided
+    if update_type == 'progress' and 'progress_notes' in data:
+        update.progress_notes = data['progress_notes']
+    elif update_type == 'effort' and 'effort_notes' in data:
+        update.effort_notes = data['effort_notes']
     
     # If this is a progress update (not effort), update the milestone's completion status
     if update_type == 'progress':
@@ -888,8 +897,12 @@ def create_milestone_progress(goal_id, milestone_id):
     
     # Send system update to the replica
     update_message = f"User updated {update_type} for milestone '{milestone.title}' in goal '{goal.title}' to {progress_value}%"
-    if data.get('notes'):
-        update_message += f" with note: '{data['notes']}'"
+    
+    # Add notes to message if present
+    if update_type == 'progress' and update.progress_notes:
+        update_message += f" with note: '{update.progress_notes}'"
+    elif update_type == 'effort' and update.effort_notes:
+        update_message += f" with note: '{update.effort_notes}'"
     
     # Import here to avoid circular imports
     from app.api.chat import send_system_update
@@ -926,7 +939,7 @@ def get_milestone_progress(goal_id, milestone_id):
     # Get optional type filter
     update_type = request.args.get('type')
     
-    # Build query based on filters
+    # Build query based on filters - ensure we're only getting updates for this specific milestone
     query = ProgressUpdate.query.filter_by(goal_id=goal_id, milestone_id=milestone_id)
     
     # Filter by type if specified

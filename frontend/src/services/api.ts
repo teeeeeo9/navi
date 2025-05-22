@@ -55,9 +55,11 @@ export interface Reflection {
 export interface ProgressUpdate {
   id: number
   goal_id: number
+  milestone_id?: number
   progress_value: number // 0-100 scale in backend but displayed as 0-10 in UI
   type: 'progress' | 'effort' // Type of progress update
-  notes: string
+  progress_notes?: string // Notes for progress updates
+  effort_notes?: string // Notes for effort updates
   created_at: string
 }
 
@@ -129,7 +131,7 @@ const api = {
     const { data } = await axios.post(`/api/progress/goals/${goalId}/updates`, {
       progress_value: progressValue, // Backend expects 0-100 scale
       type: 'progress',
-      notes
+      progress_notes: notes // Use only the type-specific notes field
     })
     return data.progress_update
   },
@@ -139,7 +141,7 @@ const api = {
     const { data } = await axios.post(`/api/progress/goals/${goalId}/updates`, {
       progress_value: effortValue, // Backend expects 0-100 scale
       type: 'effort',
-      notes
+      effort_notes: notes // Use only the type-specific notes field
     })
     return data.progress_update
   },
@@ -155,7 +157,8 @@ const api = {
     const { data } = await axios.post(`/api/goals/${goalId}/milestones/${milestoneId}/progress`, {
       progress_value: progressValue, // Backend expects 0-100 scale
       type,
-      notes
+      // Set the type-specific notes field based on update type
+      ...(type === 'progress' ? { progress_notes: notes } : { effort_notes: notes })
     })
     return data.progress_update
   },
@@ -177,4 +180,4 @@ const api = {
   }
 }
 
-export default api 
+export default api

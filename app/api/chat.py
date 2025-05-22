@@ -287,7 +287,14 @@ def get_goal_context(goal):
     if progress_updates:
         context += "\nRecent Progress Updates:\n"
         for update in progress_updates:
-            context += f"- Date: {update.created_at.strftime('%Y-%m-%d')}, Progress: {update.progress_value}%, Notes: {update.notes or 'No notes'}\n"
+            # Add formatted update to context
+            note_text = "No notes"
+            if update.type == 'progress' and update.progress_notes:
+                note_text = update.progress_notes
+            elif update.type == 'effort' and update.effort_notes:
+                note_text = update.effort_notes
+                
+            context += f"- Date: {update.created_at.strftime('%Y-%m-%d')}, Progress: {update.progress_value}%, Notes: {note_text}\n"
     
     context += "\n[END GOAL CONTEXT]\n\n"
     return context

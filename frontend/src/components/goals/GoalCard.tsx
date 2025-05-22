@@ -198,11 +198,14 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       // Convert from 0-10 scale to 0-100 for backend
       const scaledValue = value * 10;
       
+      // Use appropriate notes based on the update type
+      const notes = type === 'progress' ? progressNotes : effortNotes;
+      
       // Use appropriate API function based on type
       let update: ProgressUpdate;
       if (type === 'progress') {
-        console.log(`Creating progress update: ${scaledValue}/100, notes: "${progressNotes}"`);
-        update = await api.createProgressUpdate(goal.id, scaledValue, progressNotes);
+        console.log(`Creating progress update: ${scaledValue}/100, notes: "${notes}"`);
+        update = await api.createProgressUpdate(goal.id, scaledValue, notes);
         console.log('Progress update created:', update);
         
         // Update local goal data if progress state was updated
@@ -211,8 +214,8 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           status: scaledValue === 100 && prev.status === 'active' ? 'completed' : prev.status
         }));
       } else if (type === 'effort') {
-        console.log(`Creating effort update: ${scaledValue}/100, notes: "${effortNotes}"`);
-        update = await api.createEffortUpdate(goal.id, scaledValue, effortNotes);
+        console.log(`Creating effort update: ${scaledValue}/100, notes: "${notes}"`);
+        update = await api.createEffortUpdate(goal.id, scaledValue, notes);
         console.log('Effort update created:', update);
       } else {
         console.error('Unknown update type:', type);
@@ -247,9 +250,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
         onGoalUpdate(updatedGoal);
       }
       
-      // Clear notes after submission
-      setProgressNotes('');
-      setEffortNotes('');
+      // Clear the appropriate notes field based on the update type
+      if (type === 'progress') {
+        setProgressNotes('');
+      } else {
+        setEffortNotes('');
+      }
       
     } catch (error) {
       console.error(`Failed to update ${type}:`, error);
@@ -680,12 +686,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                 </motion.button>
               </div>
               <div className="mt-2">
-                <label className="text-xs font-medium text-dark-100 block mb-1">Progress Notes:</label>
+                <label className="text-sm font-medium text-dark-100 block mb-2">Progress Notes:</label>
                 <textarea
                   value={progressNotes}
                   onChange={(e) => setProgressNotes(e.target.value)}
                   placeholder="Add notes about your progress..."
-                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-sm text-white placeholder:text-dark-300 resize-none"
+                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
                   rows={2}
                 />
               </div>
@@ -720,26 +726,15 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                 </motion.button>
               </div>
               <div className="mt-2">
-                <label className="text-xs font-medium text-dark-100 block mb-1">Effort Notes:</label>
+                <label className="text-sm font-medium text-dark-100 block mb-2">Effort Notes:</label>
                 <textarea
                   value={effortNotes}
                   onChange={(e) => setEffortNotes(e.target.value)}
                   placeholder="Add notes about your effort level..."
-                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-sm text-white placeholder:text-dark-300 resize-none"
+                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
                   rows={2}
                 />
               </div>
-            </div>
-            
-            <div className="mb-3">
-              <label className="text-sm font-medium text-dark-100 block mb-2">Notes:</label>
-              <textarea
-                value={progressNotes}
-                onChange={(e) => setProgressNotes(e.target.value)}
-                placeholder="Add notes about your progress or effort..."
-                className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
-                rows={2}
-              />
             </div>
           </div>
         )}
@@ -747,7 +742,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
         {showCharts && goal.progress_updates && goal.progress_updates.length > 0 && (
           <ProgressChart 
             progressData={goal.progress_updates} 
-            title="Progress & Effort History"
+            title="Goal Progress & Effort"
           />
         )}
         
@@ -839,6 +834,16 @@ const refreshGoal = async (goalId: number, onGoalUpdate: (goal: Goal) => void) =
   }
 }
 
+const refreshMilestoneProgress = async (goalId: number, milestoneId: number): Promise<ProgressUpdate[]> => {
+  try {
+    const updates = await api.getMilestoneProgressUpdates(goalId, milestoneId)
+    return updates
+  } catch (error) {
+    console.error('Failed to refresh milestone progress:', error)
+    return []
+  }
+}
+
 interface MilestoneCardProps {
   milestone: Milestone;
   formatDate: (date: string) => string;
@@ -865,6 +870,27 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   const [progressNotes, setProgressNotes] = useState<string>('');
   const [effortNotes, setEffortNotes] = useState<string>('');
   
+  // State for milestone progress updates
+  const [milestoneProgressUpdates, setMilestoneProgressUpdates] = useState<ProgressUpdate[]>(
+    milestone.progress_updates || []
+  );
+  
+  // Fetch milestone progress updates when the milestone is shown
+  useEffect(() => {
+    if (showMilestoneProgress && (!milestone.progress_updates || milestone.progress_updates.length === 0)) {
+      const fetchMilestoneProgress = async () => {
+        try {
+          const updates = await api.getMilestoneProgressUpdates(goalId, milestone.id);
+          setMilestoneProgressUpdates(updates);
+        } catch (error) {
+          console.error(`Failed to fetch milestone progress updates:`, error);
+        }
+      };
+      
+      fetchMilestoneProgress();
+    }
+  }, [showMilestoneProgress, milestone.id, goalId, milestone.progress_updates]);
+  
   useEffect(() => {
     setLocalMilestone({
       title: milestone.title,
@@ -873,9 +899,13 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
     });
     
     setProgressValue(Math.round(milestone.completion_status / 10));
+    
+    // Update progress updates if available
+    if (milestone.progress_updates && milestone.progress_updates.length > 0) {
+      setMilestoneProgressUpdates(milestone.progress_updates);
+    }
   }, [milestone]);
   
-  // Editing states
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(milestone.title);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -888,7 +918,6 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   const [statusValue, setStatusValue] = useState(milestone.status);
   const statusSelectRef = useRef<HTMLSelectElement>(null);
   
-  // Set focus when editing starts
   useEffect(() => {
     if (isEditingTitle && titleInputRef.current) {
       titleInputRef.current.focus();
@@ -902,7 +931,6 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
     }
   }, [isEditingTitle, isEditingTargetDate, isEditingStatus]);
   
-  // Get status color
   const getStatusColor = () => {
     switch(localMilestone.status) {
       case 'completed': return 'bg-green-500/20 text-green-300';
@@ -919,25 +947,41 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       // Convert from 0-10 scale to 0-100 for backend
       const scaledValue = value * 10;
       
+      // Use the appropriate notes field based on the update type
+      const notes = type === 'progress' ? progressNotes : effortNotes;
+      
       // Use the new API method to create a progress update for the milestone
       const update = await api.createMilestoneProgressUpdate(
         goalId,
         milestone.id,
         scaledValue,
         type,
-        progressNotes
+        notes
       );
       
       console.log(`Milestone ${type} update successful:`, update);
       
+      // Refresh milestone progress data to ensure we have the latest updates
+      const refreshedUpdates = await refreshMilestoneProgress(goalId, milestone.id);
+      setMilestoneProgressUpdates(refreshedUpdates);
+      
       // If this is a progress update, update the milestone's completion status
       if (type === 'progress') {
+        // Update local progress value
+        setProgressValue(value);
+        
         // Only update if this milestone has its status changed
         if (scaledValue === 100 && localMilestone.status === 'pending') {
           await api.updateMilestone(goalId, milestone.id, {
             status: 'completed',
             completion_status: scaledValue
           });
+          
+          // Update local state
+          setLocalMilestone(prev => ({
+            ...prev,
+            status: 'completed'
+          }));
         } else {
           await api.updateMilestone(goalId, milestone.id, {
             completion_status: scaledValue
@@ -951,8 +995,12 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
         onMilestoneUpdate(updatedGoal);
       }
       
-      // Clear notes after submission
-      setProgressNotes('');
+      // Clear the appropriate notes field based on the update type
+      if (type === 'progress') {
+        setProgressNotes('');
+      } else {
+        setEffortNotes('');
+      }
       
     } catch (error) {
       console.error(`Failed to update milestone ${type}:`, error);
@@ -981,7 +1029,9 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       });
       
       if (onMilestoneUpdate) {
-        onMilestoneUpdate(updatedMilestone);
+        // Refresh the entire goal to update all milestone data
+        const updatedGoal = await api.getGoalDetails(goalId);
+        onMilestoneUpdate(updatedGoal);
       }
     } catch (error) {
       console.error('Failed to update milestone title:', error);
@@ -1020,7 +1070,9 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       });
       
       if (onMilestoneUpdate) {
-        onMilestoneUpdate(updatedMilestone);
+        // Refresh the entire goal to update all milestone data
+        const updatedGoal = await api.getGoalDetails(goalId);
+        onMilestoneUpdate(updatedGoal);
       }
     } catch (error) {
       console.error('Failed to update milestone target date:', error);
@@ -1058,7 +1110,9 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       });
       
       if (onMilestoneUpdate) {
-        onMilestoneUpdate(updatedMilestone);
+        // Refresh the entire goal to update all milestone data
+        const updatedGoal = await api.getGoalDetails(goalId);
+        onMilestoneUpdate(updatedGoal);
       }
     } catch (error) {
       console.error('Failed to update milestone status:', error);
@@ -1190,6 +1244,16 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
                     Update
                   </motion.button>
                 </div>
+                <div className="mt-2">
+                  <label className="text-xs font-medium text-dark-100 block mb-1">Progress Notes:</label>
+                  <textarea
+                    value={progressNotes}
+                    onChange={(e) => setProgressNotes(e.target.value)}
+                    placeholder="Add notes about your progress..."
+                    className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                    rows={2}
+                  />
+                </div>
               </div>
               
               <div className="mb-4">
@@ -1220,26 +1284,28 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
                     Update
                   </motion.button>
                 </div>
-              </div>
-              
-              <div className="mb-1">
-                <label className="text-xs font-medium text-dark-100 block mb-1">Notes:</label>
-                <textarea
-                  value={progressNotes}
-                  onChange={(e) => setProgressNotes(e.target.value)}
-                  placeholder="Add notes about your progress or effort..."
-                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
-                  rows={2}
-                />
+                <div className="mt-2">
+                  <label className="text-xs font-medium text-dark-100 block mb-1">Effort Notes:</label>
+                  <textarea
+                    value={effortNotes}
+                    onChange={(e) => setEffortNotes(e.target.value)}
+                    placeholder="Add notes about your effort level..."
+                    className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                    rows={2}
+                  />
+                </div>
               </div>
             </div>
             
-            {milestone.progress_updates && milestone.progress_updates.length > 0 && (
-              <ProgressChart 
-                progressData={milestone.progress_updates} 
-                title={`${localMilestone.title} Progress & Effort`}
-                minimal={true}
-              />
+            {milestoneProgressUpdates.length > 0 && (
+              <div className="mt-3 rounded-lg bg-dark-700/50 p-3 border border-primary-400/30">
+                <h4 className="mb-2 text-xs font-medium text-primary-300">Milestone Progress Chart</h4>
+                <ProgressChart 
+                  progressData={milestoneProgressUpdates} 
+                  title={`${localMilestone.title}`}
+                  height={180}
+                />
+              </div>
             )}
           </>
         )}

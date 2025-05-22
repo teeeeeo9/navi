@@ -33,28 +33,50 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const formattedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     const formattedTime = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     
+    // Extract progress and effort entries
+    const progressEntry = payload.find((p: any) => p.dataKey === 'progress')
+    const effortEntry = payload.find((p: any) => p.dataKey === 'effort')
+    
+    // Get notes from the payload
+    const progressNotes = payload[0]?.payload?.progress_notes
+    const effortNotes = payload[0]?.payload?.effort_notes
+    
     return (
       <div className="glass-dark rounded-lg p-3 shadow-lg">
         <p className="mb-1 text-sm text-dark-100">{formattedDate} {formattedTime}</p>
-        {payload.map((entry: any, index: number) => {
-          if (entry.value === undefined) return null
-          
-          // Set appropriate label based on dataKey
-          const label = entry.dataKey === 'progress' ? 'Progress' : 'Effort'
-          
-          return (
-            <p key={index} className="text-base font-bold text-white">
-              <span 
-                className={`inline-block w-3 h-3 rounded-full mr-2`}
-                style={{ backgroundColor: entry.color }}
-              ></span>
-              {label}: {entry.value}
-            </p>
-          )
-        })}
-        {payload[0]?.payload?.notes && (
+        
+        {/* Show progress value if present */}
+        {progressEntry && progressEntry.value !== undefined && (
+          <p className="text-base font-bold text-white">
+            <span 
+              className="inline-block w-3 h-3 rounded-full mr-2"
+              style={{ backgroundColor: progressEntry.color }}
+            ></span>
+            Progress: {progressEntry.value}
+          </p>
+        )}
+        
+        {/* Show effort value if present */}
+        {effortEntry && effortEntry.value !== undefined && (
+          <p className="text-base font-bold text-white">
+            <span 
+              className="inline-block w-3 h-3 rounded-full mr-2"
+              style={{ backgroundColor: effortEntry.color }}
+            ></span>
+            Effort: {effortEntry.value}
+          </p>
+        )}
+        
+        {/* Display notes */}
+        {progressNotes && progressEntry && (
           <p className="mt-1 max-w-[200px] text-xs text-dark-200">
-            {payload[0].payload.notes}
+            {progressNotes}
+          </p>
+        )}
+        
+        {effortNotes && effortEntry && (
+          <p className="mt-1 max-w-[200px] text-xs text-dark-200">
+            {effortNotes}
           </p>
         )}
       </div>
@@ -71,30 +93,56 @@ const ProgressChart = ({
 }: ProgressChartProps) => {
   const [expanded, setExpanded] = useState(false)
   
-  // Split data by type
-  const progressUpdates = progressData.filter(update => !update.type || update.type === 'progress')
-  const effortUpdates = progressData.filter(update => update.type === 'effort')
+  // Filter data to ensure it's specific to either a goal or milestone
+  // If first item has milestone_id, only include items with that milestone_id
+  // If first item has no milestone_id, exclude all items with milestone_id
+  const filteredData = progressData.length > 0 
+    ? (() => {
+        const firstItem = progressData[0];
+        const hasMilestoneId = !!firstItem.milestone_id;
+        
+        if (hasMilestoneId) {
+          // This is milestone data - only show updates for this specific milestone
+          return progressData.filter(update => update.milestone_id === firstItem.milestone_id);
+        } else {
+          // This is goal data - exclude any milestone updates
+          return progressData.filter(update => !update.milestone_id);
+        }
+      })()
+    : progressData;
+    
+  // Check if this is a milestone chart
+  const isMilestoneChart = filteredData.length > 0 && !!filteredData[0].milestone_id;
   
-  console.log(`Chart data: ${progressData.length} total updates`)
+  // Split data by type
+  const progressUpdates = filteredData.filter(update => !update.type || update.type === 'progress')
+  const effortUpdates = filteredData.filter(update => update.type === 'effort')
+  
+  console.log(`Chart data: ${filteredData.length} total updates`)
   console.log(`Progress updates: ${progressUpdates.length}`)
   console.log(`Effort updates: ${effortUpdates.length}`)
 
   // Process data for the chart
-  const chartData = progressData.map(update => {
+  const chartData = filteredData.map(update => {
     const timestamp = new Date(update.created_at).getTime()
     
     // Create data point with timestamp as x-axis value
     const dataPoint: any = {
-      timestamp,
-      notes: update.notes
+      timestamp
     }
     
     // Set property based on update type
     if (update.type === 'effort') {
       dataPoint.effort = update.progress_value / 10 // Convert to 0-10 scale
+      if (update.effort_notes) {
+        dataPoint.effort_notes = update.effort_notes
+      }
     } else {
       // Default to progress type if not specified or is 'progress'
       dataPoint.progress = update.progress_value / 10 // Convert to 0-10 scale
+      if (update.progress_notes) {
+        dataPoint.progress_notes = update.progress_notes
+      }
     }
     
     return dataPoint
@@ -112,10 +160,10 @@ const ProgressChart = ({
   }
 
   if (minimal) {
-    // Minimal chart for compact view
+    // Minimal chart for compact view - increase height for milestone charts
     return (
-      <div className="mt-2 bg-dark-800/40 p-2 rounded-lg">
-        <ResponsiveContainer width="100%" height={70}>
+      <div className={`mt-2 bg-dark-800/40 p-2 rounded-lg ${isMilestoneChart ? 'border border-primary-400/20' : ''}`}>
+        <ResponsiveContainer width="100%" height={100}>
           <ComposedChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
@@ -165,7 +213,7 @@ const ProgressChart = ({
   // Full interactive chart
   return (
     <motion.div 
-      className="mt-4 overflow-hidden rounded-lg bg-dark-700/60 p-4 border border-dark-600/30"
+      className={`mt-4 overflow-hidden rounded-lg bg-dark-700/60 p-4 border ${isMilestoneChart ? 'border-primary-400/30' : 'border-dark-600/30'}`}
       animate={{ height: expanded ? 'auto' : height }}
       transition={{ duration: 0.3 }}
     >
