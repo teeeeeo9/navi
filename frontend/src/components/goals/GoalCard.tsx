@@ -63,7 +63,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   // Create a local copy of the goal data that we can update immediately
   const [localGoalData, setLocalGoalData] = useState({
     title: goal.title,
-    description: goal.description || '',
     startDate: goal.start_date,
     targetDate: goal.target_date,
     status: goal.status
@@ -73,7 +72,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   useEffect(() => {
     setLocalGoalData({
       title: goal.title,
-      description: goal.description || '',
       startDate: goal.start_date,
       targetDate: goal.target_date,
       status: goal.status
@@ -84,11 +82,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [titleValue, setTitleValue] = useState(goal.title)
   const titleInputRef = useRef<HTMLInputElement>(null)
-  
-  // Description editing state
-  const [isEditingDescription, setIsEditingDescription] = useState(false)
-  const [descriptionValue, setDescriptionValue] = useState(goal.description || '')
-  const descriptionInputRef = useRef<HTMLTextAreaElement>(null)
   
   // Start date editing state
   const [isEditingStartDate, setIsEditingStartDate] = useState(false)
@@ -159,9 +152,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       titleInputRef.current.focus()
       titleInputRef.current.select()
     }
-    if (isEditingDescription && descriptionInputRef.current) {
-      descriptionInputRef.current.focus()
-    }
     if (isEditingStartDate && startDateInputRef.current) {
       startDateInputRef.current.focus()
     }
@@ -175,7 +165,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       reflectionInputRefs.current[editingReflectionId]?.focus()
       reflectionInputRefs.current[editingReflectionId]?.select()
     }
-  }, [isEditingTitle, isEditingDescription, isEditingStartDate, isEditingTargetDate, isEditingStatus, editingReflectionId])
+  }, [isEditingTitle, isEditingStartDate, isEditingTargetDate, isEditingStatus, editingReflectionId])
   
   // Debug log to check progress data
   console.log(`GoalCard for goal "${goal.title}":`, {
@@ -242,44 +232,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       handleTitleSave()
     } else if (e.key === 'Escape') {
       setIsEditingTitle(false)
-    }
-  }
-
-  // Description editing handlers
-  const handleDescriptionDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setDescriptionValue(localGoalData.description)
-    setIsEditingDescription(true)
-  }
-
-  const handleDescriptionSave = async () => {
-    if (descriptionValue === localGoalData.description) {
-      setIsEditingDescription(false)
-      return
-    }
-
-    // Exit edit mode immediately and update local display value
-    const newDescription = descriptionValue
-    setLocalGoalData(prev => ({ ...prev, description: newDescription }))
-    setIsEditingDescription(false)
-
-    try {
-      const updatedGoal = await api.updateGoal(goal.id, { description: newDescription })
-      if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal)
-      }
-    } catch (error) {
-      console.error('Failed to update goal description:', error)
-      // Revert to original value on error
-      setLocalGoalData(prev => ({ ...prev, description: goal.description || '' }))
-    }
-  }
-
-  const handleDescriptionKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
-      handleDescriptionSave()
-    } else if (e.key === 'Escape') {
-      setIsEditingDescription(false)
     }
   }
 
@@ -590,26 +542,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                 {localGoalData.title}
               </h2>
             )}
-            
-            {isEditingDescription ? (
-              <textarea
-                ref={descriptionInputRef}
-                value={descriptionValue}
-                onChange={(e) => setDescriptionValue(e.target.value)}
-                onBlur={handleDescriptionSave}
-                onKeyDown={handleDescriptionKeyDown}
-                className="w-full bg-transparent text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
-                rows={3}
-                placeholder="Add a description..."
-              />
-            ) : (
-              <p 
-                className="text-dark-100"
-                onDoubleClick={handleDescriptionDoubleClick}
-              >
-                {localGoalData.description || 'No description'}
-              </p>
-            )}
           </div>
           
           <div className="text-right">
@@ -802,7 +734,6 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   // Local state for milestone data to update immediately
   const [localMilestone, setLocalMilestone] = useState({
     title: milestone.title,
-    description: milestone.description || '',
     targetDate: milestone.target_date,
     status: milestone.status
   });
@@ -811,7 +742,6 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   useEffect(() => {
     setLocalMilestone({
       title: milestone.title,
-      description: milestone.description || '',
       targetDate: milestone.target_date,
       status: milestone.status
     });
@@ -820,10 +750,6 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(milestone.title);
   const titleInputRef = useRef<HTMLInputElement>(null);
-  
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [descriptionValue, setDescriptionValue] = useState(milestone.description || '');
-  const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   
   const [isEditingTargetDate, setIsEditingTargetDate] = useState(false);
   const [targetDateValue, setTargetDateValue] = useState(milestone.target_date.split('T')[0]);
@@ -838,16 +764,13 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       titleInputRef.current.focus();
       titleInputRef.current.select();
     }
-    if (isEditingDescription && descriptionInputRef.current) {
-      descriptionInputRef.current.focus();
-    }
     if (isEditingTargetDate && targetDateInputRef.current) {
       targetDateInputRef.current.focus();
     }
     if (isEditingStatus && statusSelectRef.current) {
       statusSelectRef.current.focus();
     }
-  }, [isEditingTitle, isEditingDescription, isEditingTargetDate, isEditingStatus]);
+  }, [isEditingTitle, isEditingTargetDate, isEditingStatus]);
   
   const getStatusColor = () => {
     switch(localMilestone.status) {
@@ -892,44 +815,6 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       handleTitleSave();
     } else if (e.key === 'Escape') {
       setIsEditingTitle(false);
-    }
-  }
-
-  // Description editing handlers
-  const handleDescriptionDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDescriptionValue(localMilestone.description);
-    setIsEditingDescription(true);
-  }
-
-  const handleDescriptionSave = async () => {
-    if (descriptionValue === localMilestone.description) {
-      setIsEditingDescription(false);
-      return;
-    }
-
-    // Exit edit mode immediately and update local display value
-    const newDescription = descriptionValue;
-    setLocalMilestone(prev => ({ ...prev, description: newDescription }));
-    setIsEditingDescription(false);
-
-    try {
-      const updatedMilestone = await api.updateMilestone(goalId, milestone.id, { description: newDescription });
-      if (onMilestoneUpdate) {
-        onMilestoneUpdate(updatedMilestone);
-      }
-    } catch (error) {
-      console.error('Failed to update milestone description:', error);
-      // Revert to original value on error
-      setLocalMilestone(prev => ({ ...prev, description: milestone.description || '' }));
-    }
-  }
-
-  const handleDescriptionKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
-      handleDescriptionSave();
-    } else if (e.key === 'Escape') {
-      setIsEditingDescription(false);
     }
   }
 
@@ -1026,26 +911,6 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
               onDoubleClick={handleTitleDoubleClick}
             >
               {localMilestone.title}
-            </div>
-          )}
-          
-          {isEditingDescription ? (
-            <textarea
-              ref={descriptionInputRef}
-              value={descriptionValue}
-              onChange={(e) => setDescriptionValue(e.target.value)}
-              onBlur={handleDescriptionSave}
-              onKeyDown={handleDescriptionKeyDown}
-              className="w-full bg-transparent text-sm opacity-80 outline-none focus:border-b focus:border-primary-400/50"
-              rows={2}
-              placeholder="Add a description..."
-            />
-          ) : (
-            <div 
-              className="text-sm opacity-80"
-              onDoubleClick={handleDescriptionDoubleClick}
-            >
-              {localMilestone.description || 'No description'}
             </div>
           )}
           

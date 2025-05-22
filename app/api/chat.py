@@ -170,6 +170,7 @@ def send_message():
         
         # Send the message to Sensay
         logger.info(f"Sending message to Sensay API, content length: {len(content_to_send)}")
+        logger.debug(f"Sending message to Sensay API, content: {content_to_send}")
         try:
             response = sensay_client.create_chat_completion(
                 replica_id=replica_id,
@@ -196,12 +197,12 @@ def send_message():
         if action_data:
             logger.info(f"Extracted action from AI response: {action_data.get('action_type', 'unknown')}")
             
-            # # Process the action
-            # action_result, display_content = process_action(action_data, user_id, related_goal_id)
+            # Process the action
+            action_result, display_content = process_action(action_data, user_id, related_goal_id)
             
-            # # If we couldn't process the action, use the original content
-            # if not display_content:
-            #     display_content = ai_content
+            # If we couldn't process the action, use the original content
+            if not display_content:
+                display_content = ai_content
         
         # Create the AI response message in the database (with the display version)
         ai_message = ChatMessage(

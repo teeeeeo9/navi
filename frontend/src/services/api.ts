@@ -23,7 +23,6 @@ export interface PaginatedResponse<T> {
 export interface Goal {
   id: number
   title: string
-  description: string
   importance: number
   status: 'active' | 'completed' | 'abandoned'
   start_date: string
@@ -40,7 +39,6 @@ export interface Milestone {
   id: number
   goal_id: number
   title: string
-  description: string
   target_date: string
   status: 'pending' | 'completed' | 'missed'
   completion_status: number

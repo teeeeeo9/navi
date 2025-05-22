@@ -179,7 +179,7 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
   });
 
   return (
-    <div className={`flex h-full flex-col rounded-2xl ${className}`}>
+    <div className={`flex h-full flex-col rounded-2xl ${className} ${compact ? '' : 'max-w-4xl mx-auto'}`}>
       <div className="glass-dark flex-1 overflow-hidden rounded-2xl">
         {isLoadingMore && (
           <div className="flex justify-center p-2">
@@ -192,11 +192,11 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
         )}
         <div 
           ref={chatContainerRef} 
-          className="flex h-full flex-col overflow-y-auto p-4 scrollbar-thin"
+          className="flex h-full flex-col overflow-y-auto p-6 scrollbar-thin"
         >
           {filteredMessages.length === 0 && !isLoading ? (
             <div className="flex h-full flex-col items-center justify-center text-dark-100">
-              <p className="text-center">No messages yet. Start a conversation!</p>
+              <p className={`text-center ${!compact ? 'text-lg' : ''}`}>No messages yet. Start a conversation!</p>
             </div>
           ) : (
             <div className="flex flex-col space-y-4">
@@ -217,7 +217,7 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
                           : message.sender === 'system'
                           ? 'bg-dark-600/70 text-dark-200 italic'
                           : 'bg-secondary-700/70 text-white'
-                      }`}
+                      } ${!compact ? 'px-5 py-4 shadow-lg' : ''}`}
                     >
                       <p className="whitespace-pre-wrap">{message.content}</p>
                       <p className="mt-1 text-right text-xs opacity-70">
@@ -251,28 +251,28 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
       </div>
 
       <form onSubmit={handleSendMessage} className="mt-4">
-        <div className="glass-dark flex overflow-hidden rounded-full">
+        <div className="glass-dark flex overflow-hidden rounded-2xl">
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={compact ? "Type here..." : "What's on your mind?"}
-            className="flex-1 bg-transparent px-4 py-3 text-white outline-none resize-none min-h-[42px] max-h-32 overflow-y-auto"
+            className="flex-1 bg-transparent px-6 py-4 text-white outline-none resize-none min-h-[60px] max-h-40 overflow-y-auto text-lg"
             disabled={isLoading}
-            rows={1}
+            rows={2}
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
-            className="bg-primary-600 px-5 py-3 text-white"
+            className="bg-primary-600 px-6 py-4 text-white"
             disabled={isLoading || !newMessage.trim()}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="h-5 w-5"
+              className="h-6 w-6"
             >
               <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
             </svg>

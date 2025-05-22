@@ -153,12 +153,13 @@ const Dashboard = () => {
             width: goals.length > 0 ? layoutVariants.split.chatWidth : layoutVariants.chatExpanded.chatWidth
           }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
-          className="flex h-full"
+          className={`flex h-full ${goals.length === 0 ? 'px-4 md:px-6 lg:px-12' : ''}`}
         >
           <ChatInterface 
             className="w-full" 
             relatedGoalId={selectedGoal?.id}
             onMessageAction={handleMessageAction}
+            compact={goals.length > 0}
           />
         </motion.div>
         
