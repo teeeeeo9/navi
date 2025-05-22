@@ -158,6 +158,20 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
     }
   }
 
+  // Handle keyboard events for the textarea
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // If Ctrl+Enter is pressed, insert a new line
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault()
+      setNewMessage(prev => prev + '\n')
+    } 
+    // If Enter is pressed without Ctrl, submit the form
+    else if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage(e as unknown as FormEvent)
+    }
+  }
+
   // Filter messages to hide system updates in the interface
   const filteredMessages = messages.filter(message => {
     // Hide any message that starts with SYSTEM_UPDATE prefix, regardless of sender
@@ -238,13 +252,14 @@ const ChatInterface = ({ relatedGoalId, onMessageAction, className = '', compact
 
       <form onSubmit={handleSendMessage} className="mt-4">
         <div className="glass-dark flex overflow-hidden rounded-full">
-          <input
-            type="text"
+          <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={compact ? "Type here..." : "What's on your mind?"}
-            className="flex-1 bg-transparent px-4 py-3 text-white outline-none"
+            className="flex-1 bg-transparent px-4 py-3 text-white outline-none resize-none min-h-[42px] max-h-32 overflow-y-auto"
             disabled={isLoading}
+            rows={1}
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
