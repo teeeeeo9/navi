@@ -182,7 +182,6 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   const getStatusColor = () => {
     switch(localGoalData.status) {
       case 'completed': return 'bg-green-500/20 text-green-300'
-      case 'abandoned': return 'bg-red-500/20 text-red-300'
       default: 
         return isOverdue 
           ? 'bg-amber-500/20 text-amber-300'
@@ -439,7 +438,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   }
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStatusValue(e.target.value as 'active' | 'completed' | 'abandoned')
+    setStatusValue(e.target.value as 'active' | 'completed')
   }
 
   const handleReflectionDoubleClick = (type: string, e: React.MouseEvent) => {
@@ -512,64 +511,31 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={onClick}
-        className={`glass relative cursor-pointer overflow-hidden rounded-xl p-0.5 transition-all ${
+        className={`glass relative cursor-pointer overflow-hidden rounded-xl p-0.5 transition-all h-full ${
           isSelected ? 'ring-2 ring-primary-400/70' : ''
         }`}
       >
-        <div className="relative rounded-xl p-4">
-          {localGoalData.status === 'completed' && (
-            <span className={`absolute right-4 top-4 rounded-full px-2 py-0.5 text-xs ${getStatusColor()}`}>
-              {localGoalData.status}
-            </span>
-          )}
+        <div className="relative rounded-xl p-3 h-full flex flex-col">
+          {/* Status badge removed */}
           
           <div className="absolute -right-4 -top-4">
-            <ProgressRing progress={progressValue} size={60} strokeWidth={4} />
+            <ProgressRing progress={progressValue} size={50} strokeWidth={4} />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
               {progressValue}/10
             </span>
           </div>
           
-          <div className="pr-12">
-            {isEditingTitle ? (
-              <input
-                ref={titleInputRef}
-                type="text"
-                value={titleValue}
-                onChange={(e) => setTitleValue(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyDown={handleTitleKeyDown}
-                className="mb-1 w-full bg-transparent text-xl font-bold text-white outline-none focus:border-b focus:border-primary-400/50"
-                onClick={(e) => e.stopPropagation()}
-              />
-            ) : (
-              <h3 
-                className="mb-1 text-xl font-bold text-white"
-                onDoubleClick={handleTitleDoubleClick}
-              >
-                {localGoalData.title}
-              </h3>
-            )}
+          <div className="pr-10 flex-grow">
+            <h3 
+              className="mb-1 text-lg font-bold text-white line-clamp-2"
+              onDoubleClick={handleTitleDoubleClick}
+            >
+              {localGoalData.title}
+            </h3>
             
-            <div className="flex items-center space-x-2 text-xs text-dark-100">
+            <div className="flex flex-wrap items-center gap-x-2 text-xs text-dark-100">
               <span>
-                Target: {
-                  isEditingTargetDate ? (
-                    <input
-                      ref={targetDateInputRef}
-                      type="date"
-                      value={targetDateValue}
-                      onChange={(e) => setTargetDateValue(e.target.value)}
-                      onBlur={handleTargetDateSave}
-                      className="bg-transparent text-xs text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ) : (
-                    <span onDoubleClick={handleTargetDateDoubleClick}>
-                      {formatDate(localGoalData.targetDate)}
-                    </span>
-                  )
-                }
+                Target: {formatDate(localGoalData.targetDate)}
               </span>
               <span>•</span>
               <span className={isOverdue ? 'text-amber-400' : ''}>
@@ -578,10 +544,19 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
             </div>
             
             {goal.milestones && goal.milestones.length > 0 && (
-              <div className="mt-2 text-xs text-dark-200">
+              <div className="mt-1 text-xs text-dark-200">
                 {goal.milestones.length} milestone{goal.milestones.length > 1 ? 's' : ''}
               </div>
             )}
+          </div>
+          
+          <div className="mt-auto">
+            <div className="w-full bg-dark-700/30 h-2 rounded-full overflow-hidden mt-2">
+              <div 
+                className="bg-primary-400 h-full" 
+                style={{ width: `${goal.completion_status}%` }}
+              ></div>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -614,26 +589,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
             )}
             
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dark-100">
-              {isEditingStatus ? (
-                <select
-                  ref={statusSelectRef}
-                  value={statusValue}
-                  onChange={handleStatusChange}
-                  onBlur={handleStatusSave}
-                  className={`rounded-full px-2 py-0.5 text-xs outline-none ${getStatusColor()}`}
-                >
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                  <option value="abandoned">Abandoned</option>
-                </select>
-              ) : (
-                <span 
-                  className={`rounded-full px-2 py-0.5 text-xs ${getStatusColor()}`}
-                  onDoubleClick={handleStatusDoubleClick}
-                >
-                  {localGoalData.status}
-                </span>
-              )}
+              {/* Status selector removed */}
               
               <span>
                 Start: {
@@ -979,7 +935,6 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   const getStatusColor = () => {
     switch(localMilestone.status) {
       case 'completed': return 'bg-green-500/20 text-green-300';
-      case 'missed': return 'bg-red-500/20 text-red-300';
       default: return 'bg-blue-500/20 text-blue-300';
     }
   };
@@ -1009,7 +964,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       tempUpdate.progress_notes = notes;
       
       // Update local milestone status if needed
-      if (scaledValue === 100 && localMilestone.status === 'pending') {
+      if (scaledValue === 100 && localMilestone.status === 'active') {
         setLocalMilestone(prev => ({
           ...prev,
           status: 'completed'
@@ -1047,7 +1002,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       // If this is a progress update, update the milestone's completion status
       if (type === 'progress') {
         // Only update if this milestone has its status changed
-        if (scaledValue === 100 && localMilestone.status === 'pending') {
+        if (scaledValue === 100 && localMilestone.status === 'active') {
           await api.updateMilestone(goalId, milestone.id, {
             status: 'completed',
             completion_status: scaledValue
@@ -1194,7 +1149,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   };
   
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStatusValue(e.target.value as 'pending' | 'completed' | 'missed');
+    setStatusValue(e.target.value as 'active' | 'completed');
   };
 
   // Convert from 0-100 to 0-10 scale for display
@@ -1225,26 +1180,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
             )}
             
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-dark-100">
-              {isEditingStatus ? (
-                <select
-                  ref={statusSelectRef}
-                  value={statusValue}
-                  onChange={handleStatusChange}
-                  onBlur={handleStatusSave}
-                  className={`rounded-full px-2 py-0.5 text-xs outline-none ${getStatusColor()}`}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="completed">Completed</option>
-                  <option value="missed">Missed</option>
-                </select>
-              ) : (
-                <span 
-                  className={`rounded-full px-2 py-0.5 text-xs ${getStatusColor()}`}
-                  onDoubleClick={handleStatusDoubleClick}
-                >
-                  {localMilestone.status}
-                </span>
-              )}
+              {/* Status selector removed */}
               
               <span>
                 Target: {

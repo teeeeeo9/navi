@@ -398,7 +398,7 @@ def update_goal(goal_id):
             return jsonify({'error': 'Invalid completion_status format. Must be a number between 0 and 100'}), 400
     
     if 'status' in data and data['status'] != goal.status:
-        valid_statuses = ['active', 'completed', 'abandoned', 'deferred']
+        valid_statuses = ['active', 'completed']
         if data['status'] in valid_statuses:
             old_status = goal.status
             goal.status = data['status']
@@ -685,7 +685,7 @@ def update_milestone(goal_id, milestone_id):
             return jsonify({'error': 'Invalid completion_status format. Must be a number between 0 and 100'}), 400
     
     if 'status' in data and data['status'] != milestone.status:
-        valid_statuses = ['pending', 'completed', 'missed']
+        valid_statuses = ['active', 'completed']
         if data['status'] in valid_statuses:
             old_status = milestone.status
             milestone.status = data['status']
@@ -889,7 +889,7 @@ def create_milestone_progress(goal_id, milestone_id):
         milestone.completion_status = progress_value
         
         # If progress is 100%, mark milestone as completed
-        if progress_value == 100 and milestone.status == 'pending':
+        if progress_value == 100 and milestone.status == 'active':
             milestone.status = 'completed'
     
     db.session.add(update)

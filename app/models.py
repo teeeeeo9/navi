@@ -56,7 +56,7 @@ class Goal(db.Model):
     start_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     target_date = db.Column(db.DateTime, nullable=False)
     completion_status = db.Column(db.Float, default=0.0)  # Percentage of completion (0-100)
-    status = db.Column(db.String(20), default='active')  # active, completed, abandoned, deferred
+    status = db.Column(db.String(20), default='active')  # active, completed
     parent_goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -79,7 +79,7 @@ class Milestone(db.Model):
     title = db.Column(db.String(200), nullable=False)
     target_date = db.Column(db.DateTime, nullable=False)
     completion_status = db.Column(db.Float, default=0.0)  # Percentage of completion (0-100)
-    status = db.Column(db.String(20), default='pending')  # pending, completed, missed
+    status = db.Column(db.String(20), default='active')  # active, completed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

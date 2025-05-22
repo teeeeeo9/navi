@@ -23,7 +23,7 @@ export interface PaginatedResponse<T> {
 export interface Goal {
   id: number
   title: string
-  status: 'active' | 'completed' | 'abandoned'
+  status: 'active' | 'completed'
   start_date: string
   target_date: string
   completion_status: number // 0-100 scale in backend
@@ -39,7 +39,7 @@ export interface Milestone {
   goal_id: number
   title: string
   target_date: string
-  status: 'pending' | 'completed' | 'missed'
+  status: 'active' | 'completed'
   completion_status: number // 0-100 scale in backend
   progress_updates?: ProgressUpdate[]
 }

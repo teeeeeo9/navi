@@ -138,14 +138,14 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
       {/* Carousel */}
       <div 
         ref={carouselRef}
-        className="scrollbar-hide h-full overflow-x-auto pb-6"
+        className="scrollbar-hide h-full overflow-x-auto pb-4"
         onScroll={handleScroll}
       >
         <div className="flex h-full gap-4 px-4">
           {goals.map((goal, index) => (
             <motion.div
               key={goal.id}
-              className="w-72 flex-shrink-0"
+              className="w-72 flex-shrink-0 h-44"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -164,7 +164,7 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
 
       {/* Pagination dots */}
       {goals.length > 1 && (
-        <div className="absolute bottom-0 left-0 flex w-full justify-center space-x-2">
+        <div className="absolute -bottom-1 left-0 flex w-full justify-center space-x-2">
           {goals.map((_, index) => (
             <button
               key={index}
