@@ -15,8 +15,8 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isChatExpanded, setIsChatExpanded] = useState(true)
+  const [_isLoading, setIsLoading] = useState(true)
+  const [_isChatExpanded, setIsChatExpanded] = useState(true)
   const chatInterfaceRef = useRef<{ handleSystemUpdate: (updateType: string, entity: string, changes: any) => Promise<void> } | null>(null)
 
   // Load goals on component mount

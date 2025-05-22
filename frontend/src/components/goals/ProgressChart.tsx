@@ -1,15 +1,14 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
   Area,
-  ComposedChart
+  ComposedChart,
+  Line
 } from 'recharts'
 import { ProgressUpdate } from '@/services/api'
 

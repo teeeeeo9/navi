@@ -84,7 +84,7 @@ const api = {
   },
 
   // New method to notify chat interface about system updates
-  handleSystemUpdate: async (updateType: string, entity: string, changes: any): Promise<{
+  handleSystemUpdate: async (updateType: string, entity: string, _changes: any): Promise<{
     system_message: ChatMessage
     ai_response: ChatMessage
   }> => {

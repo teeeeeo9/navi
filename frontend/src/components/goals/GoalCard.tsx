@@ -180,7 +180,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   }
 
   // Get status color
-  const getStatusColor = () => {
+  /* const getStatusColor = () => {
     switch(localGoalData.status) {
       case 'completed': return 'bg-green-500/20 text-green-300'
       default: 
@@ -188,7 +188,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           ? 'bg-amber-500/20 text-amber-300'
           : 'bg-blue-500/20 text-blue-300'
     }
-  }
+  } */
 
   // Function to handle submitting progress updates
   const handleProgressUpdate = async (type: 'progress' | 'effort', value: number) => {
@@ -830,7 +830,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                     key={milestone.id} 
                     milestone={milestone} 
                     formatDate={formatDate} 
-                    showChart={showCharts}
+                    _showChart={showCharts}
                     onMilestoneUpdate={(updatedGoal) => {
                       if (onGoalUpdate) {
                         refreshGoal(goal.id, onGoalUpdate)
@@ -875,8 +875,8 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
 
 const refreshGoal = async (goalId: number, onGoalUpdate: (goal: Goal, updateType: string) => void) => {
   try {
-    const updatedGoal = await api.getGoalDetails(goalId)
-    onGoalUpdate(updatedGoal, 'refresh')
+    const goal = await api.getGoalDetails(goalId)
+    onGoalUpdate(goal, 'refresh')
   } catch (error) {
     console.error('Failed to refresh goal:', error)
   }
@@ -895,12 +895,12 @@ const refreshMilestoneProgress = async (goalId: number, milestoneId: number): Pr
 interface MilestoneCardProps {
   milestone: Milestone;
   formatDate: (date: string) => string;
-  showChart: boolean;
+  _showChart?: boolean;
   onMilestoneUpdate?: (updatedGoal: Goal, updateType: string) => void;
   goalId: number;
 }
 
-const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, goalId }: MilestoneCardProps) => {
+const MilestoneCard = ({ milestone, formatDate, _showChart, onMilestoneUpdate, goalId }: MilestoneCardProps) => {
   const [localMilestone, setLocalMilestone] = useState({
     title: milestone.title,
     targetDate: milestone.target_date,
