@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import api, { Goal } from '@/services/api'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import logoImage from '@/assets/logo.png'
 
 // Components
 import ChatInterface from '@/components/chat/ChatInterface'
@@ -187,9 +188,10 @@ const Dashboard = () => {
     <div className="flex h-screen flex-col">
       {/* Header */}
       <header className="glass-dark z-10 flex justify-between p-4">
-        <div className="flex items-center">
+        <Link to="/" className="flex items-center space-x-2">
+          <img src={logoImage} alt="Navi Logo" className="h-8 w-auto" />
           <h1 className="text-2xl font-bold text-white">Navi</h1>
-        </div>
+        </Link>
 
         <div className="flex items-center space-x-4">
           {user && (

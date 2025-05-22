@@ -1,14 +1,16 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import logoImage from '@/assets/logo.png'
 
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-dark-900 to-dark-800 text-white">
       {/* Header/Navigation */}
       <header className="glass-dark z-10 flex justify-between p-4">
-        <div className="flex items-center">
+        <Link to="/" className="flex items-center space-x-2">
+          <img src={logoImage} alt="Navi Logo" className="h-8 w-auto" />
           <h1 className="text-2xl font-bold text-white">Navi</h1>
-        </div>
+        </Link>
 
         <div className="flex items-center space-x-4">
           <Link 
@@ -33,6 +35,9 @@ const LandingPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
+          <div className="mb-6 flex justify-center">
+            <img src={logoImage} alt="Navi Logo" className="h-24 w-auto" />
+          </div>
           <h1 className="mb-4 text-5xl font-bold leading-tight">
             Strategic Goal Planning <br />
             <span className="text-primary-400">Powered by AI</span>
@@ -68,12 +73,9 @@ const LandingPage = () => {
             className="glass mx-auto max-w-4xl rounded-2xl p-8 text-center"
           >
             <div className="mb-6 flex justify-center">
-              {/* Sensay Logo - A simple placeholder since we don't have the actual logo */}
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-500/20 text-primary-400">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-12 w-12">
-                  <path d="M16.5 7.5h-9v9h9v-9Z" />
-                  <path fillRule="evenodd" d="M8.25 2.25A.75.75 0 0 1 9 3v.75h2.25V3a.75.75 0 0 1 1.5 0v.75H15V3a.75.75 0 0 1 1.5 0v.75h.75a3 3 0 0 1 3 3v.75H21A.75.75 0 0 1 21 9h-.75v2.25H21a.75.75 0 0 1 0 1.5h-.75V15H21a.75.75 0 0 1 0 1.5h-.75v.75a3 3 0 0 1-3 3h-.75V21a.75.75 0 0 1-1.5 0v-.75h-2.25V21a.75.75 0 0 1-1.5 0v-.75H9V21a.75.75 0 0 1-1.5 0v-.75h-.75a3 3 0 0 1-3-3v-.75H3A.75.75 0 0 1 3 15h.75v-2.25H3a.75.75 0 0 1 0-1.5h.75V9H3a.75.75 0 0 1 0-1.5h.75v-.75a3 3 0 0 1 3-3h.75V3a.75.75 0 0 1 .75-.75ZM6 6.75A.75.75 0 0 1 6.75 6h10.5a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1-.75-.75V6.75Z" clipRule="evenodd" />
-                </svg>
+              {/* Sensay Logo */}
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-500/20">
+                <img src={logoImage} alt="Sensay Logo" className="h-16 w-auto" />
               </div>
             </div>
             <h2 className="mb-4 text-3xl font-bold">Powered by Sensay AI</h2>

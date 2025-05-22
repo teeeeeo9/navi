@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
+import logoImage from '@/assets/logo.png'
 
 const Register = () => {
   const [username, setUsername] = useState('')
@@ -46,7 +47,10 @@ const Register = () => {
         className="glass w-full max-w-md rounded-2xl p-8 shadow-2xl"
       >
         <div className="mb-6 text-center">
-          <h1 className="mb-1 text-3xl font-bold text-white">Create Account</h1>
+          <Link to="/" className="inline-block">
+            <img src={logoImage} alt="Navi Logo" className="mx-auto mb-2 h-12 w-auto" />
+            <h1 className="mb-1 text-3xl font-bold text-white">Create Account</h1>
+          </Link>
           <p className="text-md text-dark-100">Join Navi to plan your success</p>
         </div>
 
