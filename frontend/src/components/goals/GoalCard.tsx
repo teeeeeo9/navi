@@ -191,14 +191,19 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
 
   // Function to handle submitting progress updates
   const handleProgressUpdate = async (type: 'progress' | 'effort', value: number) => {
+    console.log(`Updating ${type} with value: ${value}/10`);
+    
     try {
       // Convert from 0-10 scale to 0-100 for backend
       const scaledValue = value * 10
+      console.log(`Scaled value for backend: ${scaledValue}/100`);
       
       // Use appropriate API function based on type
       let update: ProgressUpdate
       if (type === 'progress') {
+        console.log('Calling createProgressUpdate API method');
         update = await api.createProgressUpdate(goal.id, scaledValue, progressNotes)
+        console.log('Progress update response:', update);
         
         // Update local goal data if progress state was updated
         setLocalGoalData(prev => ({
@@ -206,11 +211,14 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           status: scaledValue === 100 && prev.status === 'active' ? 'completed' : prev.status
         }))
       } else {
+        console.log('Calling createEffortUpdate API method');
         update = await api.createEffortUpdate(goal.id, scaledValue, progressNotes)
+        console.log('Effort update response:', update);
       }
       
       // Refresh the goal to get updated progress data
       if (onGoalUpdate) {
+        console.log('Refreshing goal data');
         const updatedGoal = await api.getGoalDetails(goal.id)
         onGoalUpdate(updatedGoal)
       }
@@ -692,29 +700,10 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
         )}
         
         {showCharts && goal.progress_updates && goal.progress_updates.length > 0 && (
-          <>
-            {/* Filter progress updates by type */}
-            {goal.progress_updates.filter(update => 
-              update.type === 'progress' || !update.type // Include updates without type for backward compatibility
-            ).length > 0 && (
-              <ProgressChart 
-                progressData={goal.progress_updates.filter(update => 
-                  update.type === 'progress' || !update.type
-                )} 
-                title="Progress State History"
-                progressType="progress"
-              />
-            )}
-            
-            {/* Effort level chart - only shown if there are effort updates */}
-            {goal.progress_updates.filter(update => update.type === 'effort').length > 0 && (
-              <ProgressChart 
-                progressData={goal.progress_updates.filter(update => update.type === 'effort')} 
-                title="Effort Level History"
-                progressType="effort"
-              />
-            )}
-          </>
+          <ProgressChart 
+            progressData={goal.progress_updates} 
+            title="Progress & Effort History"
+          />
         )}
         
         {goal.reflections && Object.keys(goal.reflections).length > 0 && (
@@ -1052,31 +1041,11 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
         </div>
         
         {showChart && milestone.progress_updates && milestone.progress_updates.length > 0 && (
-          <>
-            {/* Filter progress updates by type */}
-            {milestone.progress_updates.filter(update => 
-              update.type === 'progress' || !update.type // Include updates without type for backward compatibility
-            ).length > 0 && (
-              <ProgressChart 
-                progressData={milestone.progress_updates.filter(update => 
-                  update.type === 'progress' || !update.type
-                )} 
-                title={`${localMilestone.title} Progress`}
-                progressType="progress"
-                minimal={true}
-              />
-            )}
-            
-            {/* Effort level chart - only shown if there are effort updates */}
-            {milestone.progress_updates.filter(update => update.type === 'effort').length > 0 && (
-              <ProgressChart 
-                progressData={milestone.progress_updates.filter(update => update.type === 'effort')} 
-                title={`${localMilestone.title} Effort`}
-                progressType="effort"
-                minimal={true}
-              />
-            )}
-          </>
+          <ProgressChart 
+            progressData={milestone.progress_updates} 
+            title={`${localMilestone.title} Progress & Effort`}
+            minimal={true}
+          />
         )}
       </div>
     </div>

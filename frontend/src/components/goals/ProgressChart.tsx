@@ -7,9 +7,10 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer, 
-  Area, 
-  AreaChart
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+  ComposedChart
 } from 'recharts'
 import { ProgressUpdate } from '@/services/api'
 
@@ -18,28 +19,44 @@ interface ProgressChartProps {
   title?: string
   height?: number
   minimal?: boolean
-  progressType?: 'progress' | 'effort'  // Add progress type to display appropriate label
 }
 
-// Format date to be more readable
-const formatDate = (dateString: string) => {
+// Format time for display in tooltip
+const formatTimeForTooltip = (dateString: string) => {
   const date = new Date(dateString)
+  return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
+
+// Format date for x-axis
+const formatXAxis = (timestamp: number) => {
+  const date = new Date(timestamp)
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-const CustomTooltip = ({ active, payload, label, progressType }: any) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    // Get the label based on progress type
-    const valueLabel = progressType === 'effort' ? 'Effort Level' : 'Progress State'
+    const timestamp = label // timestamp is used as the x-axis value
+    const date = new Date(timestamp)
+    const formattedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    const formattedTime = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     
     return (
       <div className="glass-dark rounded-lg p-3 shadow-lg">
-        <p className="mb-1 text-sm text-dark-100">{label}</p>
-        <p className="text-lg font-bold text-white">
-          {`${payload[0].value}`} {/* Remove % symbol */}
-        </p>
-        <p className="text-xs text-dark-200">{valueLabel}</p>
-        {payload[0].payload.notes && (
+        <p className="mb-1 text-sm text-dark-100">{formattedDate} {formattedTime}</p>
+        {payload.map((entry: any, index: number) => {
+          if (entry.value === undefined) return null
+          
+          return (
+            <p key={index} className="text-base font-bold text-white">
+              <span 
+                className={`inline-block w-3 h-3 rounded-full mr-2`}
+                style={{ backgroundColor: entry.color }}
+              ></span>
+              {entry.name === 'progress' ? 'Progress' : 'Effort'}: {entry.value}
+            </p>
+          )
+        })}
+        {payload[0]?.payload?.notes && (
           <p className="mt-1 max-w-[200px] text-xs text-dark-200">
             {payload[0].payload.notes}
           </p>
@@ -52,33 +69,35 @@ const CustomTooltip = ({ active, payload, label, progressType }: any) => {
 
 const ProgressChart = ({ 
   progressData, 
-  title, 
+  title = "Progress & Effort", 
   height = 200, 
-  minimal = false, 
-  progressType = 'progress' 
+  minimal = false
 }: ProgressChartProps) => {
   const [expanded, setExpanded] = useState(false)
 
-  console.log('ProgressChart inputs:', {
-    progressDataLength: progressData.length,
-    progressData,
-    title,
-    minimal
+  // Process data for the chart
+  const chartData = progressData.map(update => {
+    const timestamp = new Date(update.created_at).getTime()
+    
+    // Create data point with timestamp as x-axis value
+    const dataPoint: any = {
+      timestamp, // Use the timestamp as x-axis value for better distribution
+      notes: update.notes
+    }
+    
+    // Add data based on type
+    if (update.type === 'progress' || !update.type) {
+      dataPoint.progress = update.progress_value / 10 // Convert to 0-10 scale
+    } else if (update.type === 'effort') {
+      dataPoint.effort = update.progress_value / 10 // Convert to 0-10 scale
+    }
+    
+    return dataPoint
   })
-
-  // Format data for the chart
-  const chartData = progressData.map(update => ({
-    date: formatDate(update.created_at),
-    progress: update.progress_value,
-    notes: update.notes,
-    rawDate: new Date(update.created_at).getTime()  // For sorting
-  }))
   
-  // Sort by date (oldest to newest)
-  chartData.sort((a, b) => a.rawDate - b.rawDate)
-
-  console.log('ChartData prepared:', chartData)
-
+  // Sort by timestamp
+  chartData.sort((a: any, b: any) => a.timestamp - b.timestamp)
+  
   if (chartData.length === 0) {
     return (
       <div className="rounded-lg bg-dark-700/30 p-3 text-center text-sm text-dark-300">
@@ -87,21 +106,29 @@ const ProgressChart = ({
     )
   }
 
-  // Get the appropriate label for the Y-axis based on progress type
-  const yAxisLabel = progressType === 'effort' ? 'Effort Level' : 'Progress State'
-
   if (minimal) {
     // Minimal chart for compact view
     return (
       <div className="mt-2 bg-dark-800/40 p-2 rounded-lg">
         <ResponsiveContainer width="100%" height={70}>
-          <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
+          <ComposedChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8} />
                 <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.1} />
               </linearGradient>
+              <linearGradient id="effortGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#4ade80" stopOpacity={0.1} />
+              </linearGradient>
             </defs>
+            <XAxis 
+              dataKey="timestamp" 
+              type="number"
+              domain={['dataMin', 'dataMax']}
+              hide 
+            />
+            <Tooltip content={<CustomTooltip />} />
             <Area 
               type="monotone" 
               dataKey="progress" 
@@ -109,9 +136,18 @@ const ProgressChart = ({
               fillOpacity={1} 
               fill="url(#progressGradient)" 
               strokeWidth={2}
+              connectNulls
             />
-            <Tooltip content={<CustomTooltip progressType={progressType} />} />
-          </AreaChart>
+            <Line 
+              type="monotone" 
+              dataKey="effort" 
+              stroke="#4ade80" 
+              strokeWidth={2}
+              dot={{ r: 3, fill: "#4ade80" }}
+              activeDot={{ r: 5 }}
+              connectNulls
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     )
@@ -126,7 +162,7 @@ const ProgressChart = ({
     >
       {title && (
         <div className="mb-3 flex items-center justify-between">
-          <h4 className="text-sm font-medium text-dark-100">{title} <span className="text-xs text-dark-300">({yAxisLabel})</span></h4>
+          <h4 className="text-sm font-medium text-dark-100">{title}</h4>
           <motion.button
             onClick={() => setExpanded(!expanded)}
             whileHover={{ scale: 1.05 }}
@@ -139,28 +175,51 @@ const ProgressChart = ({
       )}
       
       <ResponsiveContainer width="100%" height={expanded ? 300 : height - 60}>
-        <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+        <ComposedChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+          <defs>
+            <linearGradient id="progressGradientFull" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#2e3142" />
           <XAxis 
-            dataKey="date" 
+            dataKey="timestamp" 
+            type="number"
+            domain={['dataMin', 'dataMax']}
+            tickFormatter={formatXAxis}
             tick={{ fill: '#868ca7' }} 
             axisLine={{ stroke: '#2e3142' }}
           />
           <YAxis 
-            domain={[0, 10]} // Change domain from 0-100 to 0-10
+            domain={[0, 10]}
             tick={{ fill: '#868ca7' }} 
             axisLine={{ stroke: '#2e3142' }}
           />
-          <Tooltip content={<CustomTooltip progressType={progressType} />} />
-          <Line 
+          <Tooltip content={<CustomTooltip />} />
+          <Area 
             type="monotone" 
             dataKey="progress" 
             stroke="#38bdf8" 
-            activeDot={{ r: 8, fill: '#0ea5e9' }} 
+            fillOpacity={1} 
+            fill="url(#progressGradientFull)" 
             strokeWidth={3}
             dot={{ r: 6, fill: '#0ea5e9', strokeWidth: 2, stroke: '#0c4a6e' }}
+            activeDot={{ r: 8, fill: '#0ea5e9' }}
+            name="Progress"
+            connectNulls
           />
-        </LineChart>
+          <Line 
+            type="monotone" 
+            dataKey="effort" 
+            stroke="#4ade80" 
+            strokeWidth={3}
+            dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#166534' }}
+            activeDot={{ r: 8, fill: '#22c55e' }}
+            name="Effort"
+            connectNulls
+          />
+        </ComposedChart>
       </ResponsiveContainer>
     </motion.div>
   )
