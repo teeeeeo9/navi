@@ -26,7 +26,7 @@ export interface Goal {
   status: 'active' | 'completed' | 'abandoned'
   start_date: string
   target_date: string
-  completion_status: number
+  completion_status: number // 0-100 scale in backend
   parent_goal_id: number | null
   milestones: Milestone[]
   reflections: Record<string, Reflection>
@@ -40,7 +40,7 @@ export interface Milestone {
   title: string
   target_date: string
   status: 'pending' | 'completed' | 'missed'
-  completion_status: number
+  completion_status: number // 0-100 scale in backend
   progress_updates?: ProgressUpdate[]
 }
 
@@ -55,7 +55,8 @@ export interface Reflection {
 export interface ProgressUpdate {
   id: number
   goal_id: number
-  progress_value: number
+  progress_value: number // 0-100 scale in backend but displayed as 0-10 in UI
+  type: 'progress' | 'effort' // Type of progress update
   notes: string
   created_at: string
 }
@@ -117,9 +118,27 @@ const api = {
     return data
   },
 
+  getProgressUpdates: async (goalId: number, type?: 'progress' | 'effort'): Promise<ProgressUpdate[]> => {
+    const typeParam = type ? `?type=${type}` : ''
+    const { data } = await axios.get(`/api/progress/goals/${goalId}/updates${typeParam}`)
+    return data.progress_updates
+  },
+
+  // Create a progress state update (affects goal completion status)
   createProgressUpdate: async (goalId: number, progressValue: number, notes: string = ''): Promise<ProgressUpdate> => {
     const { data } = await axios.post(`/api/progress/goals/${goalId}/updates`, {
-      progress_value: progressValue,
+      progress_value: progressValue, // Backend expects 0-100 scale
+      type: 'progress',
+      notes
+    })
+    return data.progress_update
+  },
+
+  // Create an effort level update (does not affect goal completion status)
+  createEffortUpdate: async (goalId: number, effortValue: number, notes: string = ''): Promise<ProgressUpdate> => {
+    const { data } = await axios.post(`/api/progress/goals/${goalId}/updates`, {
+      progress_value: effortValue, // Backend expects 0-100 scale
+      type: 'effort',
       notes
     })
     return data.progress_update

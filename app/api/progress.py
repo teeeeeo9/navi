@@ -19,14 +19,25 @@ def get_progress_updates(goal_id):
     if not goal:
         return jsonify({'error': 'Goal not found'}), 404
     
+    # Get optional type filter
+    update_type = request.args.get('type')
+    
+    # Build query based on filters
+    query = ProgressUpdate.query.filter_by(goal_id=goal_id)
+    
+    # Filter by type if specified
+    if update_type in ['progress', 'effort']:
+        query = query.filter_by(type=update_type)
+    
     # Get progress updates
-    updates = ProgressUpdate.query.filter_by(goal_id=goal_id).order_by(desc(ProgressUpdate.created_at)).all()
+    updates = query.order_by(desc(ProgressUpdate.created_at)).all()
     
     updates_data = []
     for update in updates:
         updates_data.append({
             'id': update.id,
             'progress_value': update.progress_value,
+            'type': update.type,
             'notes': update.notes,
             'created_at': update.created_at.isoformat()
         })
@@ -50,6 +61,11 @@ def create_progress_update(goal_id):
     if 'progress_value' not in data:
         return jsonify({'error': 'Missing required field: progress_value'}), 400
     
+    # Get update type (default to 'progress' for backward compatibility)
+    update_type = data.get('type', 'progress')
+    if update_type not in ['progress', 'effort']:
+        return jsonify({'error': 'Invalid type. Must be "progress" or "effort"'}), 400
+    
     # Validate progress value
     try:
         progress_value = float(data['progress_value'])
@@ -62,6 +78,7 @@ def create_progress_update(goal_id):
     update = ProgressUpdate(
         goal_id=goal_id,
         progress_value=progress_value,
+        type=update_type,
         notes=data.get('notes', '')
     )
     
@@ -69,19 +86,21 @@ def create_progress_update(goal_id):
     status_changed = False
     old_status = goal.status
     
-    # Update goal completion status
-    goal.completion_status = progress_value
-    
-    # If progress is 100%, mark goal as completed
-    if progress_value == 100 and goal.status == 'active':
-        goal.status = 'completed'
-        status_changed = True
+    # Only update goal completion status when type is 'progress'
+    if update_type == 'progress':
+        # Update goal completion status
+        goal.completion_status = progress_value
+        
+        # If progress is 100%, mark goal as completed
+        if progress_value == 100 and goal.status == 'active':
+            goal.status = 'completed'
+            status_changed = True
     
     db.session.add(update)
     db.session.commit()
     
     # Send system update to the replica
-    update_message = f"User updated progress for goal '{goal.title}' to {progress_value}%"
+    update_message = f"User updated {update_type} for goal '{goal.title}' to {progress_value}%"
     if status_changed:
         update_message += f" and status changed from '{old_status}' to '{goal.status}'"
     
@@ -95,10 +114,11 @@ def create_progress_update(goal_id):
     system_update_result = send_system_update(user_id, update_message, goal_id)
     
     return jsonify({
-        'message': 'Progress update created successfully',
+        'message': f'{update_type.capitalize()} update created successfully',
         'progress_update': {
             'id': update.id,
             'progress_value': update.progress_value,
+            'type': update.type,
             'notes': update.notes,
             'created_at': update.created_at.isoformat()
         },
@@ -125,22 +145,31 @@ def delete_progress_update(goal_id, update_id):
     if not update:
         return jsonify({'error': 'Progress update not found'}), 404
     
+    # Store the update type before deleting
+    update_type = update.type
+    
     db.session.delete(update)
     
-    # Update goal completion status based on most recent update (if any)
-    most_recent_update = ProgressUpdate.query.filter_by(goal_id=goal_id).order_by(desc(ProgressUpdate.created_at)).first()
-    if most_recent_update:
-        goal.completion_status = most_recent_update.progress_value
-        # Update goal status based on completion status
-        if goal.completion_status == 100 and goal.status == 'active':
-            goal.status = 'completed'
-        elif goal.completion_status < 100 and goal.status == 'completed':
-            goal.status = 'active'
-    else:
-        # Reset to zero if no updates remain
-        goal.completion_status = 0
-        if goal.status == 'completed':
-            goal.status = 'active'
+    # Only update goal completion status if the deleted update was a 'progress' type
+    if update_type == 'progress':
+        # Update goal completion status based on most recent progress update (if any)
+        most_recent_update = ProgressUpdate.query.filter_by(
+            goal_id=goal_id, 
+            type='progress'
+        ).order_by(desc(ProgressUpdate.created_at)).first()
+        
+        if most_recent_update:
+            goal.completion_status = most_recent_update.progress_value
+            # Update goal status based on completion status
+            if goal.completion_status == 100 and goal.status == 'active':
+                goal.status = 'completed'
+            elif goal.completion_status < 100 and goal.status == 'completed':
+                goal.status = 'active'
+        else:
+            # Reset to zero if no progress updates remain
+            goal.completion_status = 0
+            if goal.status == 'completed':
+                goal.status = 'active'
     
     db.session.commit()
     
@@ -201,6 +230,7 @@ def get_progress_summary():
             'goal_id': goal.id,
             'goal_title': goal.title,
             'progress_value': update.progress_value,
+            'type': update.type,
             'notes': update.notes,
             'created_at': update.created_at.isoformat()
         })

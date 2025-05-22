@@ -525,6 +525,11 @@ def process_action(action_data, user_id, related_goal_id=None):
             
             notes = data.get('notes', '')
             
+            # Get update type (default to 'progress' for backward compatibility)
+            update_type = data.get('type', 'progress')
+            if update_type not in ['progress', 'effort']:
+                raise ValueError("Invalid progress type. Must be 'progress' or 'effort'")
+            
             # Verify goal exists and belongs to user
             goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
             if not goal:
@@ -534,20 +539,23 @@ def process_action(action_data, user_id, related_goal_id=None):
             update = ProgressUpdate(
                 goal_id=goal_id,
                 progress_value=progress_value,
+                type=update_type,
                 notes=notes
             )
             
-            # Update goal completion status
-            goal.completion_status = progress_value
-            
-            # If progress is 100%, mark goal as completed
-            if progress_value == 100 and goal.status == 'active':
-                goal.status = 'completed'
+            # Only update goal completion status when type is 'progress'
+            if update_type == 'progress':
+                # Update goal completion status
+                goal.completion_status = progress_value
+                
+                # If progress is 100%, mark goal as completed
+                if progress_value == 100 and goal.status == 'active':
+                    goal.status = 'completed'
             
             db.session.add(update)
             db.session.commit()
             
-            logger.info(f"Updated progress for goal ID {goal_id} to {progress_value}%")
+            logger.info(f"Updated {update_type} for goal ID {goal_id} to {progress_value}")
             
             # Return the progress update info
             display_content = action_data.get('display_message')
@@ -558,10 +566,11 @@ def process_action(action_data, user_id, related_goal_id=None):
                     'id': update.id,
                     'goal_id': goal_id,
                     'progress_value': progress_value,
+                    'type': update_type,
                     'notes': notes
                 }
             }
-            logger.debug(f"update_progress action completed successfully: {json.dumps({'goal_id': goal_id, 'progress_value': progress_value})}")
+            logger.debug(f"update_progress action completed successfully: {json.dumps({'goal_id': goal_id, 'type': update_type, 'progress_value': progress_value})}")
             return result, display_content
             
         except Exception as e:

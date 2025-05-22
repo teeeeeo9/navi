@@ -93,11 +93,12 @@ class ProgressUpdate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'), nullable=False)
     progress_value = db.Column(db.Float, nullable=False)  # Percentage (0-100)
+    type = db.Column(db.String(20), nullable=False, default='progress')  # 'progress' or 'effort'
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f'<ProgressUpdate for goal_id {self.goal_id}: {self.progress_value}%>'
+        return f'<ProgressUpdate type={self.type} for goal_id {self.goal_id}: {self.progress_value}%>'
 
 class Reflection(db.Model):
     """User reflections on goals, prompted by the replica."""

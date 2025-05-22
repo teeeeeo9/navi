@@ -18,6 +18,7 @@ interface ProgressChartProps {
   title?: string
   height?: number
   minimal?: boolean
+  progressType?: 'progress' | 'effort'  // Add progress type to display appropriate label
 }
 
 // Format date to be more readable
@@ -26,14 +27,18 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, progressType }: any) => {
   if (active && payload && payload.length) {
+    // Get the label based on progress type
+    const valueLabel = progressType === 'effort' ? 'Effort Level' : 'Progress State'
+    
     return (
       <div className="glass-dark rounded-lg p-3 shadow-lg">
         <p className="mb-1 text-sm text-dark-100">{label}</p>
         <p className="text-lg font-bold text-white">
-          {`${payload[0].value}%`}
+          {`${payload[0].value}`} {/* Remove % symbol */}
         </p>
+        <p className="text-xs text-dark-200">{valueLabel}</p>
         {payload[0].payload.notes && (
           <p className="mt-1 max-w-[200px] text-xs text-dark-200">
             {payload[0].payload.notes}
@@ -45,7 +50,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
-const ProgressChart = ({ progressData, title, height = 200, minimal = false }: ProgressChartProps) => {
+const ProgressChart = ({ 
+  progressData, 
+  title, 
+  height = 200, 
+  minimal = false, 
+  progressType = 'progress' 
+}: ProgressChartProps) => {
   const [expanded, setExpanded] = useState(false)
 
   console.log('ProgressChart inputs:', {
@@ -76,6 +87,9 @@ const ProgressChart = ({ progressData, title, height = 200, minimal = false }: P
     )
   }
 
+  // Get the appropriate label for the Y-axis based on progress type
+  const yAxisLabel = progressType === 'effort' ? 'Effort Level' : 'Progress State'
+
   if (minimal) {
     // Minimal chart for compact view
     return (
@@ -96,7 +110,7 @@ const ProgressChart = ({ progressData, title, height = 200, minimal = false }: P
               fill="url(#progressGradient)" 
               strokeWidth={2}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip progressType={progressType} />} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -112,7 +126,7 @@ const ProgressChart = ({ progressData, title, height = 200, minimal = false }: P
     >
       {title && (
         <div className="mb-3 flex items-center justify-between">
-          <h4 className="text-sm font-medium text-dark-100">{title}</h4>
+          <h4 className="text-sm font-medium text-dark-100">{title} <span className="text-xs text-dark-300">({yAxisLabel})</span></h4>
           <motion.button
             onClick={() => setExpanded(!expanded)}
             whileHover={{ scale: 1.05 }}
@@ -133,12 +147,11 @@ const ProgressChart = ({ progressData, title, height = 200, minimal = false }: P
             axisLine={{ stroke: '#2e3142' }}
           />
           <YAxis 
-            domain={[0, 100]} 
+            domain={[0, 10]} // Change domain from 0-100 to 0-10
             tick={{ fill: '#868ca7' }} 
             axisLine={{ stroke: '#2e3142' }}
-            tickFormatter={(value) => `${value}%`}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip progressType={progressType} />} />
           <Line 
             type="monotone" 
             dataKey="progress" 
