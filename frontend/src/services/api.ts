@@ -144,6 +144,33 @@ const api = {
     return data.progress_update
   },
 
+  // Create a progress update for a milestone
+  createMilestoneProgressUpdate: async (
+    goalId: number, 
+    milestoneId: number, 
+    progressValue: number, 
+    type: 'progress' | 'effort', 
+    notes: string = ''
+  ): Promise<ProgressUpdate> => {
+    const { data } = await axios.post(`/api/goals/${goalId}/milestones/${milestoneId}/progress`, {
+      progress_value: progressValue, // Backend expects 0-100 scale
+      type,
+      notes
+    })
+    return data.progress_update
+  },
+
+  // Get progress updates for a milestone
+  getMilestoneProgressUpdates: async (
+    goalId: number, 
+    milestoneId: number,
+    type?: 'progress' | 'effort'
+  ): Promise<ProgressUpdate[]> => {
+    const typeParam = type ? `?type=${type}` : ''
+    const { data } = await axios.get(`/api/goals/${goalId}/milestones/${milestoneId}/progress${typeParam}`)
+    return data.progress_updates
+  },
+
   getAchievements: async () => {
     const { data } = await axios.get('/api/progress/achievements')
     return data

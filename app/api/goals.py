@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import desc
 
 from app import db
-from app.models import Goal, Milestone, User, Reflection
+from app.models import Goal, Milestone, User, Reflection, ProgressUpdate
 from app.services.sensay import get_sensay_client
 
 # Get logger
@@ -827,4 +827,116 @@ def create_reflection(goal_id):
             'created_at': reflection.created_at.isoformat(),
             'updated_at': reflection.updated_at.isoformat()
         }
-    }), 201 
+    }), 201
+
+# Milestone progress endpoints
+@goals_bp.route('/<int:goal_id>/milestones/<int:milestone_id>/progress', methods=['POST'])
+@jwt_required()
+def create_milestone_progress(goal_id, milestone_id):
+    """Create a new progress update for a milestone."""
+    user_id = get_jwt_identity()
+    
+    # Check if goal exists and belongs to user
+    goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
+    if not goal:
+        return jsonify({'error': 'Goal not found'}), 404
+    
+    # Check if milestone exists and belongs to goal
+    milestone = Milestone.query.filter_by(id=milestone_id, goal_id=goal_id).first()
+    if not milestone:
+        return jsonify({'error': 'Milestone not found'}), 404
+    
+    data = request.get_json()
+    
+    # Validate required fields
+    if 'progress_value' not in data:
+        return jsonify({'error': 'Missing required field: progress_value'}), 400
+    
+    # Get update type (default to 'progress' for backward compatibility)
+    update_type = data.get('type', 'progress')
+    if update_type not in ['progress', 'effort']:
+        return jsonify({'error': 'Invalid type. Must be "progress" or "effort"'}), 400
+    
+    # Validate progress value
+    try:
+        progress_value = float(data['progress_value'])
+        if not (0 <= progress_value <= 100):
+            return jsonify({'error': 'Progress value must be between 0 and 100'}), 400
+    except ValueError:
+        return jsonify({'error': 'Invalid progress_value format. Must be a number between 0 and 100'}), 400
+    
+    # Create progress update for milestone
+    # We use the same ProgressUpdate model but link it to the milestone instead of directly to the goal
+    update = ProgressUpdate(
+        goal_id=goal_id,  # Still link to parent goal
+        milestone_id=milestone_id,  # Link to the milestone
+        progress_value=progress_value,
+        type=update_type,
+        notes=data.get('notes', '')
+    )
+    
+    # If this is a progress update (not effort), update the milestone's completion status
+    if update_type == 'progress':
+        milestone.completion_status = progress_value
+        
+        # If progress is 100%, mark milestone as completed
+        if progress_value == 100 and milestone.status == 'pending':
+            milestone.status = 'completed'
+    
+    db.session.add(update)
+    db.session.commit()
+    
+    # Send system update to the replica
+    update_message = f"User updated {update_type} for milestone '{milestone.title}' in goal '{goal.title}' to {progress_value}%"
+    if data.get('notes'):
+        update_message += f" with note: '{data['notes']}'"
+    
+    # Import here to avoid circular imports
+    from app.api.chat import send_system_update
+    
+    # Send the system update
+    system_update_result = send_system_update(user_id, update_message, goal_id)
+    
+    return jsonify({
+        'message': f'Milestone {update_type} update created successfully',
+        'progress_update': update.to_dict(),
+        'milestone': {
+            'id': milestone.id,
+            'completion_status': milestone.completion_status,
+            'status': milestone.status
+        }
+    }), 201
+
+@goals_bp.route('/<int:goal_id>/milestones/<int:milestone_id>/progress', methods=['GET'])
+@jwt_required()
+def get_milestone_progress(goal_id, milestone_id):
+    """Get all progress updates for a milestone."""
+    user_id = get_jwt_identity()
+    
+    # Check if goal exists and belongs to user
+    goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
+    if not goal:
+        return jsonify({'error': 'Goal not found'}), 404
+    
+    # Check if milestone exists and belongs to goal
+    milestone = Milestone.query.filter_by(id=milestone_id, goal_id=goal_id).first()
+    if not milestone:
+        return jsonify({'error': 'Milestone not found'}), 404
+    
+    # Get optional type filter
+    update_type = request.args.get('type')
+    
+    # Build query based on filters
+    query = ProgressUpdate.query.filter_by(goal_id=goal_id, milestone_id=milestone_id)
+    
+    # Filter by type if specified
+    if update_type in ['progress', 'effort']:
+        query = query.filter_by(type=update_type)
+    
+    # Get progress updates
+    updates = query.order_by(desc(ProgressUpdate.created_at)).all()
+    
+    # Convert to dictionaries using the to_dict method
+    updates_data = [update.to_dict() for update in updates]
+    
+    return jsonify({'progress_updates': updates_data}), 200 

@@ -92,17 +92,21 @@ class ProgressUpdate(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     goal_id = db.Column(db.Integer, db.ForeignKey('goals.id'), nullable=False)
+    milestone_id = db.Column(db.Integer, db.ForeignKey('milestones.id'), nullable=True)  # Optional link to milestone
     progress_value = db.Column(db.Float, nullable=False)  # Percentage (0-100)
     type = db.Column(db.String(20), nullable=False, default='progress')  # 'progress' or 'effort'
-    notes = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)  # General notes
+    progress_notes = db.Column(db.Text, nullable=True)  # Specific notes for progress updates
+    effort_notes = db.Column(db.Text, nullable=True)  # Specific notes for effort updates
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f'<ProgressUpdate type={self.type} value={self.progress_value}% for goal_id {self.goal_id}>'
+        milestone_info = f", milestone_id={self.milestone_id}" if self.milestone_id else ""
+        return f'<ProgressUpdate type={self.type} value={self.progress_value}% for goal_id {self.goal_id}{milestone_info}>'
     
     def to_dict(self):
         """Convert to dictionary for API responses"""
-        return {
+        result = {
             'id': self.id,
             'goal_id': self.goal_id,
             'progress_value': self.progress_value,
@@ -110,6 +114,18 @@ class ProgressUpdate(db.Model):
             'notes': self.notes,
             'created_at': self.created_at.isoformat()
         }
+        
+        # Add milestone_id if present
+        if self.milestone_id:
+            result['milestone_id'] = self.milestone_id
+            
+        # Add type-specific notes if present
+        if self.progress_notes and self.type == 'progress':
+            result['progress_notes'] = self.progress_notes
+        if self.effort_notes and self.type == 'effort':
+            result['effort_notes'] = self.effort_notes
+            
+        return result
 
 class Reflection(db.Model):
     """User reflections on goals, prompted by the replica."""

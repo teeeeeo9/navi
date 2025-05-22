@@ -65,6 +65,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   )
   const [effortValue, setEffortValue] = useState<number>(5)
   const [progressNotes, setProgressNotes] = useState<string>('')
+  const [effortNotes, setEffortNotes] = useState<string>('')
   
   const [localGoalData, setLocalGoalData] = useState({
     title: goal.title,
@@ -210,8 +211,8 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           status: scaledValue === 100 && prev.status === 'active' ? 'completed' : prev.status
         }));
       } else if (type === 'effort') {
-        console.log(`Creating effort update: ${scaledValue}/100, notes: "${progressNotes}"`);
-        update = await api.createEffortUpdate(goal.id, scaledValue, progressNotes);
+        console.log(`Creating effort update: ${scaledValue}/100, notes: "${effortNotes}"`);
+        update = await api.createEffortUpdate(goal.id, scaledValue, effortNotes);
         console.log('Effort update created:', update);
       } else {
         console.error('Unknown update type:', type);
@@ -248,6 +249,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
       
       // Clear notes after submission
       setProgressNotes('');
+      setEffortNotes('');
       
     } catch (error) {
       console.error(`Failed to update ${type}:`, error);
@@ -677,6 +679,16 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                   Update
                 </motion.button>
               </div>
+              <div className="mt-2">
+                <label className="text-xs font-medium text-dark-100 block mb-1">Progress Notes:</label>
+                <textarea
+                  value={progressNotes}
+                  onChange={(e) => setProgressNotes(e.target.value)}
+                  placeholder="Add notes about your progress..."
+                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-sm text-white placeholder:text-dark-300 resize-none"
+                  rows={2}
+                />
+              </div>
             </div>
             
             <div className="mb-5">
@@ -706,6 +718,16 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                 >
                   Update
                 </motion.button>
+              </div>
+              <div className="mt-2">
+                <label className="text-xs font-medium text-dark-100 block mb-1">Effort Notes:</label>
+                <textarea
+                  value={effortNotes}
+                  onChange={(e) => setEffortNotes(e.target.value)}
+                  placeholder="Add notes about your effort level..."
+                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-sm text-white placeholder:text-dark-300 resize-none"
+                  rows={2}
+                />
               </div>
             </div>
             
@@ -792,7 +814,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                   milestone={milestone} 
                   formatDate={formatDate} 
                   showChart={showCharts}
-                  onMilestoneUpdate={(updatedMilestone) => {
+                  onMilestoneUpdate={(updatedGoal) => {
                     if (onGoalUpdate) {
                       refreshGoal(goal.id, onGoalUpdate)
                     }
@@ -821,7 +843,7 @@ interface MilestoneCardProps {
   milestone: Milestone;
   formatDate: (date: string) => string;
   showChart: boolean;
-  onMilestoneUpdate?: (milestone: Milestone) => void;
+  onMilestoneUpdate?: (updatedGoal: Goal) => void;
   goalId: number;
 }
 
@@ -832,12 +854,25 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
     status: milestone.status
   });
   
+  // Independent state for showing/hiding progress for this milestone
+  const [showMilestoneProgress, setShowMilestoneProgress] = useState(false);
+  
+  // States for tracking progress
+  const [progressValue, setProgressValue] = useState<number>(
+    Math.round(milestone.completion_status / 10)
+  );
+  const [effortValue, setEffortValue] = useState<number>(5);
+  const [progressNotes, setProgressNotes] = useState<string>('');
+  const [effortNotes, setEffortNotes] = useState<string>('');
+  
   useEffect(() => {
     setLocalMilestone({
       title: milestone.title,
       targetDate: milestone.target_date,
       status: milestone.status
     });
+    
+    setProgressValue(Math.round(milestone.completion_status / 10));
   }, [milestone]);
   
   // Editing states
@@ -873,6 +908,54 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
       case 'completed': return 'bg-green-500/20 text-green-300';
       case 'missed': return 'bg-red-500/20 text-red-300';
       default: return 'bg-blue-500/20 text-blue-300';
+    }
+  };
+  
+  // Function to handle submitting progress updates for milestones
+  const handleMilestoneProgressUpdate = async (type: 'progress' | 'effort', value: number) => {
+    console.log(`Submitting ${type} update for milestone with value: ${value}/10`);
+    
+    try {
+      // Convert from 0-10 scale to 0-100 for backend
+      const scaledValue = value * 10;
+      
+      // Use the new API method to create a progress update for the milestone
+      const update = await api.createMilestoneProgressUpdate(
+        goalId,
+        milestone.id,
+        scaledValue,
+        type,
+        progressNotes
+      );
+      
+      console.log(`Milestone ${type} update successful:`, update);
+      
+      // If this is a progress update, update the milestone's completion status
+      if (type === 'progress') {
+        // Only update if this milestone has its status changed
+        if (scaledValue === 100 && localMilestone.status === 'pending') {
+          await api.updateMilestone(goalId, milestone.id, {
+            status: 'completed',
+            completion_status: scaledValue
+          });
+        } else {
+          await api.updateMilestone(goalId, milestone.id, {
+            completion_status: scaledValue
+          });
+        }
+      }
+      
+      // Refresh the parent goal to get updated milestone data
+      if (onMilestoneUpdate) {
+        const updatedGoal = await api.getGoalDetails(goalId);
+        onMilestoneUpdate(updatedGoal);
+      }
+      
+      // Clear notes after submission
+      setProgressNotes('');
+      
+    } catch (error) {
+      console.error(`Failed to update milestone ${type}:`, error);
     }
   };
   
@@ -988,7 +1071,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   };
 
   // Convert from 0-100 to 0-10 scale for display
-  const progressValue = Math.round(milestone.completion_status / 10);
+  const progressValue10 = Math.round(milestone.completion_status / 10);
   
   return (
     <div className="glass rounded-lg p-0.5">
@@ -1059,16 +1142,106 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
           </div>
           
           <div className="ml-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-dark-700/50">
-            <span className="text-sm font-medium">{progressValue}/10</span>
+            <span className="text-sm font-medium">{progressValue10}/10</span>
           </div>
         </div>
         
-        {showChart && milestone.progress_updates && milestone.progress_updates.length > 0 && (
-          <ProgressChart 
-            progressData={milestone.progress_updates} 
-            title={`${localMilestone.title} Progress & Effort`}
-            minimal={true}
-          />
+        <div className="mt-3 flex justify-end">
+          <motion.button
+            onClick={() => setShowMilestoneProgress(!showMilestoneProgress)}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="rounded-full bg-dark-600/70 px-3 py-1 text-xs text-dark-100 hover:bg-dark-500/70 hover:text-white transition-colors"
+          >
+            {showMilestoneProgress ? 'Hide Progress' : 'Show Progress'}
+          </motion.button>
+        </div>
+        
+        {showMilestoneProgress && (
+          <>
+            <div className="mt-4 mb-4 rounded-xl bg-dark-700/30 p-4 border border-dark-600/30">
+              <h3 className="mb-3 text-sm font-medium text-white">Track Milestone Progress</h3>
+              
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-medium text-dark-100">
+                    Progress State: {progressValue}/10
+                  </label>
+                  <span className="text-xs text-dark-300">
+                    How far you are from completing this milestone
+                  </span>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="10" 
+                    step="1" 
+                    value={progressValue}
+                    onChange={(e) => setProgressValue(parseInt(e.target.value))}
+                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-xs"
+                    onClick={() => handleMilestoneProgressUpdate('progress', progressValue)}
+                  >
+                    Update
+                  </motion.button>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-medium text-dark-100">
+                    Effort Level: {effortValue}/10
+                  </label>
+                  <span className="text-xs text-dark-300">
+                    How much effort you're currently investing
+                  </span>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="10" 
+                    step="1" 
+                    value={effortValue}
+                    onChange={(e) => setEffortValue(parseInt(e.target.value))}
+                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs"
+                    onClick={() => handleMilestoneProgressUpdate('effort', effortValue)}
+                  >
+                    Update
+                  </motion.button>
+                </div>
+              </div>
+              
+              <div className="mb-1">
+                <label className="text-xs font-medium text-dark-100 block mb-1">Notes:</label>
+                <textarea
+                  value={progressNotes}
+                  onChange={(e) => setProgressNotes(e.target.value)}
+                  placeholder="Add notes about your progress or effort..."
+                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                  rows={2}
+                />
+              </div>
+            </div>
+            
+            {milestone.progress_updates && milestone.progress_updates.length > 0 && (
+              <ProgressChart 
+                progressData={milestone.progress_updates} 
+                title={`${localMilestone.title} Progress & Effort`}
+                minimal={true}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
