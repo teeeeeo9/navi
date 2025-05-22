@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, FormEvent, forwardRef, useImperativeHandle } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api, { ChatMessage } from '@/services/api'
+import ChatSuggestions from './ChatSuggestions'
 
 interface ChatInterfaceProps {
   relatedGoalId?: number;
@@ -238,9 +239,25 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
       return true;
     });
 
+    // Method to handle suggestion selection
+    const handleSuggestionSelected = (message: string) => {
+      setNewMessage(message)
+      
+      // Auto-submit the message after a brief delay to allow UI update
+      setTimeout(() => {
+        const event = { preventDefault: () => {} } as FormEvent
+        handleSendMessage(event)
+      }, 100)
+    }
+
     return (
       <div className={`flex h-full flex-col rounded-2xl ${className} ${compact ? '' : 'max-w-4xl mx-auto'}`}>
-        <div className="glass-dark flex-1 overflow-hidden rounded-2xl">
+        <div className="glass-dark flex-1 overflow-hidden rounded-2xl flex flex-col">
+          {/* Chat Suggestions - always shown at the top */}
+          <div className="px-6 pt-6">
+            <ChatSuggestions onSuggestionSelected={handleSuggestionSelected} />
+          </div>
+          
           {isLoadingMore && (
             <div className="flex justify-center p-2">
               <div className="flex space-x-2 rounded-full bg-dark-700/70 px-4 py-2">
@@ -250,9 +267,10 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
               </div>
             </div>
           )}
+          
           <div 
             ref={chatContainerRef} 
-            className="flex h-full flex-col overflow-y-auto p-6 scrollbar-thin"
+            className="flex flex-1 flex-col overflow-y-auto px-6 pb-6 scrollbar-thin"
           >
             {filteredMessages.length === 0 && !isLoading ? (
               <div className="flex h-full flex-col items-center justify-center text-dark-100">
