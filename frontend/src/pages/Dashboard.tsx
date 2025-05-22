@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import api, { Goal } from '@/services/api'
 
@@ -25,8 +25,9 @@ const Dashboard = () => {
   useEffect(() => {
     if (goals.length === 0) {
       setIsChatExpanded(true)
+      setSelectedGoal(null) // Ensure selectedGoal is null when no goals exist
     }
-  }, [goals])
+  }, [goals.length]) // Depend on goals.length instead of the entire goals array for better performance
 
   const loadGoals = async () => {
     try {
@@ -86,6 +87,46 @@ const Dashboard = () => {
 
   // Handle goal updates from the UI
   const handleGoalUpdate = (updatedGoal: Goal, updateType?: string) => {
+    // Handle goal deletion
+    if (updateType === 'goal_delete') {
+      // Remove the goal from the list
+      setGoals(prev => prev.filter(g => g.id !== updatedGoal.id));
+      
+      // If the deleted goal was selected, select another goal or set to null
+      if (selectedGoal && selectedGoal.id === updatedGoal.id) {
+        if (goals.length > 1) {
+          // Find the next goal to select
+          const index = goals.findIndex(g => g.id === updatedGoal.id);
+          const nextIndex = index === goals.length - 1 ? index - 1 : index + 1;
+          const nextGoal = goals[nextIndex];
+          
+          // Get full details for the next goal
+          api.getGoalDetails(nextGoal.id)
+            .then(fullGoalData => {
+              setSelectedGoal(fullGoalData);
+            })
+            .catch(error => {
+              console.error('Failed to load next goal details:', error);
+              setSelectedGoal(nextGoal); // Fallback to basic goal data
+            });
+        } else {
+          // No more goals left
+          setSelectedGoal(null);
+        }
+      }
+      
+      // Notify the chat interface about the system update
+      if (chatInterfaceRef.current) {
+        chatInterfaceRef.current.handleSystemUpdate(
+          updateType,
+          `goal:${updatedGoal.id}`,
+          { goalId: updatedGoal.id, goalTitle: updatedGoal.title }
+        );
+      }
+      
+      return; // Exit early as we've handled the deletion
+    }
+    
     // Notify the chat interface about the system update immediately
     if (updateType && chatInterfaceRef.current) {
       chatInterfaceRef.current.handleSystemUpdate(
@@ -165,7 +206,7 @@ const Dashboard = () => {
           animate={{
             width: goals.length > 0 ? layoutVariants.split.chatWidth : layoutVariants.chatExpanded.chatWidth
           }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
           className={`flex h-full ${goals.length === 0 ? 'px-4 md:px-6 lg:px-12' : ''}`}
         >
           <ChatInterface 
@@ -178,34 +219,37 @@ const Dashboard = () => {
         </motion.div>
         
         {/* Goals section - visible only when there are goals */}
-        {goals.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, width: layoutVariants.split.goalsWidth }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="ml-4 flex h-full flex-col"
-          >
-            {/* Carousel for compact view of goals */}
-            <div className="h-40">
-              <GoalCarousel 
-                goals={goals}
-                selectedGoalId={selectedGoal?.id}
-                onSelectGoal={setSelectedGoal}
-                onGoalUpdate={(goal) => handleGoalUpdate(goal)}
-              />
-            </div>
-
-            {/* Selected goal details */}
-            <div className="mt-4 flex-1 overflow-auto">
-              {selectedGoal && (
-                <GoalCard 
-                  goal={selectedGoal} 
-                  onGoalUpdate={handleGoalUpdate}
+        <AnimatePresence>
+          {goals.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, width: layoutVariants.split.goalsWidth }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="ml-4 flex h-full flex-col"
+            >
+              {/* Carousel for compact view of goals */}
+              <div className="h-40">
+                <GoalCarousel 
+                  goals={goals}
+                  selectedGoalId={selectedGoal?.id}
+                  onSelectGoal={setSelectedGoal}
+                  onGoalUpdate={(goal) => handleGoalUpdate(goal)}
                 />
-              )}
-            </div>
-          </motion.div>
-        )}
+              </div>
+
+              {/* Selected goal details */}
+              <div className="mt-4 flex-1 overflow-auto">
+                {selectedGoal && (
+                  <GoalCard 
+                    goal={selectedGoal} 
+                    onGoalUpdate={handleGoalUpdate}
+                  />
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   )

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Goal, Milestone, Reflection, ProgressUpdate } from '@/services/api'
 import ProgressChart from './ProgressChart'
 import api from '@/services/api'
+import Modal from '@/components/ui/Modal'
 
 // Define an interface for goal updates with simpler reflection format
 interface GoalUpdateWithReflections extends Partial<Omit<Goal, 'reflections'>> {
@@ -505,6 +506,25 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
     }
   }
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+
+  // Handle goal deletion
+  const handleDeleteGoal = async () => {
+    try {
+      await api.deleteGoal(goal.id)
+      // Close the modal
+      setIsDeleteModalOpen(false)
+      // Notify parent component
+      if (onGoalUpdate) {
+        // Use a special update type for deletion
+        onGoalUpdate({ ...goal, id: -1 }, 'goal_delete')
+      }
+    } catch (error) {
+      console.error('Failed to delete goal:', error)
+      setIsDeleteModalOpen(false)
+    }
+  }
+
   if (compact) {
     return (
       <motion.div
@@ -564,265 +584,292 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   }
 
   return (
-    <div className="glass rounded-2xl p-0.5 mb-8">
-      <div className="rounded-2xl p-6">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div className="flex-1">
-            {isEditingTitle ? (
-              <input
-                ref={titleInputRef}
-                type="text"
-                value={titleValue}
-                onChange={(e) => setTitleValue(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyDown={handleTitleKeyDown}
-                className="mb-1 w-full bg-transparent text-2xl font-bold text-white outline-none focus:border-b focus:border-primary-400/50"
-                onClick={(e) => e.stopPropagation()}
-              />
-            ) : (
-              <h2 
-                className="mb-1 text-2xl font-bold text-white"
-                onDoubleClick={handleTitleDoubleClick}
-              >
-                {localGoalData.title}
-              </h2>
-            )}
+    <>
+      <div className="glass rounded-2xl p-0.5 mb-8">
+        <div className="rounded-2xl p-6">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div className="flex-1">
+              {isEditingTitle ? (
+                <input
+                  ref={titleInputRef}
+                  type="text"
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                  onBlur={handleTitleSave}
+                  onKeyDown={handleTitleKeyDown}
+                  className="mb-1 w-full bg-transparent text-2xl font-bold text-white outline-none focus:border-b focus:border-primary-400/50"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <h2 
+                  className="mb-1 text-2xl font-bold text-white"
+                  onDoubleClick={handleTitleDoubleClick}
+                >
+                  {localGoalData.title}
+                </h2>
+              )}
+              
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dark-100">
+                {/* Status selector removed */}
+                
+                <span>
+                  Start: {
+                    isEditingStartDate ? (
+                      <input
+                        ref={startDateInputRef}
+                        type="date"
+                        value={startDateValue}
+                        onChange={(e) => setStartDateValue(e.target.value)}
+                        onBlur={handleStartDateSave}
+                        className="bg-transparent text-sm text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
+                      />
+                    ) : (
+                      <span onDoubleClick={handleStartDateDoubleClick}>
+                        {formatDate(localGoalData.startDate)}
+                      </span>
+                    )
+                  }
+                </span>
+                
+                <span>
+                  Target: {
+                    isEditingTargetDate ? (
+                      <input
+                        ref={targetDateInputRef}
+                        type="date"
+                        value={targetDateValue}
+                        onChange={(e) => setTargetDateValue(e.target.value)}
+                        onBlur={handleTargetDateSave}
+                        className="bg-transparent text-sm text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
+                      />
+                    ) : (
+                      <span onDoubleClick={handleTargetDateDoubleClick}>
+                        {formatDate(localGoalData.targetDate)}
+                      </span>
+                    )
+                  }
+                </span>
+                
+                <span className={isOverdue ? 'text-amber-400' : ''}>
+                  {Math.abs(daysRemaining)} days {daysRemaining >= 0 ? 'left' : 'overdue'}
+                </span>
+              </div>
+            </div>
             
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-dark-100">
-              {/* Status selector removed */}
-              
-              <span>
-                Start: {
-                  isEditingStartDate ? (
-                    <input
-                      ref={startDateInputRef}
-                      type="date"
-                      value={startDateValue}
-                      onChange={(e) => setStartDateValue(e.target.value)}
-                      onBlur={handleStartDateSave}
-                      className="bg-transparent text-sm text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
-                    />
-                  ) : (
-                    <span onDoubleClick={handleStartDateDoubleClick}>
-                      {formatDate(localGoalData.startDate)}
-                    </span>
-                  )
-                }
-              </span>
-              
-              <span>
-                Target: {
-                  isEditingTargetDate ? (
-                    <input
-                      ref={targetDateInputRef}
-                      type="date"
-                      value={targetDateValue}
-                      onChange={(e) => setTargetDateValue(e.target.value)}
-                      onBlur={handleTargetDateSave}
-                      className="bg-transparent text-sm text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
-                    />
-                  ) : (
-                    <span onDoubleClick={handleTargetDateDoubleClick}>
-                      {formatDate(localGoalData.targetDate)}
-                    </span>
-                  )
-                }
-              </span>
-              
-              <span className={isOverdue ? 'text-amber-400' : ''}>
-                {Math.abs(daysRemaining)} days {daysRemaining >= 0 ? 'left' : 'overdue'}
+            <div className="relative flex-shrink-0">
+              <ProgressRing progress={progressValue} size={90} strokeWidth={6} />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-bold">
+                {progressValue}/10
               </span>
             </div>
           </div>
           
-          <div className="relative flex-shrink-0">
-            <ProgressRing progress={progressValue} size={90} strokeWidth={6} />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-bold">
-              {progressValue}/10
-            </span>
+          <div className="mb-4 flex justify-end">
+            <motion.button
+              onClick={() => setShowCharts(!showCharts)}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="rounded-full bg-dark-600/70 px-4 py-1.5 text-sm text-dark-100 hover:bg-dark-500/70 hover:text-white transition-colors"
+            >
+              {showCharts ? 'Hide Progress' : 'Show Progress'}
+            </motion.button>
           </div>
-        </div>
-        
-        <div className="mb-4 flex justify-end">
-          <motion.button
-            onClick={() => setShowCharts(!showCharts)}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="rounded-full bg-dark-600/70 px-4 py-1.5 text-sm text-dark-100 hover:bg-dark-500/70 hover:text-white transition-colors"
-          >
-            {showCharts ? 'Hide Progress' : 'Show Progress'}
-          </motion.button>
-        </div>
 
-        {showCharts && (
-          <div className="mb-6 rounded-xl bg-dark-700/30 p-5 border border-dark-600/30">
-            <h3 className="mb-4 text-lg font-medium text-white">Track Your Progress</h3>
-            
-            <div className="mb-5">
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-dark-100">
-                  Progress State: {progressValue}/10
-                </label>
-                <span className="text-xs text-dark-300">
-                  How far you are from completing this goal
-                </span>
+          {showCharts && (
+            <div className="mb-6 rounded-xl bg-dark-700/30 p-5 border border-dark-600/30">
+              <h3 className="mb-4 text-lg font-medium text-white">Track Your Progress</h3>
+              
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium text-dark-100">
+                    Progress State: {progressValue}/10
+                  </label>
+                  <span className="text-xs text-dark-300">
+                    How far you are from completing this goal
+                  </span>
+                </div>
+                <div className="flex gap-4 items-center">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="10" 
+                    step="1" 
+                    value={progressValue}
+                    onChange={(e) => setProgressValue(parseInt(e.target.value))}
+                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-sm"
+                    onClick={() => handleProgressUpdate('progress', progressValue)}
+                  >
+                    Update
+                  </motion.button>
+                </div>
+                <div className="mt-2">
+                  <label className="text-sm font-medium text-dark-100 block mb-2">Progress Notes:</label>
+                  <textarea
+                    value={progressNotes}
+                    onChange={(e) => setProgressNotes(e.target.value)}
+                    placeholder="Add notes about your progress..."
+                    className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
+                    rows={2}
+                  />
+                </div>
               </div>
-              <div className="flex gap-4 items-center">
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="10" 
-                  step="1" 
-                  value={progressValue}
-                  onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                  className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
-                />
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-sm"
-                  onClick={() => handleProgressUpdate('progress', progressValue)}
-                >
-                  Update
-                </motion.button>
-              </div>
-              <div className="mt-2">
-                <label className="text-sm font-medium text-dark-100 block mb-2">Progress Notes:</label>
-                <textarea
-                  value={progressNotes}
-                  onChange={(e) => setProgressNotes(e.target.value)}
-                  placeholder="Add notes about your progress..."
-                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
-                  rows={2}
-                />
+              
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium text-dark-100">
+                    Effort Level: {effortValue}/10
+                  </label>
+                  <span className="text-xs text-dark-300">
+                    How much effort you're currently investing
+                  </span>
+                </div>
+                <div className="flex gap-4 items-center">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="10" 
+                    step="1" 
+                    value={effortValue}
+                    onChange={(e) => setEffortValue(parseInt(e.target.value))}
+                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
+                    onClick={() => handleProgressUpdate('effort', effortValue)}
+                  >
+                    Update
+                  </motion.button>
+                </div>
+                <div className="mt-2">
+                  <label className="text-sm font-medium text-dark-100 block mb-2">Effort Notes:</label>
+                  <textarea
+                    value={effortNotes}
+                    onChange={(e) => setEffortNotes(e.target.value)}
+                    placeholder="Add notes about your effort level..."
+                    className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
+                    rows={2}
+                  />
+                </div>
               </div>
             </div>
-            
-            <div className="mb-5">
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-dark-100">
-                  Effort Level: {effortValue}/10
-                </label>
-                <span className="text-xs text-dark-300">
-                  How much effort you're currently investing
-                </span>
-              </div>
-              <div className="flex gap-4 items-center">
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="10" 
-                  step="1" 
-                  value={effortValue}
-                  onChange={(e) => setEffortValue(parseInt(e.target.value))}
-                  className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
-                />
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
-                  onClick={() => handleProgressUpdate('effort', effortValue)}
-                >
-                  Update
-                </motion.button>
-              </div>
-              <div className="mt-2">
-                <label className="text-sm font-medium text-dark-100 block mb-2">Effort Notes:</label>
-                <textarea
-                  value={effortNotes}
-                  onChange={(e) => setEffortNotes(e.target.value)}
-                  placeholder="Add notes about your effort level..."
-                  className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
-                  rows={2}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {showCharts && goal.progress_updates && goal.progress_updates.length > 0 && (
-          <ProgressChart 
-            progressData={goal.progress_updates} 
-            title="Goal Progress & Effort"
-          />
-        )}
-        
-        {goal.reflections && Object.keys(goal.reflections).length > 0 && (
-          <div className="mb-6 mt-6">
-            <h3 className="mb-3 text-lg font-medium text-white">Reflections</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {Object.entries(goal.reflections).map(([type, reflection]) => {
-                const isEditing = editingReflectionId === type;
-                const content = isEditing ? reflectionValues[type] : localReflections[type] || reflection.content;
-                
-                if (!content && !isEditing) return null;
-                
-                const getReflectionTitle = (type: string) => {
-                  const titles: Record<string, string> = {
-                    'importance': 'Why This Matters',
-                    'obstacles': 'Potential Obstacles',
-                    'environment': 'Environmental Setup',
-                    'timeline': 'Timeline Considerations',
-                    'backups': 'Backup Plans',
-                    'review_positive': 'What Went Well',
-                    'review_improve': 'Areas to Improve'
+          )}
+          
+          {showCharts && goal.progress_updates && goal.progress_updates.length > 0 && (
+            <ProgressChart 
+              progressData={goal.progress_updates} 
+              title="Goal Progress & Effort"
+            />
+          )}
+          
+          {goal.reflections && Object.keys(goal.reflections).length > 0 && (
+            <div className="mb-6 mt-6">
+              <h3 className="mb-3 text-lg font-medium text-white">Reflections</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                {Object.entries(goal.reflections).map(([type, reflection]) => {
+                  const isEditing = editingReflectionId === type;
+                  const content = isEditing ? reflectionValues[type] : localReflections[type] || reflection.content;
+                  
+                  if (!content && !isEditing) return null;
+                  
+                  const getReflectionTitle = (type: string) => {
+                    const titles: Record<string, string> = {
+                      'importance': 'Why This Matters',
+                      'obstacles': 'Potential Obstacles',
+                      'environment': 'Environmental Setup',
+                      'timeline': 'Timeline Considerations',
+                      'backups': 'Backup Plans',
+                      'review_positive': 'What Went Well',
+                      'review_improve': 'Areas to Improve'
+                    };
+                    return titles[type] || type.replace('_', ' ');
                   };
-                  return titles[type] || type.replace('_', ' ');
-                };
-                
-                return (
-                  <div key={type} className="rounded-lg bg-dark-700/30 p-4 border border-dark-600/30">
-                    <h4 className="mb-2 text-sm font-medium text-dark-100">
-                      {getReflectionTitle(type)}
-                    </h4>
-                    {isEditing ? (
-                      <input
-                        ref={(el) => reflectionInputRefs.current[type] = el}
-                        type="text"
-                        value={reflectionValues[type] || ''}
-                        onChange={(e) => handleReflectionChange(type, e.target.value)}
-                        onBlur={() => handleReflectionSave(type)}
-                        onKeyDown={(e) => handleReflectionKeyDown(type, e)}
-                        className="w-full bg-transparent text-white outline-none focus:border-b focus:border-primary-400/50"
-                      />
-                    ) : (
-                      <p 
-                        className="text-sm text-dark-200"
-                        onDoubleClick={(e) => handleReflectionDoubleClick(type, e)}
-                      >
-                        {content}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+                  
+                  return (
+                    <div key={type} className="rounded-lg bg-dark-700/30 p-4 border border-dark-600/30">
+                      <h4 className="mb-2 text-sm font-medium text-dark-100">
+                        {getReflectionTitle(type)}
+                      </h4>
+                      {isEditing ? (
+                        <input
+                          ref={(el) => reflectionInputRefs.current[type] = el}
+                          type="text"
+                          value={reflectionValues[type] || ''}
+                          onChange={(e) => handleReflectionChange(type, e.target.value)}
+                          onBlur={() => handleReflectionSave(type)}
+                          onKeyDown={(e) => handleReflectionKeyDown(type, e)}
+                          className="w-full bg-transparent text-white outline-none focus:border-b focus:border-primary-400/50"
+                        />
+                      ) : (
+                        <p 
+                          className="text-sm text-dark-200"
+                          onDoubleClick={(e) => handleReflectionDoubleClick(type, e)}
+                        >
+                          {content}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
-        
-        {goal.milestones && goal.milestones.length > 0 && (
-          <div className="mt-6">
-            <h3 className="mb-3 text-lg font-medium text-white">Milestones</h3>
-            <div className="space-y-4">
-              {goal.milestones.map(milestone => (
-                <MilestoneCard 
-                  key={milestone.id} 
-                  milestone={milestone} 
-                  formatDate={formatDate} 
-                  showChart={showCharts}
-                  onMilestoneUpdate={(updatedGoal) => {
-                    if (onGoalUpdate) {
-                      refreshGoal(goal.id, onGoalUpdate)
-                    }
-                  }}
-                  goalId={goal.id}
-                />
-              ))}
+          )}
+          
+          {goal.milestones && goal.milestones.length > 0 && (
+            <div className="mt-6">
+              <h3 className="mb-3 text-lg font-medium text-white">Milestones</h3>
+              <div className="space-y-4">
+                {goal.milestones.map(milestone => (
+                  <MilestoneCard 
+                    key={milestone.id} 
+                    milestone={milestone} 
+                    formatDate={formatDate} 
+                    showChart={showCharts}
+                    onMilestoneUpdate={(updatedGoal) => {
+                      if (onGoalUpdate) {
+                        refreshGoal(goal.id, onGoalUpdate)
+                      }
+                    }}
+                    goalId={goal.id}
+                  />
+                ))}
+              </div>
             </div>
+          )}
+          
+          {/* Remove Goal Button */}
+          <div className="mt-6 border-t border-dark-600/30 pt-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="w-full rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 px-4 py-2 text-sm font-medium transition-colors"
+            >
+              Remove Goal
+            </motion.button>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+      
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Remove Goal"
+        confirmText="Remove"
+        onConfirm={handleDeleteGoal}
+        isDanger
+      >
+        <p>Are you sure you want to remove the goal "{goal.title}"?</p>
+        <p className="mt-2">This action cannot be undone and all associated data will be permanently deleted.</p>
+      </Modal>
+    </>
   )
 }
 
