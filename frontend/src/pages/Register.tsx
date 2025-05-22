@@ -29,7 +29,7 @@ const Register = () => {
     try {
       setIsSubmitting(true)
       await register(username, email, password)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       // Error is handled in the auth context
     } finally {

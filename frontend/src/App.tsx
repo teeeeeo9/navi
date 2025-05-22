@@ -8,6 +8,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import Dashboard from '@/pages/Dashboard'
+import LandingPage from '@/pages/LandingPage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -32,7 +33,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? (
     <>{children}</>
   ) : (
-    <Navigate to="/login" replace />
+    <Navigate to="/" replace />
   )
 }
 
@@ -41,10 +42,11 @@ function App() {
     <AuthProvider>
       <div className="min-h-screen bg-gradient-to-b from-dark-900 to-dark-800">
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
-            path="/*"
+            path="/dashboard/*"
             element={
               <ProtectedRoute>
                 <Dashboard />

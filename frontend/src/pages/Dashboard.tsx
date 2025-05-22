@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import api, { Goal } from '@/services/api'
+import { useNavigate } from 'react-router-dom'
 
 // Components
 import ChatInterface from '@/components/chat/ChatInterface'
@@ -10,6 +11,7 @@ import GoalCarousel from '@/components/goals/GoalCarousel'
 
 const Dashboard = () => {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -162,6 +164,11 @@ const Dashboard = () => {
     }, 0); // Using setTimeout with 0ms delay to ensure animation starts first
   }
 
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
   // Layout animation variants
   const layoutVariants = {
     chatExpanded: {
@@ -191,10 +198,10 @@ const Dashboard = () => {
             </span>
           )}
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="rounded-full bg-dark-700/70 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-dark-600"
           >
-            Logout
+            Log out
           </button>
         </div>
       </header>

@@ -17,7 +17,7 @@ const Login = () => {
     try {
       setIsSubmitting(true)
       await login(username, password)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       // Error is handled in the auth context
     } finally {
