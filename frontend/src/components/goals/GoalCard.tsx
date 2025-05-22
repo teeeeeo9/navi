@@ -1129,7 +1129,7 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
   
   return (
     <div className="glass rounded-lg p-0.5">
-      <div className="rounded-lg p-4">
+      <div className="rounded-lg p-4 bg-dark-700/40 backdrop-blur-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             {isEditingTitle ? (
@@ -1298,8 +1298,8 @@ const MilestoneCard = ({ milestone, formatDate, showChart, onMilestoneUpdate, go
             </div>
             
             {milestoneProgressUpdates.length > 0 && (
-              <div className="mt-3 rounded-lg bg-dark-700/50 p-3 border border-primary-400/30">
-                <h4 className="mb-2 text-xs font-medium text-primary-300">Milestone Progress Chart</h4>
+              <div className="mt-3 rounded-lg bg-dark-700/30 p-3 border border-dark-600/30">
+                <h4 className="mb-2 text-xs font-medium text-dark-100">Milestone Progress Chart</h4>
                 <ProgressChart 
                   progressData={milestoneProgressUpdates} 
                   title={`${localMilestone.title}`}
