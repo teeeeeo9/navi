@@ -1,7 +1,11 @@
 import os
 import logging
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from datetime import datetime, timedelta
+from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import (
+    create_access_token, create_refresh_token, 
+    jwt_required, get_jwt_identity, get_jwt
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from app.models import User, UserPreference
@@ -195,7 +199,8 @@ def get_profile():
                 'reminder_day': preferences.reminder_day,
                 'reminder_time': preferences.reminder_time,
                 'time_zone': preferences.time_zone,
-                'notification_channels': preferences.notification_channels
+                'notification_channels': preferences.notification_channels,
+                'character_preference': preferences.character_preference
             }
         }
     }), 200
@@ -292,4 +297,39 @@ def update_profile():
                 'notification_channels': user.preferences.notification_channels
             }
         }
-    }), 200 
+    }), 200
+
+@auth_bp.route('/preferences/character', methods=['PUT'])
+@jwt_required()
+def update_character_preference():
+    """Update the user's character preference."""
+    user_id = get_user_id_from_jwt()
+    data = request.get_json()
+    
+    if not data or 'character' not in data:
+        return jsonify({'error': 'Character preference is required'}), 400
+    
+    character = data['character']
+    # Validate character option
+    valid_characters = ['default', 'yoda']
+    if character not in valid_characters:
+        return jsonify({'error': f'Invalid character. Must be one of: {", ".join(valid_characters)}'}), 400
+    
+    # Get or create user preferences
+    user_pref = UserPreference.query.filter_by(user_id=user_id).first()
+    if not user_pref:
+        user_pref = UserPreference(user_id=user_id)
+        db.session.add(user_pref)
+    
+    # Update character preference
+    user_pref.character_preference = character
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'message': 'Character preference updated successfully',
+            'character': character
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to update character preference: {str(e)}'}), 500 

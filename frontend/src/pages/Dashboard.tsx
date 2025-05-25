@@ -224,6 +224,7 @@ const Dashboard = () => {
             onMessageAction={handleMessageAction}
             compact={goals.length > 0}
             ref={chatInterfaceRef}
+            hasGoals={goals.length > 0}
           />
         </motion.div>
         

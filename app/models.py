@@ -40,6 +40,7 @@ class UserPreference(db.Model):
     reminder_time = db.Column(db.String(5), default="09:00")  # HH:MM format
     time_zone = db.Column(db.String(50), default="UTC")
     notification_channels = db.Column(db.String(100), default="email")  # Comma-separated channels
+    character_preference = db.Column(db.String(50), default="default")  # Character preference (default, yoda, etc.)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

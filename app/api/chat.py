@@ -7,9 +7,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import desc
 
 from app import db
-from app.models import User, ChatMessage, Goal, Reflection, ProgressUpdate, Milestone
+from app.models import User, ChatMessage, Goal, Reflection, ProgressUpdate, Milestone, UserPreference
 from app.services.sensay import get_sensay_client, SensayAPIError
-from app.prompts import STRATEGIST_SYSTEM_MESSAGE, STRATEGIST_GREETING
+from app.prompts import STRATEGIST_SYSTEM_MESSAGE, STRATEGIST_GREETING, STRATEGIST_SYSTEM_MESSAGE_YODA
 
 # Get logger
 logger = logging.getLogger('strategist.chat')
@@ -863,6 +863,8 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
     2. If they do, return that replica ID
     3. If they don't, create a new replica and store its ID
     """
+    from datetime import datetime
+    
     logger.info(f"Ensuring replica exists for user: {sensay_user_id}")
     
     try:
@@ -872,14 +874,56 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
             logger.warning(f"No local user found for Sensay user ID: {sensay_user_id}")
             raise ValueError(f"No user found for Sensay user ID: {sensay_user_id}")
         
+        # Create a static slug for this user
+        static_slug = f"{REPLICA_SLUG}_{sensay_user_id}"
+        
+        # Get user preferences to determine which system message to use
+        user_preferences = UserPreference.query.filter_by(user_id=user.id).first()
+        character_preference = "default"
+        if user_preferences and hasattr(user_preferences, 'character_preference'):
+            character_preference = user_preferences.character_preference
+        
+        # Select the appropriate system message based on character preference
+        system_message = STRATEGIST_SYSTEM_MESSAGE
+        if character_preference == "yoda":
+            system_message = STRATEGIST_SYSTEM_MESSAGE_YODA
+            logger.info(f"Using Yoda character for user: {user.id}")
+        
         # Check if the user already has a replica_id stored
         if hasattr(user, 'replica_id') and user.replica_id:
             logger.info(f"User already has a replica ID stored: {user.replica_id}")
             
             # Verify the replica still exists in Sensay
             try:
-                sensay_client.get_replica(user.replica_id, sensay_user_id)
+                replica = sensay_client.get_replica(user.replica_id, sensay_user_id)
                 logger.info(f"Confirmed replica exists in Sensay: {user.replica_id}")
+                
+                # Update the system message if character preference has changed
+                current_system_message = replica.get('llm', {}).get('systemMessage', '')
+                if current_system_message != system_message:
+                    logger.info(f"Updating system message for replica: {user.replica_id}")
+                    
+                    # Prepare replica data with all required fields
+                    update_data = {
+                        'name': replica.get('name', 'Strategic Planning Assistant'),
+                        'shortDescription': replica.get('shortDescription', 'A replica to help with strategic planning'),
+                        'greeting': replica.get('greeting', STRATEGIST_GREETING),
+                        'ownerID': sensay_user_id,
+                        'slug': replica.get('slug', static_slug),
+                        'llm': {
+                            'model': replica.get('llm', {}).get('model', 'claude-3-7-sonnet-latest'),
+                            'memoryMode': replica.get('llm', {}).get('memoryMode', 'prompt-caching'),
+                            'systemMessage': system_message
+                        }
+                    }
+                    
+                    # Update replica with new system message
+                    sensay_client.update_replica(
+                        user.replica_id,
+                        sensay_user_id,
+                        update_data
+                    )
+                
                 return user.replica_id
             except Exception as e:
                 logger.warning(f"Stored replica ID {user.replica_id} not found in Sensay: {str(e)}")
@@ -893,7 +937,29 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
         # If user has any replicas, use the first one
         if replicas:
             replica_id = replicas[0].get('uuid')
+            replica = replicas[0]  # Get the full replica data
             logger.info(f"Found existing replica with ID: {replica_id}")
+            
+            # Prepare replica data with all required fields
+            update_data = {
+                'name': replica.get('name', 'Strategic Planning Assistant'),
+                'shortDescription': replica.get('shortDescription', 'A replica to help with strategic planning'),
+                'greeting': replica.get('greeting', STRATEGIST_GREETING),
+                'ownerID': sensay_user_id,
+                'slug': replica.get('slug', static_slug),
+                'llm': {
+                    'model': replica.get('llm', {}).get('model', 'claude-3-7-sonnet-latest'),
+                    'memoryMode': replica.get('llm', {}).get('memoryMode', 'prompt-caching'),
+                    'systemMessage': system_message
+                }
+            }
+            
+            # Update the system message for the existing replica
+            sensay_client.update_replica(
+                replica_id,
+                sensay_user_id,
+                update_data
+            )
             
             # Store this replica ID with the user if we have a replica_id field
             if hasattr(user, 'replica_id'):
@@ -907,22 +973,18 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
                     
             return replica_id
         
-        # No replica found, create one with a unique slug
-        from datetime import datetime
-        unique_timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        unique_slug = f"{REPLICA_SLUG}_{unique_timestamp}"
-        
-        logger.info(f"Creating new replica with unique slug: {unique_slug}")
+        # No replica found, create one with a static slug
+        logger.info(f"Creating new replica with static slug: {static_slug}")
         replica_data = {
             'name': 'Strategic Planning Assistant',
             'shortDescription': 'A replica to help with strategic planning',
             'greeting': STRATEGIST_GREETING,
-            'slug': unique_slug,
+            'slug': static_slug,
             'ownerID': sensay_user_id,
             'llm': {
                 'model': 'claude-3-7-sonnet-latest',
                 'memoryMode': 'prompt-caching',
-                'systemMessage': STRATEGIST_SYSTEM_MESSAGE
+                'systemMessage': system_message
             }
         }
         

@@ -7,7 +7,8 @@ import { logApiConfiguration } from './utils/debugUtils'
 import axios from 'axios'
 
 // Set axios baseURL explicitly to the production API URL
-axios.defaults.baseURL = 'https://f180-46-101-149-73.ngrok-free.app';
+axios.defaults.baseURL = 'http://localhost:5000';
+// axios.defaults.baseURL = 'https://f180-46-101-149-73.ngrok-free.app';
 console.log('Explicitly setting axios.defaults.baseURL to:', axios.defaults.baseURL);
 
 // Add request interceptor to include ngrok-skip-browser-warning header

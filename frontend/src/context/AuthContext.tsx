@@ -2,10 +2,20 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import axios from 'axios'
 
 // Types
+interface UserPreferences {
+  reminder_frequency: string;
+  reminder_day: number | null;
+  reminder_time: string;
+  time_zone: string;
+  notification_channels: string;
+  character_preference: string;
+}
+
 interface User {
-  id: number
-  username: string
-  email: string
+  id: number;
+  username: string;
+  email: string;
+  preferences?: UserPreferences;
 }
 
 interface AuthContextType {

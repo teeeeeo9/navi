@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '@/services/api';
 
 interface SuggestionItem {
   title: string;
@@ -9,11 +10,34 @@ interface SuggestionItem {
 
 interface ChatSuggestionsProps {
   onSuggestionSelected: (message: string) => void;
+  hasGoals?: boolean; // Prop to indicate if the user has created any goals
 }
 
-const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ onSuggestionSelected }) => {
+const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ 
+  onSuggestionSelected, 
+  hasGoals = false 
+}) => {
   const [expanded, setExpanded] = useState(false);
+  const [showCharacterTip, setShowCharacterTip] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Show the character tip only if the user has created goals
+  useEffect(() => {
+    if (hasGoals) {
+      setShowCharacterTip(true);
+    }
+  }, [hasGoals]);
+  
+  // Function to switch to Yoda character
+  const switchToYoda = async () => {
+    try {
+      await api.updateCharacterPreference('yoda');
+      // Reload the page to see the changes
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to switch character:', error);
+    }
+  };
   
   // Pre-defined list of suggestions
   const suggestions: SuggestionItem[] = [
@@ -129,6 +153,30 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ onSuggestionSelected 
             ))}
           </AnimatePresence>
         </motion.div>
+        
+        {/* Character mode suggestion */}
+        {showCharacterTip && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 p-3 glass-dark rounded-xl"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-dark-100">
+                  The best way to be productive is to have fun in the meanwhile. 
+                  Try out our Yoda strategizing replica! More characters upcoming.
+                </p>
+              </div>
+              <button
+                onClick={switchToYoda}
+                className="ml-3 px-3 py-1 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors"
+              >
+                Try Yoda
+              </button>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

@@ -205,6 +205,12 @@ const api = {
   getAchievements: async () => {
     const { data } = await axios.get('/api/progress/achievements')
     return data
+  },
+
+  // User Preferences
+  updateCharacterPreference: async (character: 'default' | 'yoda'): Promise<{message: string, character: string}> => {
+    const { data } = await axios.put('/api/auth/preferences/character', { character })
+    return data
   }
 }
 

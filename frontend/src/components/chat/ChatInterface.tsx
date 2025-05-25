@@ -2,12 +2,15 @@ import { useState, useEffect, useRef, FormEvent, forwardRef, useImperativeHandle
 import { motion, AnimatePresence } from 'framer-motion'
 import api, { ChatMessage } from '@/services/api'
 import ChatSuggestions from './ChatSuggestions'
+import { useAuth } from '@/context/AuthContext'
+import YodaImage from '@/assets/Yoda.jpeg'
 
 interface ChatInterfaceProps {
   relatedGoalId?: number;
   onMessageAction?: (action: any) => void;
   className?: string;
   compact?: boolean;
+  hasGoals?: boolean;
 }
 
 // Define the handle interface for the ref
@@ -19,7 +22,7 @@ export interface ChatInterfaceHandle {
 const SYSTEM_UPDATE_PREFIX = "SYSTEM_UPDATE:";
 
 const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
-  ({ relatedGoalId, onMessageAction, className = '', compact = false }, ref) => {
+  ({ relatedGoalId, onMessageAction, className = '', compact = false, hasGoals = false }, ref) => {
     const [messages, setMessages] = useState<ChatMessage[]>([])
     const [newMessage, setNewMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -30,6 +33,8 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const chatContainerRef = useRef<HTMLDivElement>(null)
     const messagesPerPage = 20
+    const { user } = useAuth()
+    const isYodaMode = user?.preferences?.character_preference === 'yoda'
 
     // Expose the handleSystemUpdate method to the parent component
     useImperativeHandle(ref, () => ({
@@ -252,10 +257,15 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
 
     return (
       <div className={`flex h-full flex-col rounded-2xl ${className} ${compact ? '' : 'max-w-4xl mx-auto'}`}>
+        {isYodaMode && (
+          <div className="absolute top-4 left-4 z-10">
+            <img src={YodaImage} alt="Yoda" className="w-20 h-20 rounded-full object-cover shadow-lg" />
+          </div>
+        )}
         <div className="glass-dark flex-1 overflow-hidden rounded-2xl flex flex-col">
           {/* Chat Suggestions - always shown at the top */}
           <div className="px-6 pt-6">
-            <ChatSuggestions onSuggestionSelected={handleSuggestionSelected} />
+            <ChatSuggestions onSuggestionSelected={handleSuggestionSelected} hasGoals={hasGoals} />
           </div>
           
           {isLoadingMore && (
