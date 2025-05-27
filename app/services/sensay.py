@@ -2,8 +2,7 @@ import os
 import requests
 import json
 import logging
-import urllib.parse
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ class SensayAPI:
         }
     
     def _make_request(self, method: str, endpoint: str, data: Dict = None, params: Dict = None, 
-                      user_id: str = None) -> Dict:
+                      user_id: str = None, headers: Dict = None) -> Dict:
         """Make an HTTP request to the Sensay API.
         
         Args:
@@ -44,21 +43,26 @@ class SensayAPI:
             data: Request body data for POST/PUT requests
             params: URL query parameters
             user_id: Optional user ID to include in headers
+            headers: Additional headers to include in the request
             
         Returns:
             Response data as dictionary
         """
         url = f"{self.base_url}{endpoint}"
-        headers = self.headers.copy()
+        request_headers = self.headers.copy()
         
         if user_id:
-            headers["X-USER-ID"] = user_id
+            request_headers["X-USER-ID"] = user_id
+            
+        # Add any additional headers
+        if headers:
+            request_headers.update(headers)
         
         try:
             response = requests.request(
                 method=method,
                 url=url,
-                headers=headers,
+                headers=request_headers,
                 params=params,
                 json=data
             )
@@ -125,61 +129,6 @@ class SensayAPI:
             user_id=user_id
         )
     
-    def create_replica_with_training(self, user_id: str, replica_data: Dict, training_sources: List[Dict]) -> Dict:
-        """Create a new replica and train it with provided sources.
-        
-        Args:
-            user_id: The user ID
-            replica_data: Dictionary containing replica configuration
-            training_sources: List of training source dictionaries. Each should contain either:
-                - For URLs: {"url": "https://example.com", "title": "Optional title"}
-                - For text: {"text": "Content to train on", "title": "Optional title"}
-                - For YouTube: {"youtube_url": "https://youtube.com/watch?v=ID", "title": "Optional title"}
-        
-        Returns:
-            The created replica data
-        """
-        # First create the replica
-        replica = self.create_replica(user_id, replica_data)
-        replica_id = replica.get("id")
-        
-        if not replica_id:
-            raise SensayAPIError(500, "Failed to get replica ID from creation response")
-        
-        # Add each training source to the knowledge base
-        for source in training_sources:
-            kb_entry = {}
-            
-            if "youtube_url" in source:
-                # For YouTube URLs, add as URL type
-                kb_entry = {
-                    "url": source["youtube_url"],
-                    "title": source.get("title", f"YouTube: {source['youtube_url']}"),
-                    "replica_ids": [replica_id]
-                }
-            elif "url" in source:
-                # For regular URLs
-                kb_entry = {
-                    "url": source["url"],
-                    "title": source.get("title", f"URL: {source['url']}"),
-                    "replica_ids": [replica_id]
-                }
-            elif "text" in source:
-                # For text content
-                kb_entry = {
-                    "text": source["text"],
-                    "title": source.get("title", "Text content"),
-                    "replica_ids": [replica_id]
-                }
-            else:
-                logger.warning(f"Skipping invalid training source: {source}")
-                continue
-            
-            # Add to knowledge base
-            self.create_knowledge_base_entry(user_id, kb_entry)
-            
-        return replica
-    
     def update_replica(self, replica_id: str, user_id: str, replica_data: Dict) -> Dict:
         """Update an existing replica."""
         return self._make_request(
@@ -231,158 +180,209 @@ class SensayAPI:
     
     # Knowledge Base Management
     
-    def create_knowledge_base_entry(self, user_id: str, entry_data: Dict) -> Dict:
+    def create_knowledge_base_entry(self, user_id: str, replica_id: str, entry_data: Dict) -> Dict:
         """Create a new knowledge base entry for training.
         
         Args:
-            user_id: The user ID
-            entry_data: Dictionary containing entry data with these possible fields:
-                - title: Title of the entry (required)
-                - url: URL to fetch content from (if using URL source)
-                - text: Text content to use (if using text source)
-                - file_path: Path to local file to upload (requires using generate_signed_url first)
-                - replica_ids: List of replica IDs to associate with this entry
-        
+            user_id: Sensay user ID
+            replica_id: ID of the replica to train
+            entry_data: Dictionary containing knowledge base entry data:
+                - title: Title of the entry (optional)
+                - content/rawText: Content of the entry (text)
+                - description: Optional description
+                - tags: Optional list of tags in metadata
+                - metadata: Optional metadata dictionary
+                
         Returns:
-            Created knowledge base entry data
+            Dictionary with created knowledge base entry details
         """
-        return self._make_request(
-            "POST", 
-            "/v1/training/knowledge-base", 
-            data=entry_data,
-            user_id=user_id
-        )
-    
-    def list_knowledge_base_entries(self, user_id: str) -> Dict:
-        """List all knowledge base entries for a user."""
-        return self._make_request(
-            "GET", 
-            "/v1/training/knowledge-base", 
-            user_id=user_id
-        )
-    
-    def get_knowledge_base_entry(self, entry_id: str, user_id: str) -> Dict:
-        """Get a knowledge base entry by ID."""
-        return self._make_request(
-            "GET", 
-            f"/v1/training/knowledge-base/{entry_id}", 
-            user_id=user_id
-        )
-    
-    def update_knowledge_base_entry(self, entry_id: str, user_id: str, entry_data: Dict) -> Dict:
-        """Update a knowledge base entry."""
-        return self._make_request(
-            "PUT", 
-            f"/v1/training/knowledge-base/{entry_id}", 
-            data=entry_data,
-            user_id=user_id
-        )
-
-    def delete_knowledge_base_entry(self, entry_id: str, user_id: str) -> Dict:
-        """Delete a knowledge base entry."""
-        return self._make_request(
-            "DELETE", 
-            f"/v1/training/knowledge-base/{entry_id}", 
-            user_id=user_id
-        )
-    
-    def generate_signed_url(self, user_id: str, file_name: str, content_type: str = None) -> Dict:
-        """Generate a signed URL for file upload to the knowledge base.
+        logger.debug(f"Creating knowledge base entry for replica: {replica_id}")
         
-        Args:
-            user_id: The user ID
-            file_name: Name of the file to upload
-            content_type: MIME type of the file (optional)
-        
-        Returns:
-            Dictionary containing the signed URL and additional information
-        """
-        params = {"file_name": file_name}
-        if content_type:
-            params["content_type"] = content_type
-            
-        return self._make_request(
-            "GET", 
-            "/v1/training/knowledge-base/signed-url", 
-            params=params,
-            user_id=user_id
-        )
-    
-    def upload_file_to_signed_url(self, signed_url: str, file_path: str, content_type: str = None) -> bool:
-        """Upload a file to a signed URL.
-        
-        Args:
-            signed_url: The signed URL for upload
-            file_path: Path to the local file to upload
-            content_type: MIME type of the file (optional)
-        
-        Returns:
-            True if successful, False otherwise
-        """
-        headers = {}
-        if content_type:
-            headers["Content-Type"] = content_type
-            
-        try:
-            with open(file_path, 'rb') as file:
-                response = requests.put(signed_url, data=file, headers=headers)
-                return response.status_code in [200, 201, 204]
-        except Exception as e:
-            logger.error(f"File upload error: {str(e)}")
-            return False
-    
-    def add_youtube_to_knowledge_base(self, user_id: str, youtube_url: str, 
-                                    title: str = None, replica_ids: List[str] = None) -> Dict:
-        """Add a YouTube video to the knowledge base.
-        
-        Args:
-            user_id: The user ID
-            youtube_url: URL of the YouTube video
-            title: Title for the knowledge base entry (optional)
-            replica_ids: List of replica IDs to associate with this entry (optional)
-        
-        Returns:
-            Created knowledge base entry data
-        """
-        if not title:
-            # Extract video ID for the title if no title provided
-            try:
-                parsed_url = urllib.parse.urlparse(youtube_url)
-                query_params = urllib.parse.parse_qs(parsed_url.query)
-                video_id = query_params.get('v', ['Unknown'])[0]
-                title = f"YouTube: {video_id}"
-            except Exception:
-                title = f"YouTube: {youtube_url}"
-        
-        entry_data = {
-            "url": youtube_url,
-            "title": title
+        # Prepare headers with API version if needed
+        headers = {
+            "X-API-Version": "2025-03-25"
         }
         
-        if replica_ids:
-            entry_data["replica_ids"] = replica_ids
-            
-        return self.create_knowledge_base_entry(user_id, entry_data)
+        return self._make_request(
+            "POST", 
+            f"/v1/replicas/{replica_id}/training", 
+            data=entry_data,
+            user_id=user_id,
+            headers=headers
+        )
     
-    def train_replica_with_youtube(self, replica_id: str, user_id: str, youtube_url: str, 
-                                  title: str = None) -> Dict:
-        """Train an existing replica with a YouTube video.
+    def update_knowledge_base_entry(self, user_id: str, replica_id: str, training_id: str, entry_data: Dict) -> Dict:
+        """Update an existing knowledge base entry.
         
         Args:
-            replica_id: ID of the replica to train
-            user_id: The user ID
-            youtube_url: URL of the YouTube video
-            title: Title for the knowledge base entry (optional)
-        
+            user_id: Sensay user ID
+            replica_id: ID of the replica
+            training_id: ID of the training entry to update
+            entry_data: Dictionary containing updated knowledge base entry data
+                
         Returns:
-            Created knowledge base entry data
+            Dictionary with updated knowledge base entry details
         """
-        return self.add_youtube_to_knowledge_base(
+        logger.debug(f"Updating knowledge base entry: {training_id} for replica: {replica_id}")
+        
+        # Prepare headers with API version if needed
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        
+        return self._make_request(
+            "PUT", 
+            f"/v1/replicas/{replica_id}/training/{training_id}", 
+            data=entry_data,
             user_id=user_id,
-            youtube_url=youtube_url,
-            title=title,
-            replica_ids=[replica_id]
+            headers=headers
         )
+    
+    def get_knowledge_base_entry(self, user_id: str, replica_id: str, training_id: str) -> Dict:
+        """Get a knowledge base entry by ID.
+        
+        Args:
+            user_id: Sensay user ID
+            replica_id: ID of the replica
+            training_id: ID of the training entry to retrieve
+                
+        Returns:
+            Dictionary with knowledge base entry details
+        """
+        logger.debug(f"Getting knowledge base entry: {training_id} for replica: {replica_id}")
+        
+        # Prepare headers with API version if needed
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        
+        return self._make_request(
+            "GET", 
+            f"/v1/replicas/{replica_id}/training/{training_id}", 
+            user_id=user_id,
+            headers=headers
+        )
+    
+    def list_knowledge_base_entries(self, user_id: str, replica_id: str = None) -> Dict:
+        """List all knowledge base entries.
+        
+        Args:
+            user_id: Sensay user ID
+            replica_id: Optional replica ID to filter entries by
+                
+        Returns:
+            Dictionary with list of knowledge base entries
+        """
+        # Prepare headers with API version if needed
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        
+        # # Determine the correct endpoint based on whether replica_id is provided
+        # if replica_id:
+        #     logger.debug(f"Listing knowledge base entries for replica: {replica_id}")
+        #     endpoint = f"/v1/replicas/{replica_id}/training"
+        # else:
+        logger.debug(f"Listing all knowledge base entries for user: {user_id}")
+        endpoint = "/v1/training"
+            
+        return self._make_request(
+            "GET", 
+            endpoint,
+            user_id=user_id,
+            headers=headers
+        )
+
+    def delete_knowledge_base_entry(self, user_id: str, replica_id: str, training_id: str) -> Dict:
+        """Delete a knowledge base entry.
+        
+        Args:
+            user_id: Sensay user ID
+            replica_id: ID of the replica
+            training_id: ID of the training entry to delete
+                
+        Returns:
+            Empty dictionary on success
+        """
+        logger.debug(f"Deleting knowledge base entry: {training_id} for replica: {replica_id}")
+        
+        # Prepare headers with API version if needed
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        
+        return self._make_request(
+            "DELETE", 
+            f"/v1/replicas/{replica_id}/training/{training_id}", 
+            user_id=user_id,
+            headers=headers
+        )
+        
+    def generate_signed_url(self, user_id: str, file_name: str, content_type: str) -> Dict:
+        """Generate a signed URL for file upload.
+        
+        Args:
+            user_id: Sensay user ID
+            file_name: Name of the file to upload
+            content_type: Content type of the file (e.g., "application/pdf")
+                
+        Returns:
+            Dictionary with signed URL and upload ID
+        """
+        logger.debug(f"Generating signed URL for file: {file_name}")
+        
+        # Prepare headers with API version if needed
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        
+        return self._make_request(
+            "GET", 
+            "/v1/training/upload-url", 
+            params={
+                "fileName": file_name,
+                "contentType": content_type
+            },
+            user_id=user_id,
+            headers=headers
+        )
+        
+    def train_replica_with_knowledge_base(self, user_id: str, replica_id: str, entries: List[Dict]) -> List[Dict]:
+        """Train a replica with knowledge base entries.
+        
+        Args:
+            user_id: Sensay user ID
+            replica_id: Replica ID to train
+            entries: List of dictionaries containing knowledge base entry data
+                
+        Returns:
+            List of created knowledge base entry details
+        """
+        logger.info(f"Training replica {replica_id} with {len(entries)} knowledge base entries")
+        created_entries = []
+        
+        for entry in entries:
+            try:
+                # Prepare entry data in the format expected by the API
+                entry_data = {
+                    "rawText": entry.get("content", ""),
+                    "processedText": entry.get("content", ""),
+                    "metadata": {
+                        "title": entry.get("title", "Untitled Entry"),
+                        "description": entry.get("description", ""),
+                        "tags": entry.get("tags", [])
+                    }
+                }
+                
+                # Create knowledge base entry
+                result = self.create_knowledge_base_entry(user_id, replica_id, entry_data)
+                created_entries.append(result)
+                logger.debug(f"Created knowledge base entry for: {entry.get('title')}")
+            except Exception as e:
+                logger.error(f"Error creating knowledge base entry: {str(e)}")
+                # Continue with other entries even if one fails
+        
+        return created_entries
 
 # Helper function to create and initialize the Sensay client
 def get_sensay_client():

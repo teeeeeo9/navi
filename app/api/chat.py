@@ -10,7 +10,7 @@ from app import db
 from app.models import User, ChatMessage, Goal, Reflection, ProgressUpdate, Milestone, UserPreference
 from app.services.sensay import get_sensay_client, SensayAPIError
 from app.prompts import STRATEGIST_SYSTEM_MESSAGE, STRATEGIST_GREETING, STRATEGIST_SYSTEM_MESSAGE_YODA
-from app.training_resources import get_training_sources
+from app.knowledge_base import get_knowledge_base_entries
 
 # Get logger
 logger = logging.getLogger('strategist.chat')
@@ -863,9 +863,7 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
     1. Check if the user already has a replica in the database
     2. If they do, return that replica ID
     3. If they don't, create a new replica and store its ID
-    
-    If a replica is created during registration with training data,
-    this function will find it and use it, preserving the training data.
+    4. Train the replica with knowledge base entries
     """
     from datetime import datetime
     
@@ -928,6 +926,16 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
                         update_data
                     )
                 
+                # Check if knowledge base entries exist for this replica
+                try:
+                    kb_entries = sensay_client.list_knowledge_base_entries(sensay_user_id, user.replica_id)
+                    if not kb_entries.get('items', []):
+                        logger.info(f"No knowledge base entries found for replica {user.replica_id}, adding training data")
+                        train_replica_with_knowledge_base(sensay_client, sensay_user_id, user.replica_id)
+                except Exception as e:
+                    logger.warning(f"Error checking knowledge base entries, will attempt to train replica: {str(e)}")
+                    train_replica_with_knowledge_base(sensay_client, sensay_user_id, user.replica_id)
+                
                 return user.replica_id
             except Exception as e:
                 logger.warning(f"Stored replica ID {user.replica_id} not found in Sensay: {str(e)}")
@@ -940,55 +948,52 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
         
         # If user has any replicas, use the first one
         if replicas:
-            # First try to find a replica with our expected slug
-            target_replica = None
-            for replica in replicas:
-                if replica.get('slug') == static_slug:
-                    target_replica = replica
-                    logger.info(f"Found replica with matching slug: {static_slug}")
-                    break
+            replica_id = replicas[0].get('uuid')
+            replica = replicas[0]  # Get the full replica data
+            logger.info(f"Found existing replica with ID: {replica_id}")
             
-            # If no slug match, just use the first replica
-            if not target_replica and replicas:
-                target_replica = replicas[0]
-                logger.info(f"Using the first available replica (no slug match)")
-            
-            if target_replica:
-                replica_id = target_replica.get('uuid')
-                logger.info(f"Found existing replica with ID: {replica_id}")
-                
-                # Prepare replica data with all required fields
-                update_data = {
-                    'name': target_replica.get('name', 'Strategic Planning Assistant'),
-                    'shortDescription': target_replica.get('shortDescription', 'A replica to help with strategic planning'),
-                    'greeting': target_replica.get('greeting', STRATEGIST_GREETING),
-                    'ownerID': sensay_user_id,
-                    'slug': target_replica.get('slug', static_slug),
-                    'llm': {
-                        'model': target_replica.get('llm', {}).get('model', 'claude-3-7-sonnet-latest'),
-                        'memoryMode': target_replica.get('llm', {}).get('memoryMode', 'prompt-caching'),
-                        'systemMessage': system_message
-                    }
+            # Prepare replica data with all required fields
+            update_data = {
+                'name': replica.get('name', 'Strategic Planning Assistant'),
+                'shortDescription': replica.get('shortDescription', 'A replica to help with strategic planning'),
+                'greeting': replica.get('greeting', STRATEGIST_GREETING),
+                'ownerID': sensay_user_id,
+                'slug': replica.get('slug', static_slug),
+                'llm': {
+                    'model': replica.get('llm', {}).get('model', 'claude-3-7-sonnet-latest'),
+                    'memoryMode': replica.get('llm', {}).get('memoryMode', 'prompt-caching'),
+                    'systemMessage': system_message
                 }
-                
-                # Update the system message for the existing replica
-                sensay_client.update_replica(
-                    replica_id,
-                    sensay_user_id,
-                    update_data
-                )
-                
-                # Store this replica ID with the user if we have a replica_id field
-                if hasattr(user, 'replica_id'):
-                    user.replica_id = replica_id
-                    try:
-                        db.session.commit()
-                        logger.info(f"Updated user record with replica ID: {replica_id}")
-                    except Exception as e:
-                        db.session.rollback()
-                        logger.error(f"Failed to update user with replica ID: {str(e)}")
-                        
-                return replica_id
+            }
+            
+            # Update the system message for the existing replica
+            sensay_client.update_replica(
+                replica_id,
+                sensay_user_id,
+                update_data
+            )
+            
+            # Check if knowledge base entries exist for this replica
+            try:
+                kb_entries = sensay_client.list_knowledge_base_entries(sensay_user_id, replica_id)
+                if not kb_entries.get('items', []):
+                    logger.info(f"No knowledge base entries found for replica {replica_id}, adding training data")
+                    train_replica_with_knowledge_base(sensay_client, sensay_user_id, replica_id)
+            except Exception as e:
+                logger.warning(f"Error checking knowledge base entries, will attempt to train replica: {str(e)}")
+                train_replica_with_knowledge_base(sensay_client, sensay_user_id, replica_id)
+            
+            # Store this replica ID with the user if we have a replica_id field
+            if hasattr(user, 'replica_id'):
+                user.replica_id = replica_id
+                try:
+                    db.session.commit()
+                    logger.info(f"Updated user record with replica ID: {replica_id}")
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error(f"Failed to update user with replica ID: {str(e)}")
+                    
+            return replica_id
         
         # No replica found, create one with a static slug
         logger.info(f"Creating new replica with static slug: {static_slug}")
@@ -1005,36 +1010,12 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
             }
         }
         
-        # Get training sources
-        training_sources = get_training_sources(character_preference)
+        new_replica = sensay_client.create_replica(sensay_user_id, replica_data)
+        replica_id = new_replica.get('uuid')
+        logger.info(f"Created new replica with ID: {replica_id}")
         
-        # Check if we should create with training
-        try:
-            # Create with training if possible
-            logger.info(f"Creating new replica with training and static slug: {static_slug}")
-            new_replica = sensay_client.create_replica_with_training(
-                sensay_user_id, 
-                replica_data, 
-                training_sources
-            )
-            
-            # Extract replica ID
-            replica_id = new_replica.get("id")
-            if not replica_id:
-                replica_id = new_replica.get("uuid")  # Try alternative field name
-                
-            if not replica_id:
-                raise ValueError("Failed to get replica ID from creation response")
-                
-            logger.info(f"Created new replica with training, ID: {replica_id}")
-        except Exception as e:
-            logger.warning(f"Failed to create replica with training: {str(e)}")
-            
-            # Fall back to creating without training
-            logger.info("Falling back to creating replica without training")
-            new_replica = sensay_client.create_replica(sensay_user_id, replica_data)
-            replica_id = new_replica.get('uuid')
-            logger.info(f"Created new replica without training, ID: {replica_id}")
+        # Train the new replica with knowledge base entries
+        train_replica_with_knowledge_base(sensay_client, sensay_user_id, replica_id)
         
         # Store this replica ID with the user if we have a replica_id field
         if hasattr(user, 'replica_id'):
@@ -1052,6 +1033,35 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
         logger.error(f"Error ensuring replica exists: {str(e)}", exc_info=True)
         current_app.logger.error(f"Error ensuring replica exists: {str(e)}")
         raise
+
+def train_replica_with_knowledge_base(sensay_client, sensay_user_id, replica_id):
+    """Train a replica with predefined knowledge base entries.
+    
+    Args:
+        sensay_client: Initialized Sensay API client
+        sensay_user_id: Sensay user ID
+        replica_id: ID of the replica to train
+    """
+    logger.info(f"Training replica {replica_id} with knowledge base entries")
+    
+    try:
+        # Get knowledge base entries
+        entries = get_knowledge_base_entries()
+        logger.info(f"Got {len(entries)} knowledge base entries for training")
+        
+        # Train the replica with all entries
+        created_entries = sensay_client.train_replica_with_knowledge_base(
+            sensay_user_id, 
+            replica_id, 
+            entries
+        )
+        
+        logger.info(f"Successfully added {len(created_entries)} knowledge base entries to replica {replica_id}")
+        return True
+    except Exception as e:
+        logger.error(f"Error training replica with knowledge base: {str(e)}", exc_info=True)
+        # Continue even if training fails - the replica will still work
+        return False
 
 # Function to send system updates about UI changes to the replica
 def send_system_update(user_id, update_message, related_goal_id=None, save_message=True):

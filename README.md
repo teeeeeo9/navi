@@ -11,6 +11,7 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
 - **Progress Tracking**: Track progress on goals and visualize your journey with charts.
 - **Reflections**: Capture thoughts on the importance of goals, potential obstacles, and strategies.
 - **AI Assistant**: Chat with an AI assistant trained to help with strategic planning.
+- **Knowledge Base Training**: Each replica is automatically trained with strategic planning concepts and methodologies.
 - **Dual UI Interaction**: Interact through both chat interface and traditional UI elements, with the AI being aware of changes made in either interface.
 - **Animated Visualizations**: Beautiful, animated displays of your goals, milestones, and progress.
 - **Glass Morphism UI**: Modern transparent/glass UI elements that create depth and visual appeal.
@@ -78,6 +79,11 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
    python app.py create_db
    ```
 
+6. Run the database migration to add the replica_id column:
+   ```
+   python migrations/add_replica_id.py
+   ```
+
 ### Frontend Installation
 
 1. Navigate to the frontend directory:
@@ -114,6 +120,20 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
    python test_app.py
    ```
 
+## Knowledge Base Training
+
+Each Sensay replica created by the application is automatically trained with strategic planning knowledge. This training happens during replica creation and includes:
+
+- SMART goal-setting methodology
+- Reflection best practices
+- Milestone planning strategies
+- Progress tracking methods
+- Obstacle management techniques
+- Environment design for goal achievement
+- Goal prioritization frameworks
+- Adaptation strategies
+
+The knowledge base content can be customized by modifying the entries in `app/knowledge_base.py`.
 
 ## API Documentation
 
@@ -217,6 +237,7 @@ navi/
 │   ├── __init__.py             # Application factory
 │   ├── models.py               # Database models
 │   ├── prompts.py              # AI assistant system prompts
+│   ├── knowledge_base.py       # Knowledge base entries for replica training
 │   ├── api/                    # API endpoints
 │   │   ├── __init__.py
 │   │   ├── auth.py             # Authentication endpoints
@@ -227,6 +248,7 @@ navi/
 │       ├── __init__.py
 │       └── sensay.py           # Sensay API client
 ├── app.py                      # Application entry point
+├── migrations/                 # Database migration scripts
 ├── test_app.py                 # Application test script
 ├── requirements.txt            # Python dependencies
 └── env.example                 # Example environment variables

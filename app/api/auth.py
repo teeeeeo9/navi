@@ -11,14 +11,11 @@ from app import db
 from app.models import User, UserPreference
 from app.services.sensay import get_sensay_client, SensayAPIError
 from app.utils import get_user_id_from_jwt
-from app.api.chat import send_system_update
-from app.training_resources import get_training_sources
+from app.api.chat import ensure_replica_exists, send_system_update
 
 # Get logger
 logger = logging.getLogger('strategist.auth')
 
-# Module-level test
-logger.critical("MODULE LEVEL TEST MESSAGE")
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -91,58 +88,14 @@ def register():
         db.session.commit()
         logger.info(f"User registered successfully: {user.username} (ID: {user.id})")
         
-        # Create a new replica for this user with training data
+        # Create a new replica for this user
         try:
-            # Import required constants from chat.py
-            from app.api.chat import REPLICA_SLUG, STRATEGIST_SYSTEM_MESSAGE, STRATEGIST_GREETING
+            replica_id = ensure_replica_exists(sensay_client, sensay_user_id)
+            logger.info(f"Created new replica with ID: {replica_id} for user: {user.username}")
             
-            # Create a static slug for this user
-            static_slug = f"{REPLICA_SLUG}_{sensay_user_id}"
-            
-            # Prepare replica data
-            replica_data = {
-                'name': 'Strategic Planning Assistant',
-                'shortDescription': 'A replica to help with strategic planning',
-                'greeting': STRATEGIST_GREETING,
-                'slug': static_slug,
-                'ownerID': sensay_user_id,
-                'llm': {
-                    'model': 'claude-3-7-sonnet-latest',
-                    'memoryMode': 'prompt-caching',
-                    'systemMessage': STRATEGIST_SYSTEM_MESSAGE
-                }
-            }
-            
-            # Get training sources
-            training_sources = get_training_sources()
-            
-            # Create replica with training
-            logger.info(f"Creating new replica with training for user: {sensay_user_id}")
-            new_replica = sensay_client.create_replica_with_training(
-                user_id=sensay_user_id,
-                replica_data=replica_data,
-                training_sources=training_sources
-            )
-            
-            # Extract replica ID
-            replica_id = new_replica.get("id")
-            if not replica_id:
-                replica_id = new_replica.get("uuid")  # Try alternative field name
-            
-            if replica_id:
-                logger.info(f"Created new replica with ID: {replica_id} for user: {user.username}")
-                
-                # Store replica ID with user if we have the field
-                if hasattr(user, 'replica_id'):
-                    user.replica_id = replica_id
-                    db.session.commit()
-                    logger.info(f"Updated user record with new replica ID: {replica_id}")
-                
-                # Send an initial hello message to the replica
-                send_system_update(user.id, "Hello", save_message=True)
-                logger.info(f"Sent initial hello message to replica for user: {user.username}")
-            else:
-                logger.warning("Failed to get replica ID from creation response")
+            # Send an initial hello message to the replica
+            send_system_update(user.id, "Hello", save_message=True)
+            logger.info(f"Sent initial hello message to replica for user: {user.username}")
         except Exception as e:
             logger.error(f"Failed to create replica or send initial message: {str(e)}", exc_info=True)
             # Continue with registration even if replica creation fails
@@ -208,7 +161,6 @@ def login():
 @jwt_required()
 def get_profile():
     """Get the current user's profile."""
-    logger.warning("ENTERING get_profile function")
     
     try:
         user_id = get_user_id_from_jwt()
@@ -217,7 +169,6 @@ def get_profile():
         logger.error(f"JWT error: {str(e)}", exc_info=True)
         return jsonify({'error': 'JWT authentication failed'}), 401
     
-    logger.warning("test")
     user = User.query.get(user_id)
     
     if not user:

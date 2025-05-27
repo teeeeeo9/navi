@@ -2,9 +2,12 @@ import logging
 from app import create_app, db
 from flask.cli import FlaskGroup
 
-# Create the application instance
-app = create_app()
-cli = FlaskGroup(app)
+# Create a function to get the app instance
+def get_app():
+    return create_app()
+
+# Create CLI using the factory function
+cli = FlaskGroup(get_app)
 
 # Get logger
 logger = logging.getLogger('strategist')

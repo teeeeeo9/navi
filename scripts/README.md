@@ -1,66 +1,58 @@
 # Strategist Scripts
 
-This directory contains utility scripts for managing and interacting with the Strategist application.
+This directory contains utility scripts for interacting with the Strategist API.
 
 ## Available Scripts
 
-### list_replicas.py
-Lists all replicas for a Sensay user.
+### `test_achievements.py`
+
+A script to demonstrate and test the achievements API endpoint. This script shows how to retrieve and display a user's achievements, including completed goals, milestones, and reflections that contain lessons learned.
+
+#### Usage
 
 ```bash
-python scripts/list_replicas.py --user-id <sensay_user_id>
-```
-
-### list_knowledge_base.py
-Lists all knowledge base entries (training data) for a Sensay replica or user.
-
-```bash
-# List knowledge base entries for a specific replica
-python scripts/list_knowledge_base.py --replica-id <replica_id>
-
-# List knowledge base entries for all replicas of a user
-python scripts/list_knowledge_base.py --user-id <sensay_user_id>
-
-# Output in JSON format (useful for further processing)
-python scripts/list_knowledge_base.py --user-id <sensay_user_id> --format json
-```
-
-### delete_replica.py
-Deletes a specific replica from Sensay.
-
-```bash
-python scripts/delete_replica.py --replica-id <replica_id> --user-id <sensay_user_id>
-```
-
-### cleanup.py
-Performs cleanup operations on the application database and Sensay.
-
-```bash
-python scripts/cleanup.py
-```
-
-### test_achievements.py
-Tests the achievements functionality of the application.
-
-```bash
+# Run with automatic login
 python scripts/test_achievements.py
+
+# Provide your own token
+python scripts/test_achievements.py --token YOUR_JWT_TOKEN
+
+# Additional options
+python scripts/test_achievements.py [--limit NUMBER] [--raw] [--skip-login]
 ```
 
-### migrate_progress_types.py
-Migrates progress updates to the new type system.
+Parameters:
+- `--token`: Your JWT authentication token (optional). If not provided, the script will automatically log in using test credentials. You can also set the `AUTH_TOKEN` environment variable.
+- `--limit`: Optional. Limit the number of achievements returned.
+- `--raw`: Optional. Display the raw JSON response instead of the formatted output.
+- `--skip-login`: Optional. Skip automatic login (requires --token to be provided).
 
-```bash
-python scripts/migrate_progress_types.py
-```
+#### Environment Variables
 
-## Environment Setup
+- `API_URL`: Base URL for the API (defaults to 'http://localhost:5000/api')
+- `AUTH_TOKEN`: Default authentication token
 
-All scripts expect the following environment variables to be set:
+#### Examples
 
-- `SENSAY_API_KEY`: Your Sensay API key
-- `SENSAY_USER_ID`: (Optional) Default Sensay user ID to use if not specified
+1. Get all achievements with automatic login:
+   ```bash
+   python scripts/test_achievements.py
+   ```
 
-You can set these in a `.env` file in the project root directory.
+2. Get all achievements with a specific token:
+   ```bash
+   python scripts/test_achievements.py --token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   ```
+
+3. Get the 5 most recent achievements:
+   ```bash
+   python scripts/test_achievements.py --limit 5
+   ```
+
+4. Get achievements as raw JSON:
+   ```bash
+   python scripts/test_achievements.py --raw
+   ```
 
 ## Authentication
 

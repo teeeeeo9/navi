@@ -5,6 +5,7 @@ Cleanup script for the Navi application:
 2. Gets and deletes all replicas for each user from Sensay
 3. Drops the database
 4. Creates a new database
+5. Removes log files
 
 Usage: python scripts/cleanup.py [--force]
 """
@@ -134,6 +135,26 @@ def create_database():
             print(traceback.format_exc())
             raise
 
+def remove_log_files():
+    """Remove log files."""
+    print("Starting remove_log_files function")
+    try:
+        log_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+        if os.path.exists(log_path):
+            print(f"Removing log files from {log_path}...")
+            # Remove all files in the logs directory
+            for file in os.listdir(log_path):
+                file_path = os.path.join(log_path, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    print(f"Removed log file: {file}")
+            print("Log files removed successfully")
+        else:
+            print("Logs directory not found, no files to remove")
+    except Exception as e:
+        print(f"Error removing log files: {str(e)}")
+        print(traceback.format_exc())
+
 def main():
     # parser = argparse.ArgumentParser(description='Cleanup script for Navi application')
     # parser.add_argument('--force', action='store_true', help='Skip confirmation prompt')
@@ -162,6 +183,9 @@ def main():
     
     # Step 3: Create a new database
     create_database()
+    
+    # Step 4: Remove log files
+    remove_log_files()
     
     print("\nCleanup completed successfully!")
 

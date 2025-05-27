@@ -10,8 +10,8 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    sensay_user_id = db.Column(db.String(120), unique=True, nullable=True)
-    replica_id = db.Column(db.String(120), nullable=True)  # To store the user's Sensay replica ID
+    sensay_user_id = db.Column(db.String(120), unique=True, nullable=False)
+    replica_id = db.Column(db.String(120), unique=True, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
