@@ -31,6 +31,9 @@ USERNAME = "testuser"
 EMAIL = "testuser@example.com"
 PASSWORD = "testpassword"
 
+# Debug mode flag
+DEBUG_MODE = True
+
 # Headers for authenticated requests
 auth_headers = {
     'Content-Type': 'application/json'
@@ -289,6 +292,7 @@ def display_help():
     print("/clear - Clear the screen")
     print("/history - Show recent chat history")
     print("/history all - Show full chat history including system messages")
+    print("/debug - Toggle debug mode to show raw JSON responses")
     print("")
     print("Any other text will be sent as a message to the AI replica.")
     print("To discuss a specific goal, use: /chat <goal_id> and then chat normally.")
@@ -296,6 +300,8 @@ def display_help():
 
 def interactive_chat():
     """Interactive chat with the AI replica."""
+    global DEBUG_MODE
+    
     clear_screen()
     print("===== WELCOME TO STRATEGIST INTERACTIVE CHAT =====")
     print("You are now chatting with your AI strategic planning assistant.")
@@ -338,6 +344,10 @@ def interactive_chat():
             
         elif user_input.lower() == '/clear':
             clear_screen()
+            
+        elif user_input.lower() == '/debug':
+            DEBUG_MODE = not DEBUG_MODE
+            print(f"Debug mode {'enabled' if DEBUG_MODE else 'disabled'}")
             
         elif user_input.lower() == '/history':
             # Default to not showing system messages
@@ -395,6 +405,12 @@ def interactive_chat():
             if response:
                 # Display AI response
                 print(f"AI: {response['ai_response']['content']}")
+                
+                # Display raw JSON in debug mode
+                if DEBUG_MODE:
+                    print("\n===== JSON RESPONSE =====")
+                    pretty_print(response)
+                    print("=" * 50)
                 
                 # Check if an action was performed
                 if 'action_result' in response:

@@ -12,6 +12,234 @@ logger = logging.getLogger(__name__)
 # Knowledge base entries for training strategic planning assistant
 STRATEGIC_PLANNING_ENTRIES = [
     {
+        "title": "About Navi: Your Strategic Thinking Partner",
+        "content": """
+        ## What is Navi?
+
+        Navi is your dedicated thinking partner - a digital strategic mastermind designed to help you clarify your priorities, set meaningful goals, and navigate the path to achieving them. Unlike typical productivity apps that focus on task management, Navi focuses on the bigger picture: your strategic direction and meaningful accomplishments.
+
+        Navi combines the warmth and wisdom of a trusted mentor with cutting-edge AI technology to provide personalized strategic guidance whenever you need it.
+
+        ## How Navi Works
+
+        Navi works through a natural conversational interface. Rather than filling out forms or navigating complex menus, you simply chat with Navi as you would with a trusted advisor. Behind the scenes, Navi:
+
+        1. **Understands your goals**: Through conversation, Navi helps you articulate what you truly want to accomplish
+        2. **Structures your thinking**: Helps break down ambitious goals into achievable milestones
+        3. **Promotes reflection**: Guides you through important reflections about importance, obstacles, and strategies
+        4. **Tracks progress**: Maintains a visual record of your journey toward each goal
+        5. **Adapts to you**: Gets to know your communication style, priorities, and patterns over time
+
+        Navi integrates seamlessly between its chat interface and visual elements. You can interact through conversation or directly with the visual representations of your goals.
+
+        ## How to Use Navi
+
+        **Getting Started:**
+        - Begin by simply chatting with Navi about what you'd like to accomplish
+        - Be open about your aspirations - Navi isn't judgmental and works with goals of any size
+        - Allow Navi to guide you through important reflections about your goals
+
+        **Regular Use:**
+        - Check in regularly to update your progress
+        - Use Navi for both quick progress updates and deeper strategic reviews
+        - Interact with visual elements to update goals, milestones, and progress
+        - Reflect with Navi on what's working and what could be improved
+
+        **Best Practices:**
+        - Be honest about both successes and challenges
+        - Use Navi to reflect before, during, and after goal pursuit
+        - Leverage Navi's ability to remember previous conversations and insights
+        - Treat Navi as a thinking partner rather than just a tool
+
+        ## Why Use Navi
+
+        In a world of endless distractions and information overload, Navi helps you:
+
+        - **Find clarity**: Cut through the noise to identify what truly matters to you
+        - **Maintain focus**: Keep your attention on high-impact goals rather than endless tasks
+        - **Develop strategy**: Think more deeply about how to approach your most important aims
+        - **Build momentum**: Create and visualize progress toward meaningful accomplishments
+        - **Learn and grow**: Reflect effectively on your approaches and outcomes
+        - **Save time**: Skip complex productivity systems for a more intuitive approach
+
+        Navi isn't about doing more things - it's about doing the right things. It's designed for people who want to make significant progress on what truly matters rather than just staying busy.
+        """,
+        "description": "Important: Overview of Navi as a strategic thinking partner, how it works, and its benefits",
+        "tags": ["important", "navi", "overview", "introduction", "benefits", "usage"]
+    },  
+    {
+        "title": "Navi's strategic Reflection Types",
+        "content": """
+        Strategic reflections are a core component of effective goal setting and achievement. These structured reflection types help users gain deeper insights and develop more robust strategies:
+
+        1. Importance Reflection:
+           - Purpose: To clarify why a goal matters personally to the user
+           - Timing: Usually discussed before starting work on the goal
+           - Key Questions: What will you gain when you achieve this goal? How does it align with your values? What meaningful changes will it bring?
+           - Benefits: Creates intrinsic motivation, helps maintain commitment during challenges
+
+        2. Obstacles Reflection:
+           - Purpose: To identify and prepare for potential challenges
+           - Timing: Typically discussed before starting work on the goal or during execution when new information emerges
+           - Key Questions: What might prevent success? What unexpected outcomes could arise? How can these challenges be addressed?
+           - Benefits: Creates preparedness, reduces surprise setbacks, builds contingency thinking
+
+        3. Environment Reflection:
+           - Purpose: To optimize your surroundings for goal achievement
+           - Timing: Usually discussed before starting work on the goal
+           - Key Questions: What setup will maximize success? What changes to your physical, digital, or social environment are needed?
+           - Benefits: Reduces friction, creates supportive conditions for success
+
+        4. Timeline Reflection:
+           - Purpose: To establish and evaluate realistic timeframes
+           - Timing: Before starting (is the timeline realistic?), during execution (are you on track?), and after completion (why was the timeline accurate or inaccurate?)
+           - Key Questions: Is your timeline realistic, optimistic, or pessimistic? Are you keeping pace? If deadlines were missed, why?
+           - Benefits: Improves planning accuracy, identifies process improvements
+
+        5. Backup Plans Reflection:
+           - Purpose: To develop contingency strategies
+           - Timing: Usually discussed before starting work on the goal
+           - Key Questions: What alternatives exist if your primary approach fails? What are the pros and cons of each backup option?
+           - Benefits: Creates resilience, reduces anxiety, provides clear pivoting options
+
+        6. Positive Review Reflection:
+           - Purpose: To recognize successes and effective strategies
+           - Timing: During execution or after completion
+           - Key Questions: What went well? What effective approaches did you use? What strengths did you leverage?
+           - Benefits: Builds confidence, reinforces effective behaviors, creates positive momentum
+
+        7. Improvement Review Reflection:
+           - Purpose: To identify growth opportunities
+           - Timing: During execution or after completion
+           - Key Questions: What could have gone better? What would you do differently next time? What lessons have you learned?
+           - Benefits: Promotes continuous learning, improves future goal achievement
+
+        Regular engagement with these reflection types throughout the goal journey leads to more thoughtful strategies, higher completion rates, and more meaningful growth experiences.
+        """,
+        "description": "Important: Navi's different types of strategic reflections for goal setting",
+        "tags": ["important", "navi" ]
+    },      
+{
+        "title": "Navi's Goal Tracking Framework",
+        "content": """
+        Goal tracking is conducted through multiple dimensions to ensure comprehensive monitoring of progress. The primary dimensions include:
+        
+        1. Reflection Types:
+            - Importance: Why this goal matters to the user, what they will gain when achieved
+            - Obstacles: Potential challenges during execution, unexpected outcomes, and solutions
+            - Environment: Setup changes needed to maximize success probability
+            - Timeline: Assessment of timeline realism, monitoring progress against timeline
+            - Backups: Alternative options if primary approaches fail
+            - Review Positive: What went well in the process
+            - Review Improve: Areas for improvement in the approach
+        
+        2. Progress Dimensions:
+            - Progress State (0-10): A snapshot of current completion status
+            - Effort Level (0-10): Amount of effort currently being invested
+        
+        Both progress metrics are dynamic and non-linear, allowing for realistic tracking of complex goals. Progress metrics can be applied to both overall goals and individual milestones.
+
+        """,
+        "description": "Important: Navi's framework for tracking goals across multiple dimensions",
+        "tags": ["important","navi", "tracking", "framework", "progress", "metrics"]
+    },
+    {
+        "title": "Navi's Goal Management JSON Formats",
+        "content": """
+        The following JSON formats are used for goal management operations:
+
+        1. Goal Creation:
+        ```json
+        {
+            "action_type": "create_goal", 
+            "data": {
+                "title": "Goal Title", 
+                "target_date": "YYYY-MM-DD", 
+                "milestones": [
+                    {"title": "Milestone 1", "target_date": "YYYY-MM-DD"}
+                ], 
+                "reflections": {
+                    "importance": "Why this goal matters to the user", 
+                    "obstacles": "User's brief input on potential challenges"
+                }
+            }
+        }
+        ```
+
+        2. Goal Analysis & Reflection:
+        ```json
+        {
+            "action_type": "save_reflections",
+            "data": {
+                "goal_id": "[goal_id]",
+                "reflections": [
+                    {
+                        "type": "importance",
+                        "content": "Why this aspect is particularly important now"
+                    },
+                    {
+                        "type": "obstacles",
+                        "content": "The essence of the user's reflection on obstacles"
+                    },
+                    {
+                        "type": "timeline",
+                        "content": "The user's thoughts on the timeline feasibility"
+                    }
+                ]
+            }
+        }
+        ```
+
+        3. Progress Update:
+        ```json
+        {
+            "action_type": "update_progress",
+            "data": {
+                "goal_id": "[goal_id]",
+                "milestone_id": "[optional_milestone_id_if_specific]",
+                "type": "progress|effort",
+                "value": 7,
+                "notes": "User's notes or summary of their update"
+            }
+        }
+        ```
+
+        4. Milestone Update:
+        ```json
+        {
+            "action_type": "update_milestone", 
+            "data": {
+                "goal_id": "[goal_id]", 
+                "milestone_id": "[milestone_id]", 
+                "status": "completed|pending|missed|in_progress"
+            }
+        }
+        ```
+
+        5. Goal Update:
+        ```json
+        {
+            "action_type": "update_goal",
+            "data": {
+                "goal_id": "[goal_id]",
+                "title": "Updated Goal Title",
+                "target_date": "YYYY-MM-DD",
+                "status": "active|completed|abandoned|deferred",
+                "reflections": {
+                    "importance": "Updated reflection on importance",
+                    "obstacles": "Updated reflection on obstacles"
+                }
+            }
+        }
+        ```
+        
+        These JSON formats enable structured interaction with the goal management system while maintaining flexibility for varying levels of detail in user input.
+        """,
+        "description": "Important: Navi's Standard JSON formats for goal management operations",
+        "tags": ["important", "json", "api", "navi"]
+    },
+    
+    {
         "title": "SMART Goal Setting Framework",
         "content": """
         SMART is an acronym that stands for Specific, Measurable, Achievable, Relevant, and Time-bound. 
@@ -28,33 +256,10 @@ STRATEGIC_PLANNING_ENTRIES = [
         
         Using the SMART framework helps create well-defined goals that provide direction and motivation, track progress, and increase the likelihood of achievement.
         """,
-        "description": "Comprehensive explanation of the SMART goal-setting framework",
-        "tags": ["goal-setting", "strategy", "planning", "methodology"]
+        "description": "Resources: Comprehensive explanation of the SMART goal-setting framework",
+        "tags": ["resources", "strategy", "methodology"]
     },
-    {
-        "title": "Goal Reflection Best Practices",
-        "content": """
-        Regular reflection is essential for meaningful goal achievement. Here are key aspects to reflect on:
-        
-        Importance: Why is this goal important to you? How does it align with your values and long-term vision? What benefits will achieving this goal bring to your life?
-        
-        Obstacles: What potential challenges might you face? What resources do you need? What skills might you need to develop? What external factors could impact your progress?
-        
-        Environmental Setup: How can you modify your environment to support goal achievement? What distractions should you eliminate? What tools or resources do you need to have readily available?
-        
-        Timeline Management: Is your timeline realistic? Are there external deadlines to consider? Have you built in buffer time for unexpected delays? How will you track progress along the way?
-        
-        Backup Plans: What alternatives do you have if your primary approach doesn't work? What's your contingency plan if resources become unavailable? How flexible are you willing to be with your approach?
-        
-        Positive Review: What's working well in your approach? What strengths are you leveraging effectively? What small wins should you celebrate along the way?
-        
-        Areas for Improvement: What could be working better? What lessons have you learned so far? How might you adjust your approach moving forward?
-        
-        Reflection should be scheduled regularly - weekly for active projects, monthly for longer-term goals. Each reflection session should end with clear, actionable adjustments to your approach when needed.
-        """,
-        "description": "Best practices for goal reflection and strategic thinking",
-        "tags": ["reflection", "strategy", "planning", "goals"]
-    },
+
     {
         "title": "Milestone Planning Strategies",
         "content": """
@@ -86,49 +291,10 @@ STRATEGIC_PLANNING_ENTRIES = [
         
         Well-planned milestones provide a roadmap for your goal, breaking it down into achievable segments that each represent meaningful progress toward your ultimate objective.
         """,
-        "description": "Strategic approaches to planning effective milestones for goals",
-        "tags": ["milestones", "planning", "strategy", "goals"]
+        "description": "Resources: Strategic approaches to planning effective milestones for goals",
+        "tags": ["resources", "milestones", "planning", "strategy", "goals"]
     },
-    {
-        "title": "Progress Tracking Methods",
-        "content": """
-        Effective progress tracking keeps you motivated and informed about your goal journey.
-        
-        Quantitative Tracking: 
-        - Percentage completion (0-100%)
-        - Numerical metrics (e.g., words written, sales made, weight lifted)
-        - Binary checklists (completed/not completed)
-        - Time spent on activities
-        
-        Qualitative Tracking:
-        - Effort level assessment (low/medium/high)
-        - Journal entries describing progress
-        - Quality assessments of work completed
-        - Mood or energy tracking related to the goal
-        
-        Visual Tracking Methods:
-        - Progress bars
-        - Charts and graphs
-        - Kanban boards moving tasks through stages
-        - Calendar tracking with color coding
-        
-        Frequency Considerations:
-        - Daily tracking for habits and short-term goals
-        - Weekly tracking for most professional and personal goals
-        - Monthly tracking for longer-term goals
-        - Quarterly reviews for annual goals
-        
-        Tracking Principles:
-        - Make it easy - tracking should take minimal effort
-        - Make it visible - progress should be readily apparent
-        - Make it meaningful - track what actually matters
-        - Make it consistent - use the same metrics throughout
-        
-        Tracking progress in both objective (quantitative) and subjective (qualitative) dimensions provides a more complete picture of your goal journey and helps maintain motivation even when measurable progress is temporarily stalled.
-        """,
-        "description": "Methods and best practices for tracking progress on goals",
-        "tags": ["progress", "tracking", "metrics", "goals"]
-    },
+
     {
         "title": "Overcoming Goal Obstacles",
         "content": """
@@ -165,47 +331,10 @@ STRATEGIC_PLANNING_ENTRIES = [
         
         By anticipating obstacles and having strategies ready, you can maintain momentum even when challenges arise.
         """,
-        "description": "Strategies for anticipating and overcoming obstacles in goal pursuit",
-        "tags": ["obstacles", "challenges", "solutions", "strategy"]
+        "description": "Resources: Strategies for anticipating and overcoming obstacles in goal pursuit",
+        "tags": ["resources", "obstacles", "challenges", "solutions", "strategy"]
     },
-    {
-        "title": "Effective Goal Environment Design",
-        "content": """
-        Your environment significantly impacts your ability to achieve goals. Strategic environment design makes goal achievement easier and more natural.
-        
-        Physical Environment:
-        - Minimize distractions relevant to your goal
-        - Make needed tools and resources easily accessible
-        - Create visual cues and reminders of your goals
-        - Designate specific spaces for goal-related activities
-        - Remove temptations that could derail progress
-        
-        Digital Environment:
-        - Configure notifications to support rather than hinder focus
-        - Organize digital files for easy access to goal materials
-        - Use apps and tools specifically designed for your goal type
-        - Create digital boundaries during focused work time
-        - Leverage automation for routine aspects of your goal
-        
-        Social Environment:
-        - Communicate your goals to supportive people
-        - Seek out communities pursuing similar goals
-        - Distance yourself from negative influences
-        - Find accountability partners or mentors
-        - Consider how your social commitments impact goal time
-        
-        Temporal Environment:
-        - Identify and leverage your peak productivity hours
-        - Block dedicated time for goal work
-        - Create routines that naturally incorporate goal activities
-        - Use timeboxing to maintain focus and prevent burnout
-        - Schedule regular review and reflection sessions
-        
-        Environment design principles should be applied proactively and adjusted based on what actually works for you. The ideal environment removes friction from goal-related activities and adds friction to distractions and competing priorities.
-        """,
-        "description": "How to design your environment to support goal achievement",
-        "tags": ["environment", "productivity", "habits", "systems"]
-    },
+    
     {
         "title": "Strategic Goal Prioritization",
         "content": """
@@ -242,53 +371,11 @@ STRATEGIC_PLANNING_ENTRIES = [
         
         Strategic prioritization isn't a one-time activity but should be revisited regularly as circumstances change. It's better to achieve a few important goals fully than to make minimal progress on many goals simultaneously.
         """,
-        "description": "Frameworks for strategically prioritizing multiple goals",
-        "tags": ["prioritization", "strategy", "decision-making", "focus"]
-    },
-    {
-        "title": "Adapting Goals to Changing Circumstances",
-        "content": """
-        Flexibility in goal pursuit is essential for long-term success. Knowing when and how to adapt your goals ensures you stay on track even as circumstances change.
-        
-        Signs Adaptation May Be Needed:
-        - Consistent inability to make progress despite effort
-        - Significant changes in available resources
-        - New information that affects the goal's relevance or approach
-        - Unexpected opportunities that align better with your core values
-        - Repeated patterns of similar obstacles
-        
-        Adaptation Strategies:
-        
-        Scope Adjustment:
-        - Expand the goal if it's proving too easy
-        - Narrow the goal if it's proving too challenging
-        - Maintain the core objective while changing the approach
-        
-        Timeline Modification:
-        - Extend deadlines when external factors cause delays
-        - Accelerate timelines when progress exceeds expectations
-        - Break a goal into phases with separate timelines
-        
-        Resource Reallocation:
-        - Identify new resources that could support the goal
-        - Shift resources between different aspects of the goal
-        - Reduce resource requirements through approach changes
-        
-        Strategic Pivoting:
-        - Identify the core value behind your original goal
-        - Explore alternative goals that serve the same core value
-        - Evaluate whether a different goal better serves your needs now
-        
-        Adaptation vs. Abandonment:
-        - Adaptation maintains commitment to core values and long-term vision
-        - Adaptation is based on rational analysis, not emotional reactions
-        - Adaptation looks for "both/and" solutions before "either/or" choices
-        
-        Skillful adaptation requires self-awareness, environmental awareness, and a clear understanding of why your goals matter to you in the first place. The most successful goal-setters maintain determination while remaining flexible about their specific approach.
-        """,
-        "description": "How to adapt goals appropriately when circumstances change",
-        "tags": ["adaptability", "flexibility", "resilience", "strategy"]
+        "description": "Resources: Frameworks for strategically prioritizing multiple goals",
+        "tags": ["resources", "prioritization", "strategy", "decision-making", "focus"]
     }
+    
+
 ]
 
 def get_knowledge_base_entries():
