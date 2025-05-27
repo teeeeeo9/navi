@@ -902,7 +902,14 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
                 
                 # Update the system message if character preference has changed
                 current_system_message = replica.get('llm', {}).get('systemMessage', '')
-                if current_system_message != system_message:
+                # logger.debug(f"Current system message: {current_system_message}")
+                # logger.debug(f"System message: {system_message}")
+                
+                # Normalize strings before comparison to ignore whitespace and formatting differences
+                def normalize_message(msg):
+                    return ' '.join(msg.split())
+                
+                if normalize_message(current_system_message) != normalize_message(system_message):
                     logger.info(f"Updating system message for replica: {user.replica_id}")
                     
                     # Prepare replica data with all required fields
