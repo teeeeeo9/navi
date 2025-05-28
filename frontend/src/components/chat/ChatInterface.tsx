@@ -27,10 +27,17 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
     const [messages, setMessages] = useState<ChatMessage[]>([])
     const [newMessage, setNewMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const [page, setPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
     const [hasMore, setHasMore] = useState(true)
     const [systemUpdateInProgress, setSystemUpdateInProgress] = useState(false)
+    const [hideSuggestions, setHideSuggestions] = useState(() => {
+        // Initialize from localStorage
+        const saved = localStorage.getItem('hideChatSuggestions')
+        return saved === 'true'
+    })
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const chatContainerRef = useRef<HTMLDivElement>(null)
     const messagesPerPage = 20
@@ -254,6 +261,13 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
       handleSendMessage(event, message)
     }
 
+    // Toggle suggestions visibility and persist to localStorage
+    const toggleSuggestions = () => {
+      const newValue = !hideSuggestions
+      setHideSuggestions(newValue)
+      localStorage.setItem('hideChatSuggestions', newValue.toString())
+    }
+
     return (
       <div className={`flex h-full flex-col rounded-2xl ${className} ${compact ? '' : 'max-w-4xl mx-auto'}`}>
         {isYodaMode && (
@@ -341,7 +355,36 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
 
         {/* Suggestions positioned right above the input */}
         <div className="mt-2 mb-2">
-          <ChatSuggestions onSuggestionSelected={handleSuggestionSelected} hasGoals={hasGoals} />
+          <div className="flex flex-col space-y-2">
+            {!hideSuggestions && (
+              <ChatSuggestions onSuggestionSelected={handleSuggestionSelected} hasGoals={hasGoals} />
+            )}
+            
+            {/* Hide/Show Suggestions Button */}
+            <div className="flex justify-end">
+              <motion.button
+                onClick={toggleSuggestions}
+                className="text-xs text-gray-400 hover:text-gray-300 transition-colors flex items-center space-x-1 px-2 py-1 rounded-md hover:bg-white/5"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span>{hideSuggestions ? 'Show suggestions' : 'Hide suggestions'}</span>
+                <motion.div
+                  animate={{ rotate: hideSuggestions ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="w-3 h-3"
+                  >
+                    <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                  </svg>
+                </motion.div>
+              </motion.button>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSendMessage} className="mt-2">
