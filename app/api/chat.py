@@ -9,7 +9,7 @@ from sqlalchemy import desc
 from app import db
 from app.models import User, ChatMessage, Goal, Reflection, ProgressUpdate, Milestone, UserPreference
 from app.services.sensay import get_sensay_client, SensayAPIError
-from app.prompts import STRATEGIST_SYSTEM_MESSAGE, STRATEGIST_GREETING, STRATEGIST_SYSTEM_MESSAGE_YODA
+from app.prompts import STRATEGIST_SYSTEM_MESSAGE, STRATEGIST_GREETING, YODA_INSTRUCTION
 from app.knowledge_base import get_knowledge_base_entries
 
 # Get logger
@@ -888,9 +888,10 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
         # Select the appropriate system message based on character preference
         system_message = STRATEGIST_SYSTEM_MESSAGE
         if character_preference == "yoda":
-            system_message = STRATEGIST_SYSTEM_MESSAGE_YODA
-            logger.info(f"Using Yoda character for user: {user.id}")
-        
+            # Instead of using a separate system message, append the Yoda instruction
+            system_message = STRATEGIST_SYSTEM_MESSAGE + YODA_INSTRUCTION
+            logger.info(f"Using Yoda mode for user: {user.id}")
+            
         # Check if the user already has a replica_id stored
         if hasattr(user, 'replica_id') and user.replica_id:
             logger.info(f"User already has a replica ID stored: {user.replica_id}")
@@ -932,7 +933,9 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
                         sensay_user_id,
                         update_data
                     )
-                
+                    
+                    logger.info(f"System message updated for replica: {user.replica_id}")
+
                 # Check if knowledge base entries exist for this replica
                 try:
                     kb_entries = sensay_client.list_knowledge_base_entries(sensay_user_id, user.replica_id)
