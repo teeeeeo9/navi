@@ -10,6 +10,7 @@ import theme from '@/styles/theme'
 import ChatInterface from '@/components/chat/ChatInterface'
 import GoalView from '@/components/goals/GoalView'
 import GoalCarousel from '@/components/goals/GoalCarousel'
+import ZenMode from '@/components/goals/ZenMode'
 
 const Dashboard = () => {
   const { user, logout } = useAuth()
@@ -17,6 +18,7 @@ const Dashboard = () => {
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isZenMode, setIsZenMode] = useState(false)
   const chatInterfaceRef = useRef<{ handleSystemUpdate: (updateType: string, entity: string, changes: any) => Promise<void> } | null>(null)
 
   // Load goals on component mount
@@ -159,6 +161,15 @@ const Dashboard = () => {
     navigate('/')
   }
 
+  const toggleZenMode = () => {
+    setIsZenMode(!isZenMode)
+  }
+
+  // Don't render zen mode if no goal is selected
+  if (isZenMode && selectedGoal) {
+    return <ZenMode goal={selectedGoal} onExitZen={toggleZenMode} />
+  }
+
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-b from-dark-900 to-dark-800">
       {/* Background elements for glass effect */}
@@ -195,6 +206,21 @@ const Dashboard = () => {
             >
               Log out
             </button>
+            
+            {/* Zen Mode Toggle Button - only show if there's a selected goal */}
+            {selectedGoal && (
+              <button
+                onClick={toggleZenMode}
+                className={`rounded-full border px-5 py-2 text-sm font-medium backdrop-blur-sm transition-colors ${
+                  isZenMode 
+                    ? 'bg-orange-500/20 border-orange-400/30 text-orange-300 hover:bg-orange-500/30' 
+                    : 'border-white/10 bg-white/5 text-white hover:bg-white/10'
+                }`}
+                style={{ borderColor: isZenMode ? undefined : 'var(--color-border-light)' }}
+              >
+                Zen Mode
+              </button>
+            )}
           </div>
         </div>
       </header>
