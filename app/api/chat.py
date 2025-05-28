@@ -1005,14 +1005,18 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
         # No replica found, create one with a static slug
         logger.info(f"Creating new replica with static slug: {static_slug}")
         replica_data = {
-            'name': 'Strategic Planning Assistant',
+            'name': 'Navi - Strategic Planning Assistant',
             'shortDescription': 'A replica to help with strategic planning',
             'greeting': STRATEGIST_GREETING,
             'slug': static_slug,
             'ownerID': sensay_user_id,
             'llm': {
-                'model': 'claude-3-7-sonnet-latest',
-                'memoryMode': 'prompt-caching',
+                "model": "claude-4-sonnet-20250514",
+                # "model": "gpt-4o",
+                # 'model': 'claude-3-7-sonnet-latest',
+                "provider": "openai",
+                'memoryMode': 'rag-search',
+                
                 'systemMessage': system_message
             }
         }
