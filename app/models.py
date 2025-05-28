@@ -16,7 +16,7 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    goals = db.relationship('Goal', backref='user', lazy=True, cascade='all, delete-orphan')
+    goals = db.relationship('Goal', backref='user', lazy=True, cascade='all, delete-orphan') 
     preferences = db.relationship('UserPreference', backref='user', uselist=False, cascade='all, delete-orphan')
     chat_history = db.relationship('ChatMessage', backref='user', lazy=True, cascade='all, delete-orphan')
     

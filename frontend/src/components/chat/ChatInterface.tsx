@@ -263,11 +263,6 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
           </div>
         )}
         <div className="glass-dark flex-1 overflow-hidden rounded-2xl flex flex-col">
-          {/* Chat Suggestions - always shown at the top */}
-          <div className="px-6 pt-6">
-            <ChatSuggestions onSuggestionSelected={handleSuggestionSelected} hasGoals={hasGoals} />
-          </div>
-          
           {isLoadingMore && (
             <div className="flex justify-center p-2">
               <div className="flex space-x-2 rounded-full bg-dark-700/70 px-4 py-2">
@@ -338,7 +333,12 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
           </div>
         </div>
 
-        <form onSubmit={handleSendMessage} className="mt-4">
+        {/* Suggestions positioned right above the input */}
+        <div className="mt-2 mb-2">
+          <ChatSuggestions onSuggestionSelected={handleSuggestionSelected} hasGoals={hasGoals} />
+        </div>
+
+        <form onSubmit={handleSendMessage} className="mt-2">
           <div className="glass-dark flex overflow-hidden rounded-2xl">
             <textarea
               value={newMessage}
