@@ -159,9 +159,11 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
-    const handleSendMessage = async (e: FormEvent) => {
+    const handleSendMessage = async (e: FormEvent, directMessage?: string) => {
       e.preventDefault()
-      if (!newMessage.trim() || isLoading) return
+      // Use the direct message if provided, otherwise use the state value
+      const messageToSend = directMessage || newMessage
+      if (!messageToSend.trim() || isLoading) return
 
       try {
         setIsLoading(true)
@@ -170,7 +172,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
         const tempUserMessage: ChatMessage = {
           id: Math.random(), // temporary ID
           sender: 'user',
-          content: newMessage,
+          content: messageToSend,
           created_at: new Date().toISOString(),
           related_goal_id: relatedGoalId
         }
@@ -179,7 +181,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
         setNewMessage('')
         
         // Send message to API
-        const response = await api.sendMessage(newMessage, relatedGoalId)
+        const response = await api.sendMessage(messageToSend, relatedGoalId)
         
         // Replace temp message with real one and add AI response
         setMessages(prev => [
@@ -247,13 +249,9 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
 
     // Method to handle suggestion selection
     const handleSuggestionSelected = (message: string) => {
-      setNewMessage(message)
-      
-      // Auto-submit the message after a brief delay to allow UI update
-      setTimeout(() => {
-        const event = { preventDefault: () => {} } as FormEvent
-        handleSendMessage(event)
-      }, 100)
+      // Create an event and directly send the message without setting state first
+      const event = { preventDefault: () => {} } as FormEvent
+      handleSendMessage(event, message)
     }
 
     return (
@@ -276,7 +274,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
           
           <div 
             ref={chatContainerRef} 
-            className="flex flex-1 flex-col overflow-y-auto px-6 pb-6 scrollbar-thin"
+            className="flex flex-1 flex-col overflow-y-auto px-6 pb-6 no-scrollbar"
           >
             {filteredMessages.length === 0 && !isLoading ? (
               <div className="flex h-full flex-col items-center justify-center text-gray-400">

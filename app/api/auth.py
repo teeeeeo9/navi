@@ -299,33 +299,55 @@ def update_profile():
 @jwt_required()
 def update_character_preference():
     """Update the user's character preference."""
+    logger.info("Character preference update endpoint called")
+    
     user_id = get_user_id_from_jwt()
+    logger.info(f"User ID from JWT: {user_id}")
+    
     data = request.get_json()
+    logger.info(f"Character preference request data: {data}")
     
     if not data or 'character' not in data:
+        logger.warning("Character preference update failed: Missing 'character' in request")
         return jsonify({'error': 'Character preference is required'}), 400
     
     character = data['character']
+    logger.info(f"Requested character preference: {character}")
+    
     # Validate character option
     valid_characters = ['default', 'yoda']
     if character not in valid_characters:
+        logger.warning(f"Invalid character preference: {character}")
         return jsonify({'error': f'Invalid character. Must be one of: {", ".join(valid_characters)}'}), 400
     
     # Get or create user preferences
     user_pref = UserPreference.query.filter_by(user_id=user_id).first()
     if not user_pref:
+        logger.info(f"Creating new user preferences for user: {user_id}")
         user_pref = UserPreference(user_id=user_id)
         db.session.add(user_pref)
+    else:
+        logger.info(f"Current character preference for user {user_id}: {user_pref.character_preference}")
     
     # Update character preference
+    logger.info(f"Setting character preference to: {character} for user: {user_id}")
     user_pref.character_preference = character
     
     try:
         db.session.commit()
+        logger.info(f"Character preference successfully updated to {character} for user: {user_id}")
+        
+        # Notify chat service about character change
+        if character == 'yoda':
+            logger.info(f"Using Yoda mode for user: {user_id}")
+        else:
+            logger.info(f"Using default mode for user: {user_id}")
+        
         return jsonify({
             'message': 'Character preference updated successfully',
             'character': character
         }), 200
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Failed to update character preference: {str(e)}", exc_info=True)
         return jsonify({'error': f'Failed to update character preference: {str(e)}'}), 500 

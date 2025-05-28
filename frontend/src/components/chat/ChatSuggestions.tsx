@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import api from '@/services/api';
 import theme from '@/styles/theme';
+import { useAuth } from '@/context/AuthContext';
 
 interface SuggestionItem {
   title: string;
@@ -19,35 +20,40 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
   onSuggestionSelected, 
   hasGoals = false 
 }) => {
-  const [showCharacterTip, setShowCharacterTip] = useState(false);
+  const { user } = useAuth();
   const [selectedSuggestion, setSelectedSuggestion] = useState<number | null>(null);
+  const [showYodaTooltip, setShowYodaTooltip] = useState(false);
+  const isYodaMode = user?.preferences?.character_preference === 'yoda';
   
-  // Show the character tip only if the user has created goals
-  useEffect(() => {
-    if (hasGoals) {
-      setShowCharacterTip(true);
-    }
-  }, [hasGoals]);
-  
-  // Function to switch to Yoda character
-  const switchToYoda = async () => {
+  // Function to switch character mode
+  const switchCharacter = async (character: 'default' | 'yoda') => {
+    console.log(`Attempting to switch character to: ${character}`);
     try {
-      await api.updateCharacterPreference('yoda');
+      // Update the character preference via API
+      const response = await api.updateCharacterPreference(character);
+      console.log(`Character preference updated successfully:`, response);
+      
       // Reload the page to see the changes
+      console.log('Reloading page to apply changes...');
       window.location.reload();
     } catch (error) {
       console.error('Failed to switch character:', error);
+      // Show an error message to the user
+      alert(`Failed to switch character mode: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
   
   // Click handler with visual feedback
   const handleClick = (message: string, index: number) => {
+    // Set selected for visual feedback
     setSelectedSuggestion(index);
     
-    // Reset after animation completes
+    // Call suggestion handler immediately
+    onSuggestionSelected(message);
+    
+    // Reset animation after a brief moment
     setTimeout(() => {
       setSelectedSuggestion(null);
-      onSuggestionSelected(message);
     }, 150);
   };
   
@@ -103,29 +109,44 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
             <span>{suggestion.title}</span>
           </motion.button>
         ))}
-      </div>
-      
-      {/* Character mode suggestion - simplified */}
-      {showCharacterTip && (
+        
+        {/* Yoda mode suggestion */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mt-2 flex justify-between items-center"
+          className="relative"
+          onMouseEnter={() => setShowYodaTooltip(true)}
+          onMouseLeave={() => setShowYodaTooltip(false)}
         >
-          <p className="text-xs text-gray-400 italic">
-            Try Yoda mode for a fun strategizing experience
-          </p>
           <motion.button
-            onClick={switchToYoda}
-            className="text-xs hover:text-blue-300"
-            style={{ color: theme.blue[400] }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="rounded-full px-3.5 py-1.5 bg-white/5 backdrop-blur-sm border border-white/10 text-white/90 text-xs flex items-center space-x-1.5 transition-all"
+            onClick={() => switchCharacter(isYodaMode ? 'default' : 'yoda')}
+            whileHover={{ 
+              y: -2,
+              boxShadow: `0 0 0 1px ${theme.green[500]}30`,
+              borderColor: `${theme.green[500]}50`,
+              transition: { duration: 0.2 }
+            }}
+            animate={{ 
+              scale: 1,
+              backgroundColor: 'rgba(255, 255, 255, 0.05)'
+            }}
+            transition={{ duration: 0.15 }}
           >
-            Switch to Yoda
+            <span>{isYodaMode ? "🧙‍♂️" : "🧙‍♂️"}</span>
+            <span>{isYodaMode ? "Return to your normal Navi replica" : "Try Yoda mode"}</span>
           </motion.button>
+          
+          {/* Tooltip for Yoda mode */}
+          {showYodaTooltip && !isYodaMode && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute bottom-full left-0 mb-2 p-2 bg-gray-800 rounded-lg text-xs text-white w-64 shadow-lg z-10"
+            >
+              The best way to be productive is to have fun in the meantime. Want Yoda to guide you? More characters are coming shortly;)
+            </motion.div>
+          )}
         </motion.div>
-      )}
+      </div>
     </div>
   );
 };

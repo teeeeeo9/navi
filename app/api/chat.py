@@ -889,7 +889,7 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
         system_message = STRATEGIST_SYSTEM_MESSAGE
         if character_preference == "yoda":
             # Instead of using a separate system message, append the Yoda instruction
-            system_message = STRATEGIST_SYSTEM_MESSAGE + YODA_INSTRUCTION
+            system_message = YODA_INSTRUCTION + STRATEGIST_SYSTEM_MESSAGE
             logger.info(f"Using Yoda mode for user: {user.id}")
             
         # Check if the user already has a replica_id stored
