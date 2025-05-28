@@ -353,13 +353,13 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                   onChange={(e) => setTitleValue(e.target.value)}
                   onBlur={handleTitleSave}
                   onKeyDown={handleTitleKeyDown}
-                  className="w-full bg-dark-800/50 text-white rounded-lg border border-blue-400/30 px-4 py-2 text-2xl font-bold outline-none"
+                  className="w-full bg-transparent text-xl font-medium text-white border-b border-blue-400/50 px-4 py-2 outline-none"
                 />
               </div>
             ) : (
               <div className="flex items-center mb-4">
                 <h2 
-                  className="text-2xl font-bold text-white cursor-pointer"
+                  className="text-xl font-medium text-white cursor-pointer"
                   onClick={handleTitleEdit}
                 >
                   {localGoalData.title}
@@ -461,13 +461,13 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
         {/* Progress and Effort Input - Hidden by default */}
         {showProgressUpdate && (
           <div className="mb-8 rounded-lg border border-white/10 bg-white/5 p-6">
-            <h3 className="mb-4 text-base font-medium text-white">Update Your Progress</h3>
+            <h3 className="mb-4 text-sm font-medium text-white">Update Your Progress</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-gray-300">
-                    Progress: {progressValue}/10
+                    Progress: {Math.round(progressValue)}/10
                   </label>
                   <span className="text-xs text-gray-400">
                     How far along are you?
@@ -495,7 +495,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                     value={progressNotes}
                     onChange={(e) => setProgressNotes(e.target.value)}
                     placeholder="Add notes about your progress..."
-                    className="w-full rounded-lg border border-white/10 bg-dark-800/50 p-3 text-sm text-white placeholder:text-gray-500 resize-none"
+                    className="w-full rounded-lg border border-white/10 bg-dark-800/30 p-3 text-sm text-white placeholder:text-gray-500 resize-none"
                     rows={3}
                   />
                 </div>
@@ -504,7 +504,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-gray-300">
-                    Effort: {effortValue}/10
+                    Effort: {Math.round(effortValue)}/10
                   </label>
                   <span className="text-xs text-gray-400">
                     How much effort are you investing?
@@ -532,7 +532,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                     value={effortNotes}
                     onChange={(e) => setEffortNotes(e.target.value)}
                     placeholder="Add notes about your effort level..."
-                    className="w-full rounded-lg border border-white/10 bg-dark-800/50 p-3 text-sm text-white placeholder:text-gray-500 resize-none"
+                    className="w-full rounded-lg border border-white/10 bg-dark-800/30 p-3 text-sm text-white placeholder:text-gray-500 resize-none"
                     rows={3}
                   />
                 </div>
@@ -545,7 +545,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Left column: Reflections */}
           <div>
-            <h3 className="text-lg font-medium text-white mb-4">Reflections</h3>
+            <h3 className="text-base font-medium text-white mb-4">Reflections</h3>
             
             <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-450px)] pr-2">
               {getSortedReflections().map(([type, reflection]) => (
@@ -574,7 +574,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
           
           {/* Right column: Milestones */}
           <div>
-            <h3 className="text-lg font-medium text-white mb-4">Milestones</h3>
+            <h3 className="text-base font-medium text-white mb-4">Milestones</h3>
             
             {/* Milestones */}
             <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-450px)] pr-2">

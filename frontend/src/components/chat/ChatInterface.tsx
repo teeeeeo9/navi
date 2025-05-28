@@ -304,13 +304,13 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
                         } ${!compact ? 'px-5 py-4 shadow-lg' : ''}`}
                         style={{
                           backgroundColor: message.sender === 'user' 
-                            ? 'rgba(135, 138, 140, 0.4)' // Grey for user
+                            ? 'rgba(135, 138, 140, 0.25)' // More transparent grey for user
                             : message.sender === 'system'
-                            ? 'rgba(126, 148, 168, 0.3)' // Light grey for system
-                            : 'rgba(113, 160, 198, 0.5)' // Blue for replica
+                            ? 'rgba(126, 148, 168, 0.2)' // More transparent light grey for system
+                            : 'rgba(113, 160, 198, 0.3)' // More transparent blue for replica
                         }}
                       >
-                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                         <p className="mt-1 text-right text-xs opacity-70">
                           {new Date(message.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
@@ -354,7 +354,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={compact ? "What's on your mind?" : "What's on your mind?"}
-              className="flex-1 bg-transparent px-6 py-4 text-white outline-none resize-none min-h-[60px] max-h-40 overflow-y-auto text-lg"
+              className="flex-1 bg-transparent px-6 py-4 text-white outline-none resize-none min-h-[60px] max-h-40 overflow-y-auto text-base"
               disabled={isLoading || systemUpdateInProgress}
               rows={2}
             />

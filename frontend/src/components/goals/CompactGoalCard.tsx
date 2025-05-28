@@ -90,7 +90,7 @@ const CompactGoalCard = ({ goal, isSelected = false, onClick }: CompactGoalCardP
         {/* Remove progress ring */}
         
         <div className="flex-grow">
-          <h3 className="mb-2 text-lg font-bold text-white line-clamp-2">
+          <h3 className="mb-2 text-base font-medium text-white line-clamp-2">
             {goal.title}
           </h3>
           

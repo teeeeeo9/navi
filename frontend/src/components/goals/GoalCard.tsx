@@ -566,14 +566,14 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           
           <div className="absolute -right-4 -top-4">
             <ProgressRing progress={progressValue} size={50} strokeWidth={4} />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
-              {progressValue}/10
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-medium">
+              {Math.round(progressValue)}/10
             </span>
           </div>
           
           <div className="pr-10 flex-grow">
             <h3 
-              className="mb-1 text-lg font-bold text-white line-clamp-2"
+              className="mb-1 text-base font-medium text-white line-clamp-2"
               onDoubleClick={handleTitleDoubleClick}
             >
               {localGoalData.title}
@@ -629,12 +629,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                   onChange={(e) => setTitleValue(e.target.value)}
                   onBlur={handleTitleSave}
                   onKeyDown={handleTitleKeyDown}
-                  className="mb-1 w-full bg-transparent text-2xl font-bold text-white outline-none focus:border-b focus:border-primary-400/50"
+                  className="mb-1 w-full bg-transparent text-xl font-medium text-white outline-none border-b border-primary-400/50"
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
                 <h2 
-                  className="mb-1 text-2xl font-bold text-white"
+                  className="mb-1 text-xl font-medium text-white"
                   onDoubleClick={handleTitleDoubleClick}
                 >
                   {localGoalData.title}
@@ -651,7 +651,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                         value={startDateValue}
                         onChange={(e) => setStartDateValue(e.target.value)}
                         onBlur={handleStartDateSave}
-                        className="bg-transparent text-sm text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
+                        className="bg-transparent text-sm text-dark-100 outline-none border-b border-primary-400/50"
                       />
                     ) : (
                       <span 
@@ -673,7 +673,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                         value={targetDateValue}
                         onChange={(e) => setTargetDateValue(e.target.value)}
                         onBlur={handleTargetDateSave}
-                        className="bg-transparent text-sm text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
+                        className="bg-transparent text-sm text-dark-100 outline-none border-b border-primary-400/50"
                       />
                     ) : (
                       <span 
@@ -705,7 +705,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
             {/* Left column: Reflections */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-medium text-white">Reflections</h3>
+                <h3 className="text-base font-medium text-white">Reflections</h3>
                 <button
                   onClick={() => {
                     const elem = document.getElementById(`reflection-${goal.id}-importance`);
@@ -789,7 +789,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
             {/* Right column: Milestones */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-medium text-white">Milestones</h3>
+                <h3 className="text-base font-medium text-white">Milestones</h3>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowCharts(!showCharts)}
@@ -827,7 +827,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
               {showCharts && (
                 <div className="mt-4">
                   <div className="mb-6 rounded-xl bg-dark-700/30 p-5 border border-dark-600/30">
-                    <h3 className="mb-4 text-lg font-medium text-white">Track Your Progress</h3>
+                    <h3 className="mb-4 text-base font-medium text-white">Track Your Progress</h3>
                     
                     <div className="mb-5">
                       <div className="flex justify-between items-center mb-2">
@@ -863,7 +863,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           value={progressNotes}
                           onChange={(e) => setProgressNotes(e.target.value)}
                           placeholder="Add notes about your progress..."
-                          className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
+                          className="w-full rounded-lg bg-dark-800/30 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
                           rows={2}
                         />
                       </div>
@@ -903,7 +903,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           value={effortNotes}
                           onChange={(e) => setEffortNotes(e.target.value)}
                           placeholder="Add notes about your effort level..."
-                          className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
+                          className="w-full rounded-lg bg-dark-800/30 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
                           rows={2}
                         />
                       </div>
@@ -1250,7 +1250,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
             ) : (
               <div className="flex items-center">
                 <h4 
-                  className="mb-2 text-base font-medium text-white cursor-pointer"
+                  className="mb-2 text-sm font-medium text-white cursor-pointer"
                   onDoubleClick={handleTitleDoubleClick}
                 >
                   {localMilestone.title}
@@ -1358,7 +1358,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     value={progressNotes}
                     onChange={(e) => setProgressNotes(e.target.value)}
                     placeholder="Add notes about your progress..."
-                    className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                    className="w-full rounded-lg bg-dark-800/30 border border-dark-600/50 p-2 text-sm text-white placeholder:text-dark-300 resize-none"
                     rows={2}
                   />
                 </div>
@@ -1398,7 +1398,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     value={effortNotes}
                     onChange={(e) => setEffortNotes(e.target.value)}
                     placeholder="Add notes about your effort level..."
-                    className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                    className="w-full rounded-lg bg-dark-800/30 border border-dark-600/50 p-2 text-sm text-white placeholder:text-dark-300 resize-none"
                     rows={2}
                   />
                 </div>

@@ -272,7 +272,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                 onChange={(e) => setTitleValue(e.target.value)}
                 onBlur={handleTitleSave}
                 onKeyDown={handleTitleKeyDown}
-                className="w-full bg-dark-800/50 text-white rounded-lg border border-blue-400/30 px-3 py-2 text-base font-medium outline-none"
+                className="w-full bg-transparent text-base font-medium text-white rounded-lg border-b border-blue-400/50 px-3 py-2 outline-none"
               />
             </div>
           ) : (
@@ -305,7 +305,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                   onChange={(e) => setTargetDateValue(e.target.value)}
                   onBlur={handleDateSave}
                   onKeyDown={handleDateKeyDown}
-                  className="bg-transparent text-xs text-white outline-none w-32"
+                  className="bg-transparent text-xs text-white outline-none border-b border-blue-400/50 w-32"
                 />
               </div>
             ) : (
@@ -346,11 +346,11 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
       {showProgress && (
         <div className="mt-5 space-y-5">
           <div className="rounded-lg border border-white/10 bg-white/5 p-5">
-            <h3 className="mb-4 text-sm font-medium text-white">Track Milestone Progress</h3>
+            <h3 className="mb-4 text-xs font-medium text-white">Track Milestone Progress</h3>
             
             <div className="mb-5">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-gray-300">
+                <label className="text-sm font-medium text-gray-300">
                   Progress: {Math.round(progressValue)}/10
                 </label>
                 <span className="text-xs text-gray-400">
@@ -389,7 +389,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
             
             <div className="mb-2">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-gray-300">
+                <label className="text-sm font-medium text-gray-300">
                   Effort Level: {Math.round(effortValue)}/10
                 </label>
                 <span className="text-xs text-gray-400">

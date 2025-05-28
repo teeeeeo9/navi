@@ -83,7 +83,7 @@ const ReflectionCard: React.FC<ReflectionCardProps> = ({
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       handleSave();
       e.preventDefault();
     } else if (e.key === 'Escape') {
@@ -98,9 +98,9 @@ const ReflectionCard: React.FC<ReflectionCardProps> = ({
       className="group rounded-lg border border-white/10 bg-white/5 p-5 transition-all backdrop-blur-md hover:bg-white/10"
     >
       <div className="flex items-center gap-3 mb-3">
-        <span className="text-xl">{reflectionStyle.icon}</span>
+        <span className="text-lg">{reflectionStyle.icon}</span>
         <div>
-          <h4 className="text-base font-medium text-white">
+          <h4 className="text-sm font-medium text-white">
             {reflectionStyle.title}
           </h4>
           <p className="text-xs text-gray-400">{reflectionStyle.description}</p>
@@ -127,18 +127,10 @@ const ReflectionCard: React.FC<ReflectionCardProps> = ({
             onChange={(e) => setEditedContent(e.target.value)}
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
-            className="w-full bg-dark-800/60 text-white outline-none border border-blue-400/30 p-3 rounded-lg resize-none text-sm"
+            className="w-full bg-transparent text-sm text-gray-300 outline-none border-b border-blue-400/30 p-3 rounded-lg resize-none"
             rows={4}
             placeholder={`Add your thoughts on ${reflectionStyle.title.toLowerCase()}...`}
           />
-          <div className="mt-2 flex justify-end">
-            <button 
-              onClick={handleSave}
-              className="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 rounded-md hover:bg-blue-500/30 transition-colors"
-            >
-              Save
-            </button>
-          </div>
         </div>
       ) : (
         <p 
