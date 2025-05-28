@@ -203,10 +203,10 @@ const Dashboard = () => {
       <main className="relative z-10 flex flex-1 overflow-hidden p-4">
         {/* No goals state - centered chat */}
         {goals.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center p-6">
-            <div className="w-full max-w-2xl">
+          <div className="flex flex-1 flex-col items-center justify-center p-6">
+            <div className="w-full max-w-4xl h-[80vh] flex-1">
               <ChatInterface 
-                className="glass-morphism rounded-2xl border border-white/10 shadow-xl p-4" 
+                className="glass-morphism rounded-2xl border border-white/10 shadow-xl p-4 h-full" 
                 onMessageAction={handleMessageAction}
                 compact={false}
                 ref={chatInterfaceRef}
