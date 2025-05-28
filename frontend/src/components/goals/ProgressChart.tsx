@@ -6,12 +6,12 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Area,
   ComposedChart,
+  Area,
   Line
 } from 'recharts'
 import { ProgressUpdate } from '@/services/api'
-import colorScheme from '@/styles/colorScheme'
+import theme from '@/styles/theme'
 
 interface ProgressChartProps {
   progressData: ProgressUpdate[]
@@ -20,24 +20,34 @@ interface ProgressChartProps {
   minimal?: boolean
 }
 
+// Get color for progress based on value (used in tooltip)
+const getColorForValue = (value: number) => {
+  if (value <= 2) return theme.blue[900];
+  if (value <= 4) return theme.blue[500];
+  if (value <= 6) return theme.grey[500];
+  if (value <= 9) return theme.blue[500]; 
+  return theme.orange[700]; // Orange ONLY for perfect 10
+}
+
 // Format date for x-axis
 const formatXAxis = (timestamp: number) => {
   const date = new Date(timestamp)
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+// Custom tooltip component
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const timestamp = label // timestamp is used as the x-axis value
+    const timestamp = label
     const date = new Date(timestamp)
     const formattedDate = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     const formattedTime = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     
-    // Extract progress and effort entries
+    // Get the data points
     const progressEntry = payload.find((p: any) => p.dataKey === 'progress')
     const effortEntry = payload.find((p: any) => p.dataKey === 'effort')
     
-    // Get notes from the payload
+    // Get notes if they exist
     const progressNotes = payload[0]?.payload?.progress_notes
     const effortNotes = payload[0]?.payload?.effort_notes
     
@@ -45,36 +55,33 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="rounded-lg border border-white/10 bg-dark-800/90 p-4 shadow-lg backdrop-blur-md">
         <p className="mb-2 text-sm text-gray-300">{formattedDate} {formattedTime}</p>
         
-        {/* Show progress value if present */}
         {progressEntry && progressEntry.value !== undefined && (
           <p className="text-base font-bold text-white">
             <span 
               className="mr-2 inline-block h-3 w-3 rounded-full"
-              style={{ backgroundColor: progressEntry.color }}
+              style={{ backgroundColor: theme.blue[500] }}
             ></span>
             Progress: {progressEntry.value}
           </p>
         )}
         
-        {/* Show effort value if present */}
         {effortEntry && effortEntry.value !== undefined && (
           <p className="text-base font-bold text-white">
             <span 
               className="mr-2 inline-block h-3 w-3 rounded-full"
-              style={{ backgroundColor: effortEntry.color }}
+              style={{ backgroundColor: theme.green[500] }}
             ></span>
             Effort: {effortEntry.value}
           </p>
         )}
         
-        {/* Display notes */}
-        {progressNotes && progressEntry && (
+        {progressNotes && (
           <p className="mt-2 max-w-[250px] text-sm text-gray-400">
             {progressNotes}
           </p>
         )}
         
-        {effortNotes && effortEntry && (
+        {effortNotes && (
           <p className="mt-2 max-w-[250px] text-sm text-gray-400">
             {effortNotes}
           </p>
@@ -82,20 +89,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       </div>
     )
   }
+  
   return null
 }
 
 const ProgressChart = ({ 
   progressData, 
-  title = "Progress & Effort", 
   height = 200, 
   minimal = false
 }: ProgressChartProps) => {
   const [expanded, setExpanded] = useState(false)
   
   // Filter data to ensure it's specific to either a goal or milestone
-  // If first item has milestone_id, only include items with that milestone_id
-  // If first item has no milestone_id, exclude all items with milestone_id
   const filteredData = progressData.length > 0 
     ? (() => {
         const firstItem = progressData[0];
@@ -117,39 +122,37 @@ const ProgressChart = ({
   // Split data by type
   const progressUpdates = filteredData.filter(update => !update.type || update.type === 'progress')
   const effortUpdates = filteredData.filter(update => update.type === 'effort')
-  
-  console.log(`Chart data: ${filteredData.length} total updates`)
-  console.log(`Progress updates: ${progressUpdates.length}`)
-  console.log(`Effort updates: ${effortUpdates.length}`)
 
-  // Process data for the chart
-  const chartData = filteredData.map(update => {
-    const timestamp = new Date(update.created_at).getTime()
+  // Process data for the chart - create a clean array with no duplicate timestamps
+  const processData = () => {
+    const dataMap = new Map();
     
-    // Create data point with timestamp as x-axis value
-    const dataPoint: any = {
-      timestamp
-    }
+    // First process all progress updates
+    progressUpdates.forEach(update => {
+      const timestamp = new Date(update.created_at).getTime();
+      dataMap.set(timestamp, {
+        timestamp,
+        progress: update.progress_value / 10,
+        progress_notes: update.progress_notes || ''
+      });
+    });
     
-    // Set property based on update type
-    if (update.type === 'effort') {
-      dataPoint.effort = update.progress_value / 10 // Convert to 0-10 scale
-      if (update.effort_notes) {
-        dataPoint.effort_notes = update.effort_notes
-      }
-    } else {
-      // Default to progress type if not specified or is 'progress'
-      dataPoint.progress = update.progress_value / 10 // Convert to 0-10 scale
-      if (update.progress_notes) {
-        dataPoint.progress_notes = update.progress_notes
-      }
-    }
+    // Then add effort updates (avoid overwriting progress data)
+    effortUpdates.forEach(update => {
+      const timestamp = new Date(update.created_at).getTime();
+      const existingData = dataMap.get(timestamp) || { timestamp };
+      dataMap.set(timestamp, {
+        ...existingData,
+        effort: update.progress_value / 10,
+        effort_notes: update.effort_notes || ''
+      });
+    });
     
-    return dataPoint
-  })
+    // Convert map to array and sort by timestamp
+    return Array.from(dataMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+  };
   
-  // Sort by timestamp
-  chartData.sort((a: any, b: any) => a.timestamp - b.timestamp)
+  const chartData = processData();
   
   if (chartData.length === 0) {
     return (
@@ -165,12 +168,6 @@ const ProgressChart = ({
       <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
         <ResponsiveContainer width="100%" height={100}>
           <ComposedChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
-            <defs>
-              <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={colorScheme.blue[500]} stopOpacity={0.8} />
-                <stop offset="95%" stopColor={colorScheme.blue[500]} stopOpacity={0.1} />
-              </linearGradient>
-            </defs>
             <XAxis 
               dataKey="timestamp" 
               type="number"
@@ -184,10 +181,11 @@ const ProgressChart = ({
               <Area 
                 type="monotone" 
                 dataKey="progress" 
-                stroke={colorScheme.blue[500]} 
-                fillOpacity={1} 
-                fill="url(#progressGradient)" 
+                stroke={theme.blue[500]} 
+                fill="rgba(113, 160, 198, 0.2)"
                 strokeWidth={2}
+                activeDot={{ r: 4, fill: theme.blue[500] }}
+                dot={{ r: 3, fill: theme.blue[500], strokeWidth: 0 }}
                 connectNulls
               />
             )}
@@ -197,10 +195,10 @@ const ProgressChart = ({
               <Line 
                 type="monotone" 
                 dataKey="effort" 
-                stroke={colorScheme.purple[500]} 
+                stroke={theme.green[500]} 
                 strokeWidth={2}
-                dot={{ r: 3, fill: colorScheme.purple[500] }}
-                activeDot={{ r: 4 }}
+                dot={{ r: 3, fill: theme.green[500], strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: theme.green[500] }}
                 connectNulls
               />
             )}
@@ -210,7 +208,7 @@ const ProgressChart = ({
     )
   }
 
-  // Full interactive chart
+  // Full chart
   return (
     <motion.div 
       className={`overflow-hidden rounded-lg border border-white/10 ${
@@ -219,60 +217,38 @@ const ProgressChart = ({
       animate={{ height: expanded ? 'auto' : height }}
       transition={{ duration: 0.3 }}
     >
-      {title && (
-        <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <h4 className="text-base font-medium text-white">{title}</h4>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-blue-400"></span>
-              <span className="text-xs text-gray-300">Progress</span>
-              
-              {effortUpdates.length > 0 && (
-                <>
-                  <span className="ml-3 h-2.5 w-2.5 rounded-full bg-purple-400"></span>
-                  <span className="text-xs text-gray-300">Effort</span>
-                </>
-              )}
-            </div>
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="rounded-full border border-white/10 bg-white/5 p-1.5 text-sm text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              {expanded ? (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-                  <path fillRule="evenodd" d="M11.47 7.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 9.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-                  <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="flex justify-end px-3 pt-2">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="rounded-full border border-white/10 bg-white/5 p-1 text-sm text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          {expanded ? (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+              <path fillRule="evenodd" d="M11.47 7.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 9.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clipRule="evenodd" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+              <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
+            </svg>
+          )}
+        </button>
+      </div>
       
       <div className="px-3 pb-4">
-        <ResponsiveContainer width="100%" height={expanded ? 350 : height - 60}>
-          <ComposedChart data={chartData} margin={{ top: 10, right: 15, left: -5, bottom: 5 }}>
-            <defs>
-              <linearGradient id="progressGradientFull" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={colorScheme.blue[500]} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={colorScheme.blue[500]} stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
+        <ResponsiveContainer width="100%" height={expanded ? 350 : height - 30}>
+          <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -5, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
             <XAxis 
               dataKey="timestamp" 
               type="number"
               domain={['dataMin', 'dataMax']}
               tickFormatter={formatXAxis}
-              tick={{ fill: '#9ca3af', fontSize: 11 }} 
+              tick={{ fill: theme.grey[300], fontSize: 11 }} 
               axisLine={{ stroke: '#374151' }}
             />
             <YAxis 
               domain={[0, 10]}
-              tick={{ fill: '#9ca3af', fontSize: 11 }} 
+              tick={{ fill: theme.grey[300], fontSize: 11 }} 
               axisLine={{ stroke: '#374151' }}
               tickCount={6}
             />
@@ -283,12 +259,11 @@ const ProgressChart = ({
               <Area 
                 type="monotone" 
                 dataKey="progress" 
-                stroke={colorScheme.blue[500]} 
-                fillOpacity={1} 
-                fill="url(#progressGradientFull)" 
+                stroke={theme.blue[500]} 
+                fill="rgba(113, 160, 198, 0.2)"
                 strokeWidth={2}
-                dot={{ r: 3, fill: colorScheme.blue[500], strokeWidth: 1, stroke: colorScheme.blue[800] }}
-                activeDot={{ r: 4, fill: colorScheme.blue[500] }}
+                dot={{ r: 3, fill: theme.blue[500], strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: theme.blue[500] }}
                 name="Progress"
                 connectNulls
               />
@@ -299,10 +274,10 @@ const ProgressChart = ({
               <Line 
                 type="monotone" 
                 dataKey="effort" 
-                stroke={colorScheme.purple[500]} 
+                stroke={theme.green[500]} 
                 strokeWidth={2}
-                dot={{ r: 3, fill: colorScheme.purple[500], strokeWidth: 1, stroke: colorScheme.purple[600] }}
-                activeDot={{ r: 4, fill: colorScheme.purple[500] }}
+                dot={{ r: 3, fill: theme.green[500], strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: theme.green[500] }}
                 name="Effort"
                 connectNulls
               />

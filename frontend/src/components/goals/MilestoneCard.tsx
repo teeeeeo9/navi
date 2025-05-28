@@ -2,12 +2,23 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Milestone, ProgressUpdate } from '@/services/api';
 import api from '@/services/api';
 import ProgressChart from './ProgressChart';
+import { theme } from '@/styles/theme';
+import { motion } from 'framer-motion';
 
 interface MilestoneCardProps {
   milestone: Milestone;
   formatDate: (date: string) => string;
   onMilestoneUpdate?: (milestoneId: number) => void;
   goalId: number;
+}
+
+// Helper function to get color based on progress value
+const getColorForProgress = (progress: number) => {
+  if (progress <= 2) return theme.blue[900]; // Dark blue for very low progress
+  if (progress <= 4) return theme.blue[500]; // Blue for low-medium progress
+  if (progress <= 6) return theme.grey[500]; // Grey for medium progress
+  if (progress <= 9) return theme.blue[500]; // Back to blue for higher progress
+  return theme.orange[700]; // Orange ONLY for perfect 10 progress
 }
 
 const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, onMilestoneUpdate, goalId }) => {
@@ -307,18 +318,26 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
             )}
             
             <span 
-              className={`px-2.5 py-1.5 rounded-lg ${
-                localMilestone.status === 'completed' 
-                  ? 'bg-green-500/10 text-green-300' 
-                  : 'bg-blue-500/10 text-blue-300'
-              }`}
+              className={`px-2.5 py-1.5 rounded-lg`}
+              style={{ 
+                backgroundColor: localMilestone.status === 'completed' 
+                  ? 'rgba(113, 160, 198, 0.2)'
+                  : 'rgba(126, 148, 168, 0.15)',
+                color: localMilestone.status === 'completed' 
+                  ? theme.orange[700]  // Only use orange for completed
+                  : theme.blue[500]
+              }}
             >
               {localMilestone.status === 'completed' ? 'Completed' : 'In Progress'}
             </span>
           </div>
         </div>
         
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-blue-400/20 bg-blue-500/10 text-sm font-medium">
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 text-sm font-medium"
+             style={{ 
+               backgroundColor: 'rgba(30, 30, 40, 0.4)', 
+               color: getColorForProgress(progressValue)
+             }}>
           {progressValue}/10
         </div>
       </div>
@@ -326,8 +345,13 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
       <div className="mt-3 mb-2">
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-700/30">
           <div 
-            className="h-full bg-gradient-to-r from-blue-400 to-blue-500" 
-            style={{ width: `${milestone.completion_status}%` }}
+            className="h-full" 
+            style={{ 
+              width: `${milestone.completion_status}%`,
+              background: milestone.completion_status === 100 
+                ? 'var(--gradient-progress-complete)' 
+                : 'var(--gradient-progress-incomplete)'
+            }}
           ></div>
         </div>
       </div>
@@ -363,14 +387,16 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                   step="1" 
                   value={progressValue}
                   onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
-                <button
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs transition-colors"
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs"
                   onClick={() => handleProgressUpdate('progress', progressValue)}
                 >
                   Update
-                </button>
+                </motion.button>
               </div>
               <div className="mt-3">
                 <textarea
@@ -400,14 +426,16 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                   step="1" 
                   value={effortValue}
                   onChange={(e) => setEffortValue(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                  className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
                 />
-                <button
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-md text-xs transition-colors"
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs"
                   onClick={() => handleProgressUpdate('effort', effortValue)}
                 >
                   Update
-                </button>
+                </motion.button>
               </div>
               <div className="mt-3">
                 <textarea

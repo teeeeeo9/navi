@@ -1,11 +1,22 @@
 import { Goal } from '@/services/api'
-import colorScheme from '@/styles/colorScheme'
+import theme from '@/styles/theme'
 
 // Progress Ring Component
 const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: number, size?: number, strokeWidth?: number }) => {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const strokeDashoffset = circumference - ((progress / 10) * circumference)
+  
+  // Calculate color based on progress - blue (for low) to orange (for high)
+  const getColorForProgress = (progress: number) => {
+    if (progress <= 2) return theme.blue[900]; // Dark blue for very low progress
+    if (progress <= 4) return theme.blue[500]; // Blue for low-medium progress
+    if (progress <= 6) return theme.grey[500]; // Grey for medium progress
+    if (progress <= 9) return theme.blue[500]; // Back to blue for higher progress
+    return theme.orange[700]; // Orange ONLY for perfect 10 progress
+  }
+  
+  const progressColor = getColorForProgress(progress);
 
   return (
     <svg width={size} height={size} className="transform -rotate-90">
@@ -18,25 +29,19 @@ const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: numb
         stroke="rgba(255,255,255,0.1)"
         strokeWidth={strokeWidth}
       />
-      {/* Progress circle */}
+      {/* Progress circle with dynamic color */}
       <circle
         cx={size / 2}
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="url(#progressGradient)"
+        stroke={progressColor}
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
         strokeDashoffset={strokeDashoffset}
         strokeLinecap="round"
+        style={{ transition: "stroke 0.3s ease" }}
       />
-      {/* Progress gradient */}
-      <defs>
-        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={colorScheme.blue[500]} />
-          <stop offset="100%" stopColor={colorScheme.purple[500]} />
-        </linearGradient>
-      </defs>
     </svg>
   )
 }
@@ -77,6 +82,9 @@ const CompactGoalCard = ({ goal, isSelected = false, onClick }: CompactGoalCardP
       className={`group cursor-pointer h-full rounded-xl border border-white/10 bg-white/5 backdrop-blur-md transition-all ${
         isSelected ? 'ring-2 ring-blue-400' : 'hover:bg-white/10'
       }`}
+      style={{ 
+        borderColor: isSelected ? theme.blue[500] : 'var(--color-border-light)'
+      }}
     >
       <div className="relative flex h-full flex-col p-5">
         {/* Progress ring */}
@@ -98,7 +106,11 @@ const CompactGoalCard = ({ goal, isSelected = false, onClick }: CompactGoalCardP
             <span className="rounded-lg bg-white/5 px-2.5 py-1.5">
               {formatDate(goal.target_date)}
             </span>
-            <span className={`rounded-lg px-2.5 py-1.5 ${isOverdue ? 'bg-orange-500/10 text-orange-300' : 'bg-blue-500/10 text-blue-300'}`}>
+            <span className={`rounded-lg px-2.5 py-1.5`}
+                  style={{ 
+                    backgroundColor: isOverdue ? 'rgba(247,144,81,0.1)' : 'rgba(113,160,198,0.1)',
+                    color: isOverdue ? theme.orange[600] : theme.blue[500]
+                  }}>
               {Math.abs(daysRemaining)} days {daysRemaining >= 0 ? 'left' : 'overdue'}
             </span>
           </div>
@@ -113,8 +125,13 @@ const CompactGoalCard = ({ goal, isSelected = false, onClick }: CompactGoalCardP
         <div className="mt-auto">
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-700/30">
             <div 
-              className="h-full bg-gradient-to-r from-blue-400 to-purple-400" 
-              style={{ width: `${goal.completion_status}%` }}
+              className="h-full" 
+              style={{ 
+                width: `${goal.completion_status}%`,
+                background: goal.completion_status === 100 
+                  ? 'var(--gradient-progress-complete)' 
+                  : 'var(--gradient-progress-incomplete)'
+              }}
             ></div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import api, { ChatMessage } from '@/services/api'
 import ChatSuggestions from './ChatSuggestions'
 import { useAuth } from '@/context/AuthContext'
 import YodaImage from '@/assets/Yoda.jpeg'
-import colorScheme from '@/styles/colorScheme'
+import theme from '@/styles/theme'
 
 interface ChatInterfaceProps {
   relatedGoalId?: number;
@@ -300,8 +300,15 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
                             ? 'bg-blue-600/50 text-white backdrop-blur-sm'
                             : message.sender === 'system'
                             ? 'bg-gray-700/50 text-gray-300 italic backdrop-blur-sm'
-                            : 'bg-teal-600/50 text-white backdrop-blur-sm'
+                            : 'bg-blue-400/50 text-white backdrop-blur-sm'
                         } ${!compact ? 'px-5 py-4 shadow-lg' : ''}`}
+                        style={{
+                          backgroundColor: message.sender === 'user' 
+                            ? 'rgba(135, 138, 140, 0.4)' // Grey for user
+                            : message.sender === 'system'
+                            ? 'rgba(126, 148, 168, 0.3)' // Light grey for system
+                            : 'rgba(113, 160, 198, 0.5)' // Blue for replica
+                        }}
                       >
                         <p className="whitespace-pre-wrap">{message.content}</p>
                         <p className="mt-1 text-right text-xs opacity-70">
@@ -340,7 +347,8 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
         </div>
 
         <form onSubmit={handleSendMessage} className="mt-2">
-          <div className="flex overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md">
+          <div className="flex overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md"
+               style={{ borderColor: 'var(--color-border-light)' }}>
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
@@ -354,7 +362,8 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              className="bg-blue-600 px-6 py-4 text-white"
+              className="px-6 py-4 text-white"
+              style={{ background: 'var(--gradient-blue-grey)' }}
               disabled={isLoading || systemUpdateInProgress || !newMessage.trim()}
             >
               <svg

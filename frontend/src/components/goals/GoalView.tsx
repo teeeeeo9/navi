@@ -4,13 +4,24 @@ import api from '@/services/api';
 import ProgressChart from './ProgressChart';
 import MilestoneCard from './MilestoneCard';
 import ReflectionCard, { reflectionTypes } from './ReflectionCard';
-import colorScheme from '@/styles/colorScheme';
+import theme from '@/styles/theme';
 
 // Progress Ring Component
 const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: number, size?: number, strokeWidth?: number }) => {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const strokeDashoffset = circumference - ((progress / 10) * circumference)
+  
+  // Calculate color based on progress - blue (for low) to orange (for high)
+  const getColorForProgress = (progress: number) => {
+    if (progress <= 2) return theme.blue[900]; // Dark blue for very low progress
+    if (progress <= 4) return theme.blue[500]; // Blue for low-medium progress
+    if (progress <= 6) return theme.grey[500]; // Grey for medium progress
+    if (progress <= 9) return theme.blue[500]; // Back to blue for higher progress
+    return theme.orange[700]; // Orange ONLY for perfect 10 progress
+  }
+  
+  const progressColor = getColorForProgress(progress);
 
   return (
     <svg width={size} height={size} className="transform -rotate-90">
@@ -23,25 +34,19 @@ const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: numb
         stroke="rgba(255,255,255,0.1)"
         strokeWidth={strokeWidth}
       />
-      {/* Progress circle */}
+      {/* Progress circle with dynamic color */}
       <circle
         cx={size / 2}
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="url(#progressGradient)"
+        stroke={progressColor}
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
         strokeDashoffset={strokeDashoffset}
         strokeLinecap="round"
+        style={{ transition: "stroke 0.3s ease" }}
       />
-      {/* Progress gradient */}
-      <defs>
-        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={colorScheme.blue[500]} />
-          <stop offset="100%" stopColor={colorScheme.purple[500]} />
-        </linearGradient>
-      </defs>
     </svg>
   )
 }
@@ -410,12 +415,20 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                 </span>
               )}
               
-              <span className={`rounded-lg px-3 py-1.5 ${isOverdue ? 'bg-orange-500/10 text-orange-300' : 'bg-blue-500/10 text-blue-300'}`}>
+              <span className={`rounded-lg px-3 py-1.5`}
+                     style={{ 
+                       backgroundColor: isOverdue ? 'rgba(247,144,81,0.1)' : 'rgba(113,160,198,0.1)',
+                       color: isOverdue ? theme.orange[600] : theme.blue[500]
+                     }}>
                 {Math.abs(daysRemaining)} days {daysRemaining >= 0 ? 'left' : 'overdue'}
               </span>
               
               {localGoalData.status === 'completed' && (
-                <span className="rounded-lg bg-green-500/10 px-3 py-1.5 text-green-300">
+                <span className="rounded-lg px-3 py-1.5"
+                      style={{ 
+                        backgroundColor: 'rgba(113,160,198,0.2)',
+                        color: theme.blue[400]
+                      }}>
                   Completed
                 </span>
               )}
@@ -466,10 +479,10 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                   step="1" 
                   value={progressValue}
                   onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  className="range-blue w-full"
                 />
                 <button
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-md text-xs transition-colors"
+                  className="btn-blue text-sm"
                   onClick={() => handleProgressUpdate('progress', progressValue)}
                 >
                   Update
@@ -503,10 +516,10 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                   step="1" 
                   value={effortValue}
                   onChange={(e) => setEffortValue(parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                  className="range-green w-full"
                 />
                 <button
-                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-1.5 rounded-md text-xs transition-colors"
+                  className="btn-green text-sm"
                   onClick={() => handleProgressUpdate('effort', effortValue)}
                 >
                   Update
@@ -548,7 +561,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                 <div className="mt-4">
                   <div className="rounded-lg border border-dashed border-white/10 bg-white/5 p-4 text-center transition-colors hover:bg-white/10">
                     <span className="text-gray-400">
-                      Ask your AI assistant to add more reflections...
+                      Ask Navi to add more reflections
                     </span>
                   </div>
                 </div>

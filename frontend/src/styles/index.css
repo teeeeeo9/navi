@@ -4,6 +4,61 @@
 
 /* Custom styles beyond Tailwind */
 @layer base {
+  :root {
+    /* UI Background Colors */
+    --color-bg-primary: #0a0a0f;
+    --color-bg-secondary: #121218;
+    --color-bg-card: rgba(30, 30, 40, 0.5);
+    --color-bg-card-hover: rgba(40, 40, 50, 0.7);
+    
+    /* Border Colors */
+    --color-border-light: rgba(113, 135, 154, 0.2);
+    --color-border-medium: rgba(113, 135, 154, 0.3);
+    --color-border-focus: rgba(113, 160, 198, 0.4);
+    
+    /* Text Colors */
+    --color-text-primary: #ffffff;
+    --color-text-secondary: rgba(178, 188, 195, 0.9);
+    --color-text-tertiary: rgba(142, 152, 168, 0.7);
+    --color-text-highlight: rgba(247, 144, 81, 1);
+    
+    /* Gradient Backgrounds */
+    --gradient-blue-grey: linear-gradient(135deg, rgba(113, 160, 198, 1) 0%, rgba(122, 144, 161, 1) 100%);
+    --gradient-grey-orange: linear-gradient(135deg, rgba(142, 152, 168, 1) 0%, rgba(239, 164, 131, 1) 100%);
+    --gradient-blue-orange: linear-gradient(135deg, rgba(118, 154, 190, 1) 0%, rgba(247, 144, 81, 1) 100%);
+    
+    /* Progress Gradient - UPDATED: blue shades until 100%, orange only at 100% */
+    --gradient-progress: linear-gradient(to right, 
+      rgba(91, 99, 140, 1) 0%, 
+      rgba(118, 154, 190, 1) 40%, 
+      rgba(126, 148, 168, 1) 80%, 
+      rgba(247, 144, 81, 1) 100%
+    );
+    
+    /* Progress color for incomplete goal (blue shades only) */
+    --gradient-progress-incomplete: linear-gradient(to right, 
+      rgba(91, 99, 140, 1) 0%, 
+      rgba(118, 154, 190, 1) 50%, 
+      rgba(126, 148, 168, 1) 100%
+    );
+    
+    /* Progress color for complete goal (blue to orange) */
+    --gradient-progress-complete: linear-gradient(to right, 
+      rgba(91, 99, 140, 1) 0%, 
+      rgba(118, 154, 190, 1) 40%, 
+      rgba(126, 148, 168, 1) 80%, 
+      rgba(247, 144, 81, 1) 100%
+    );
+    
+    /* Circular progress conic gradient - updated with the same concept */
+    --conic-progress: conic-gradient(
+      rgba(91, 99, 140, 1) 0deg,
+      rgba(118, 154, 190, 1) 120deg,
+      rgba(126, 148, 168, 1) 320deg,
+      rgba(247, 144, 81, 1) 360deg
+    );
+  }
+  
   body {
     @apply bg-gradient-to-br from-dark-900 to-dark-800 text-white min-h-screen;
     background-attachment: fixed;
@@ -11,13 +66,58 @@
   
   /* For the glass effect */
   .glass {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+    @apply backdrop-blur-lg border shadow-xl;
+    background-color: rgba(30, 30, 40, 0.2);
+    border-color: var(--color-border-light);
     backdrop-filter: blur(12px);
   }
 
   .glass-dark {
-    @apply bg-dark-800/60 backdrop-blur-lg border border-dark-700/30 shadow-xl;
+    @apply backdrop-blur-lg border shadow-xl;
+    background-color: rgba(10, 10, 15, 0.6);
+    border-color: var(--color-border-light);
     backdrop-filter: blur(12px);
+  }
+  
+  /* Gradient Buttons */
+  .btn-gradient-primary {
+    background: var(--gradient-blue-grey);
+    @apply text-white font-medium px-4 py-2 rounded-md transition-all;
+  }
+  
+  .btn-gradient-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+  
+  .btn-gradient-secondary {
+    background: var(--gradient-grey-orange);
+    @apply text-white font-medium px-4 py-2 rounded-md transition-all;
+  }
+  
+  .btn-gradient-accent {
+    background: var(--gradient-blue-orange);
+    @apply text-white font-medium px-4 py-2 rounded-md transition-all;
+  }
+  
+  /* Consistent button styling */
+  .btn-blue {
+    @apply bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md transition-colors;
+  }
+  
+  .btn-green {
+    @apply bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md transition-colors;
+  }
+  
+  /* Custom range slider styling */
+  .range-blue {
+    @apply w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer;
+    accent-color: rgba(113, 160, 198, 1); /* theme.blue[500] */
+  }
+  
+  .range-green {
+    @apply w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer;
+    accent-color: rgba(38, 188, 126, 1); /* theme.green[500] */
   }
 }
 
@@ -67,13 +167,14 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-dark-800;
+  background-color: var(--color-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-dark-600 rounded-full;
+  background-color: rgba(122, 144, 161, 0.5);
+  @apply rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-dark-500;
+  background-color: rgba(122, 144, 161, 0.8);
 } 

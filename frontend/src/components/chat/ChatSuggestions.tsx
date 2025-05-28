@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import api from '@/services/api';
-import colorScheme from '@/styles/colorScheme';
+import theme from '@/styles/theme';
 
 interface SuggestionItem {
   title: string;
@@ -57,25 +57,25 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
       title: "How does Navi work?",
       message: "How does Navi work? How do I use the app?",
       icon: "❓",
-      color: colorScheme.blue[500]
+      color: theme.blue[400]
     },    
     {
       title: "Set a new goal",
       message: "I'd like to set a new goal",
       icon: "🎯",
-      color: colorScheme.teal[500]
+      color: theme.blue[600]
     },
     {
       title: "Deep dive into strategy",
       message: "Let's dive deep into strategy. Can you help me review strategically my goals, milestones and progress?",
       icon: "🔍",
-      color: colorScheme.purple[500]
+      color: theme.grey[500]
     },
     {
       title: "Help me focus",
       message: "Help me focus",
       icon: "🧠",
-      color: colorScheme.orange[500]
+      color: theme.orange[600]
     }
   ];
   
@@ -89,13 +89,13 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
             onClick={() => handleClick(suggestion.message, index)}
             whileHover={{ 
               y: -2,
-              boxShadow: `0 0 0 1px ${suggestion.color || colorScheme.blue[500]}30`,
-              borderColor: `${suggestion.color || colorScheme.blue[500]}50`,
+              boxShadow: `0 0 0 1px ${suggestion.color || theme.blue[500]}30`,
+              borderColor: `${suggestion.color || theme.blue[500]}50`,
               transition: { duration: 0.2 }
             }}
             animate={{ 
               scale: selectedSuggestion === index ? 0.9 : 1,
-              backgroundColor: selectedSuggestion === index ? `${suggestion.color || colorScheme.blue[500]}20` : 'rgba(255, 255, 255, 0.05)'
+              backgroundColor: selectedSuggestion === index ? `${suggestion.color || theme.blue[500]}20` : 'rgba(255, 255, 255, 0.05)'
             }}
             transition={{ duration: 0.15 }}
           >
@@ -117,7 +117,8 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
           </p>
           <motion.button
             onClick={switchToYoda}
-            className="text-xs text-teal-400 hover:text-teal-300"
+            className="text-xs hover:text-blue-300"
+            style={{ color: theme.blue[400] }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

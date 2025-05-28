@@ -15,6 +15,17 @@ const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: numb
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const strokeDashoffset = circumference - ((progress / 10) * circumference)
+  
+  // Calculate color based on progress - only use orange for perfect 10
+  const getColorForProgress = (progress: number) => {
+    if (progress <= 2) return 'rgba(91, 99, 140, 1)'; // Dark blue
+    if (progress <= 4) return 'rgba(113, 160, 198, 1)'; // Medium blue
+    if (progress <= 6) return 'rgba(126, 148, 168, 1)'; // Grey-blue
+    if (progress <= 9) return 'rgba(118, 154, 190, 1)'; // Blue
+    return 'rgba(247, 144, 81, 1)'; // Orange ONLY for perfect 10
+  }
+  
+  const progressColor = getColorForProgress(progress);
 
   return (
     <svg width={size} height={size} className="transform -rotate-90">
@@ -33,19 +44,13 @@ const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: numb
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="url(#progressGradient)"
+        stroke={progressColor}
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
         strokeDashoffset={strokeDashoffset}
         strokeLinecap="round"
+        style={{ transition: "stroke 0.3s ease" }}
       />
-      {/* Progress gradient */}
-      <defs>
-        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#818cf8" />
-        </linearGradient>
-      </defs>
     </svg>
   )
 }
@@ -594,8 +599,13 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           <div className="mt-auto">
             <div className="w-full bg-dark-700/30 h-2 rounded-full overflow-hidden mt-2">
               <div 
-                className="bg-primary-400 h-full" 
-                style={{ width: `${goal.completion_status}%` }}
+                className="h-full" 
+                style={{ 
+                  width: `${goal.completion_status}%`,
+                  background: goal.completion_status === 100 
+                    ? 'var(--gradient-progress-complete)' 
+                    : 'var(--gradient-progress-incomplete)'
+                }}
               ></div>
             </div>
           </div>
@@ -836,12 +846,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           step="1" 
                           value={progressValue}
                           onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                          className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                          className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
                         />
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-sm"
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm"
                           onClick={() => handleProgressUpdate('progress', progressValue)}
                         >
                           Update
@@ -876,12 +886,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           step="1" 
                           value={effortValue}
                           onChange={(e) => setEffortValue(parseInt(e.target.value))}
-                          className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                          className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
                         />
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-sm"
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm"
                           onClick={() => handleProgressUpdate('effort', effortValue)}
                         >
                           Update
@@ -1287,8 +1297,13 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
         <div className="mt-2 mb-1">
           <div className="w-full bg-dark-700/30 h-1.5 rounded-full overflow-hidden">
             <div 
-              className="bg-primary-400/70 h-full" 
-              style={{ width: `${milestone.completion_status}%` }}
+              className="h-full" 
+              style={{ 
+                width: `${milestone.completion_status}%`,
+                background: milestone.completion_status === 100 
+                  ? 'var(--gradient-progress-complete)' 
+                  : 'var(--gradient-progress-incomplete)'
+              }}
             ></div>
           </div>
         </div>
@@ -1298,7 +1313,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
             onClick={() => setShowMilestoneProgress(!showMilestoneProgress)}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded hover:bg-primary-400/10 transition-colors"
+            className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded hover:bg-blue-400/10 transition-colors"
           >
             {showMilestoneProgress ? 'Hide Progress' : 'Track Progress'}
           </motion.button>
@@ -1326,12 +1341,12 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     step="1" 
                     value={progressValue}
                     onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
                   />
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-xs"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-xs"
                     onClick={() => handleMilestoneProgressUpdate('progress', progressValue)}
                   >
                     Update
@@ -1366,12 +1381,12 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     step="1" 
                     value={effortValue}
                     onChange={(e) => setEffortValue(parseInt(e.target.value))}
-                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
                   />
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-xs"
+                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-xs"
                     onClick={() => handleMilestoneProgressUpdate('effort', effortValue)}
                   >
                     Update

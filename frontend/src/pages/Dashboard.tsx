@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import api, { Goal } from '@/services/api'
 import { useNavigate, Link } from 'react-router-dom'
 import logoImage from '@/assets/logo.png'
-import colorScheme from '@/styles/colorScheme'
+import theme from '@/styles/theme'
 
 // Components
 import ChatInterface from '@/components/chat/ChatInterface'
@@ -160,12 +160,15 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-b from-[#111827] to-[#0a0f1a]">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-b from-dark-900 to-dark-800">
       {/* Background elements for glass effect */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute top-[10%] -left-[10%] h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[120px]" />
-        <div className="absolute top-[40%] -right-[5%] h-[300px] w-[300px] rounded-full bg-gray-500/10 blur-[100px]" />
-        <div className="absolute bottom-[10%] left-[30%] h-[250px] w-[250px] rounded-full bg-purple-500/10 blur-[80px]" />
+        <div className="absolute top-[10%] -left-[10%] h-[500px] w-[500px] rounded-full blur-[120px]" 
+             style={{ backgroundColor: 'rgba(113, 160, 198, 0.1)' }} />
+        <div className="absolute top-[40%] -right-[5%] h-[300px] w-[300px] rounded-full blur-[100px]"
+             style={{ backgroundColor: 'rgba(122, 144, 161, 0.1)' }} />
+        <div className="absolute bottom-[10%] left-[30%] h-[250px] w-[250px] rounded-full blur-[80px]"
+             style={{ backgroundColor: 'rgba(247, 144, 81, 0.1)' }} />
       </div>
 
       {/* Header */}
@@ -175,19 +178,20 @@ const Dashboard = () => {
             <img src={logoImage} alt="Navi Logo" className="h-9 w-auto" />
             <div>
               <h1 className="text-2xl font-bold text-white">Navi</h1>
-              <p className="text-xs text-blue-300">Your strategic replica</p>
+              <p className="text-xs" style={{ color: theme.blue[300] }}>Your strategic replica</p>
             </div>
           </Link>
 
           <div className="flex items-center space-x-6">
             {user && (
               <span className="text-sm text-gray-300">
-                <span className="text-blue-400">{user.username}</span>
+                <span style={{ color: theme.blue[400] }}>{user.username}</span>
               </span>
             )}
             <button
               onClick={handleLogout}
               className="rounded-full border border-white/10 bg-white/5 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10"
+              style={{ borderColor: 'var(--color-border-light)' }}
             >
               Log out
             </button>
