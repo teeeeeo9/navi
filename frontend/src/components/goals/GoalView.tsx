@@ -4,6 +4,7 @@ import api from '@/services/api';
 import ProgressChart from './ProgressChart';
 import MilestoneCard from './MilestoneCard';
 import ReflectionCard, { reflectionTypes } from './ReflectionCard';
+import CelebrationAnimation from './CelebrationAnimation';
 import theme from '@/styles/theme';
 
 // Progress Ring Component
@@ -80,7 +81,9 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
       status: goal.status
     });
     
-    setProgressValue(Math.round(goal.completion_status / 10));
+    const newProgressValue = Math.round(goal.completion_status / 10);
+    setProgressValue(newProgressValue);
+    setPreviousProgressValue(newProgressValue);
   }, [goal]);
   
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -97,6 +100,12 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
   
   const [daysRemaining, setDaysRemaining] = useState(calculateDaysRemaining(goal.target_date));
   const [isOverdue, setIsOverdue] = useState(calculateDaysRemaining(goal.target_date) < 0 && goal.status === 'active');
+
+  // Celebration animation state
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [previousProgressValue, setPreviousProgressValue] = useState<number>(
+    Math.round(goal.completion_status / 10)
+  );
 
   useEffect(() => {
     const days = calculateDaysRemaining(goal.target_date);
@@ -149,6 +158,17 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
     };
     
     if (type === 'progress') {
+      // Check if goal just reached completion (went from < 10 to 10)
+      const wasNotCompleted = previousProgressValue < 10;
+      const isNowCompleted = value === 10;
+      
+      if (wasNotCompleted && isNowCompleted) {
+        setShowCelebration(true);
+      }
+      
+      // Update previous progress value
+      setPreviousProgressValue(value);
+      
       // Update local goal data if progress state was updated
       setLocalGoalData(prev => ({
         ...prev,
@@ -609,6 +629,13 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
           </button>
         </div>
       </div>
+      
+      {/* Celebration Animation */}
+      <CelebrationAnimation
+        isVisible={showCelebration}
+        type="goal"
+        onComplete={() => setShowCelebration(false)}
+      />
     </div>
   );
 };

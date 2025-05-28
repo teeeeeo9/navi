@@ -4,6 +4,7 @@ import api from '@/services/api';
 import ProgressChart from './ProgressChart';
 import { theme } from '@/styles/theme';
 import { motion } from 'framer-motion';
+import CelebrationAnimation from './CelebrationAnimation';
 
 interface MilestoneCardProps {
   milestone: Milestone;
@@ -44,6 +45,12 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
     milestone.progress_updates || []
   );
   
+  // Celebration animation state
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [previousProgressValue, setPreviousProgressValue] = useState<number>(
+    Math.round(milestone.completion_status / 10)
+  );
+  
   // Fetch milestone progress updates when the milestone is shown
   useEffect(() => {
     if (showProgress && (!milestone.progress_updates || milestone.progress_updates.length === 0)) {
@@ -67,7 +74,9 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
       status: milestone.status
     });
     
-    setProgressValue(Math.round(milestone.completion_status / 10));
+    const newProgressValue = Math.round(milestone.completion_status / 10);
+    setProgressValue(newProgressValue);
+    setPreviousProgressValue(newProgressValue);
     
     // Update progress updates if available
     if (milestone.progress_updates && milestone.progress_updates.length > 0) {
@@ -114,6 +123,17 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
     // Add type-specific notes
     if (type === 'progress') {
       tempUpdate.progress_notes = notes;
+      
+      // Check if milestone just reached completion (went from < 10 to 10)
+      const wasNotCompleted = previousProgressValue < 10;
+      const isNowCompleted = value === 10;
+      
+      if (wasNotCompleted && isNowCompleted) {
+        setShowCelebration(true);
+      }
+      
+      // Update previous progress value
+      setPreviousProgressValue(value);
       
       // Update local milestone status if needed
       if (scaledValue === 100 && localMilestone.status === 'active') {
@@ -436,6 +456,13 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
           )}
         </div>
       )}
+      
+      {/* Celebration Animation */}
+      <CelebrationAnimation
+        isVisible={showCelebration}
+        type="milestone"
+        onComplete={() => setShowCelebration(false)}
+      />
     </div>
   );
 };
