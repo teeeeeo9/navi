@@ -16,7 +16,7 @@ const Dashboard = () => {
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [_isLoading, setIsLoading] = useState(true)
-  const [_isChatExpanded, setIsChatExpanded] = useState(true)
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false)
   const chatInterfaceRef = useRef<{ handleSystemUpdate: (updateType: string, entity: string, changes: any) => Promise<void> } | null>(null)
 
   // Load goals on component mount
@@ -27,7 +27,7 @@ const Dashboard = () => {
   // If no goals are present, expand the chat by default
   useEffect(() => {
     if (goals.length === 0) {
-      setIsChatExpanded(true)
+      setIsChatCollapsed(false)
       setSelectedGoal(null) // Ensure selectedGoal is null when no goals exist
     }
   }, [goals.length]) // Depend on goals.length instead of the entire goals array for better performance
@@ -170,24 +170,14 @@ const Dashboard = () => {
     navigate('/')
   }
 
-  // Layout animation variants
-  const layoutVariants = {
-    chatExpanded: {
-      chatWidth: '100%',
-      goalsWidth: '0%',
-      opacity: 1
-    },
-    split: {
-      chatWidth: '35%',
-      goalsWidth: '65%',
-      opacity: 1
-    }
+  const toggleChat = () => {
+    setIsChatCollapsed(!isChatCollapsed)
   }
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-col bg-gradient-to-br from-dark-900 via-dark-850 to-dark-800">
       {/* Header */}
-      <header className="glass-dark z-10 flex justify-between p-4">
+      <header className="z-10 flex justify-between p-4 backdrop-blur-md bg-dark-900/30 border-b border-white/5">
         <Link to="/" className="flex items-center space-x-2">
           <img src={logoImage} alt="Navi Logo" className="h-8 w-auto" />
           <h1 className="text-2xl font-bold text-white">Navi</h1>
@@ -201,7 +191,7 @@ const Dashboard = () => {
           )}
           <button
             onClick={handleLogout}
-            className="rounded-full bg-dark-700/70 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-dark-600"
+            className="rounded-full bg-dark-700/50 hover:bg-dark-600/50 px-4 py-2 text-sm font-medium text-white transition-colors"
           >
             Log out
           </button>
@@ -209,37 +199,66 @@ const Dashboard = () => {
       </header>
 
       {/* Main content area */}
-      <main className="flex flex-1 overflow-hidden p-4">
-        {/* Chat section */}
+      <main className="flex flex-1 overflow-hidden">
+        {/* Left side: Chat */}
         <motion.div
           animate={{
-            width: goals.length > 0 ? layoutVariants.split.chatWidth : layoutVariants.chatExpanded.chatWidth
+            width: isChatCollapsed ? '60px' : (goals.length > 0 ? '30%' : '100%'),
+            minWidth: isChatCollapsed ? '60px' : '300px'
           }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          className={`flex h-full ${goals.length === 0 ? 'px-4 md:px-6 lg:px-12' : ''}`}
+          className="relative h-full backdrop-blur-sm bg-dark-800/20 border-r border-white/5"
         >
-          <ChatInterface 
-            className="w-full" 
-            relatedGoalId={selectedGoal?.id}
-            onMessageAction={handleMessageAction}
-            compact={goals.length > 0}
-            ref={chatInterfaceRef}
-            hasGoals={goals.length > 0}
-          />
+          {goals.length > 0 && (
+            <button
+              onClick={toggleChat}
+              className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-dark-700/50 hover:bg-dark-600/50 text-white transition-colors"
+            >
+              {isChatCollapsed ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                  <path fillRule="evenodd" d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                  <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" />
+                </svg>
+              )}
+            </button>
+          )}
+          
+          <AnimatePresence>
+            {!isChatCollapsed && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full"
+              >
+                <ChatInterface 
+                  className="w-full" 
+                  relatedGoalId={selectedGoal?.id}
+                  onMessageAction={handleMessageAction}
+                  compact={goals.length > 0}
+                  ref={chatInterfaceRef}
+                  hasGoals={goals.length > 0}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
         
-        {/* Goals section - visible only when there are goals */}
+        {/* Right side: Goals section - visible only when there are goals */}
         <AnimatePresence>
           {goals.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1, width: layoutVariants.split.goalsWidth }}
+              animate={{ opacity: 1, width: isChatCollapsed ? 'calc(100% - 60px)' : '70%' }}
               exit={{ opacity: 0, width: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="ml-4 flex h-full flex-col"
+              className="flex h-full flex-col overflow-hidden"
             >
               {/* Carousel for compact view of goals */}
-              <div className="h-40">
+              <div className="p-4 pb-0 backdrop-blur-sm bg-dark-800/10 border-b border-white/5">
                 <GoalCarousel 
                   goals={goals}
                   selectedGoalId={selectedGoal?.id}
@@ -249,7 +268,7 @@ const Dashboard = () => {
               </div>
 
               {/* Selected goal details */}
-              <div className="mt-4 flex-1 overflow-auto">
+              <div className="flex-1 overflow-auto p-4 pt-2 scrollbar-thin scrollbar-track-dark-800/20 scrollbar-thumb-dark-700/50">
                 {selectedGoal && (
                   <GoalCard 
                     goal={selectedGoal} 

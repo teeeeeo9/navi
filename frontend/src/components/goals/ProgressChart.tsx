@@ -209,82 +209,108 @@ const ProgressChart = ({
     )
   }
 
-  // Full interactive chart
+  // Full interactive chart - now more compact and stylish
   return (
     <motion.div 
-      className={`mt-4 overflow-hidden rounded-lg bg-dark-700/60 p-4 border ${isMilestoneChart ? 'border-primary-400/30' : 'border-dark-600/30'}`}
+      className={`mt-4 overflow-hidden rounded-lg border ${
+        isMilestoneChart ? 'border-primary-400/30 bg-dark-700/40' : 'border-dark-600/30 bg-dark-700/20'
+      }`}
       animate={{ height: expanded ? 'auto' : height }}
       transition={{ duration: 0.3 }}
     >
       {title && (
-        <div className="mb-3 flex items-center justify-between">
+        <div className="px-4 pt-3 pb-1 flex items-center justify-between">
           <h4 className="text-sm font-medium text-dark-100">{title}</h4>
-          <motion.button
-            onClick={() => setExpanded(!expanded)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="rounded-full bg-dark-600/50 p-1 text-sm text-dark-200 hover:bg-dark-500/50 hover:text-white"
-          >
-            {expanded ? 'Collapse' : 'Expand'}
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 mr-2">
+              <span className="w-2 h-2 rounded-full bg-primary-400"></span>
+              <span className="text-xs text-dark-200">Progress</span>
+              
+              {effortUpdates.length > 0 && (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-green-400 ml-2"></span>
+                  <span className="text-xs text-dark-200">Effort</span>
+                </>
+              )}
+            </div>
+            <motion.button
+              onClick={() => setExpanded(!expanded)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="rounded-full bg-dark-600/50 p-1 text-sm text-dark-200 hover:bg-dark-500/50 hover:text-white"
+            >
+              {expanded ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M11.47 7.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 9.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
+                </svg>
+              )}
+            </motion.button>
+          </div>
         </div>
       )}
       
-      <ResponsiveContainer width="100%" height={expanded ? 300 : height - 60}>
-        <ComposedChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-          <defs>
-            <linearGradient id="progressGradientFull" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#2e3142" />
-          <XAxis 
-            dataKey="timestamp" 
-            type="number"
-            domain={['dataMin', 'dataMax']}
-            tickFormatter={formatXAxis}
-            tick={{ fill: '#868ca7' }} 
-            axisLine={{ stroke: '#2e3142' }}
-          />
-          <YAxis 
-            domain={[0, 10]}
-            tick={{ fill: '#868ca7' }} 
-            axisLine={{ stroke: '#2e3142' }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          
-          {/* Progress Area */}
-          {progressUpdates.length > 0 && (
-            <Area 
-              type="monotone" 
-              dataKey="progress" 
-              stroke="#38bdf8" 
-              fillOpacity={1} 
-              fill="url(#progressGradientFull)" 
-              strokeWidth={3}
-              dot={{ r: 6, fill: '#0ea5e9', strokeWidth: 2, stroke: '#0c4a6e' }}
-              activeDot={{ r: 8, fill: '#0ea5e9' }}
-              name="Progress"
-              connectNulls
+      <div className="px-2 pb-3">
+        <ResponsiveContainer width="100%" height={expanded ? 300 : height - 60}>
+          <ComposedChart data={chartData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
+            <defs>
+              <linearGradient id="progressGradientFull" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#2e3142" opacity={0.3} />
+            <XAxis 
+              dataKey="timestamp" 
+              type="number"
+              domain={['dataMin', 'dataMax']}
+              tickFormatter={formatXAxis}
+              tick={{ fill: '#868ca7', fontSize: 10 }} 
+              axisLine={{ stroke: '#2e3142' }}
             />
-          )}
-          
-          {/* Effort Line */}
-          {effortUpdates.length > 0 && (
-            <Line 
-              type="monotone" 
-              dataKey="effort" 
-              stroke="#4ade80" 
-              strokeWidth={3}
-              dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#166534' }}
-              activeDot={{ r: 8, fill: '#22c55e' }}
-              name="Effort"
-              connectNulls
+            <YAxis 
+              domain={[0, 10]}
+              tick={{ fill: '#868ca7', fontSize: 10 }} 
+              axisLine={{ stroke: '#2e3142' }}
+              tickCount={6}
             />
-          )}
-        </ComposedChart>
-      </ResponsiveContainer>
+            <Tooltip content={<CustomTooltip />} />
+            
+            {/* Progress Area */}
+            {progressUpdates.length > 0 && (
+              <Area 
+                type="monotone" 
+                dataKey="progress" 
+                stroke="#38bdf8" 
+                fillOpacity={1} 
+                fill="url(#progressGradientFull)" 
+                strokeWidth={2}
+                dot={{ r: 4, fill: '#0ea5e9', strokeWidth: 1, stroke: '#0c4a6e' }}
+                activeDot={{ r: 6, fill: '#0ea5e9' }}
+                name="Progress"
+                connectNulls
+              />
+            )}
+            
+            {/* Effort Line */}
+            {effortUpdates.length > 0 && (
+              <Line 
+                type="monotone" 
+                dataKey="effort" 
+                stroke="#4ade80" 
+                strokeWidth={2}
+                dot={{ r: 4, fill: '#22c55e', strokeWidth: 1, stroke: '#166534' }}
+                activeDot={{ r: 6, fill: '#22c55e' }}
+                name="Effort"
+                connectNulls
+              />
+            )}
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
     </motion.div>
   )
 }

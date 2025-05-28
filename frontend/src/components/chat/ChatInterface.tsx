@@ -344,7 +344,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={compact ? "Type here..." : "What's on your mind?"}
+              placeholder={compact ? "What's on your mind?" : "What's on your mind?"}
               className="flex-1 bg-transparent px-6 py-4 text-white outline-none resize-none min-h-[60px] max-h-40 overflow-y-auto text-lg"
               disabled={isLoading || systemUpdateInProgress}
               rows={2}

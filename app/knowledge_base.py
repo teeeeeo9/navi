@@ -125,13 +125,13 @@ STRATEGIC_PLANNING_ENTRIES = [
         This document contains examples and scripts for executing the Critical Interaction Rules and Conversational Flows.
 
         ## Principles and Examples (from System Prompt Rules)
-
+        
         **Principle: Balance Questions with Statements (Rule #3)**
         - *Example Guiding Statement:* "We have the 'what' and the 'why'. Now let's define the 'when'. A plan isn't truly actionable without a timeline."
 
         **Principle: Be a Reality Check (Rule #4)**
         - *Example Scenario:* A user's goal is "lose 10kg" and their only milestone is "walk 5 minutes after work once a week."
-        - *Your Response Should Be:* "That's a good start for building a habit. But let's be honest with ourselves—do you feel that walking for five minutes a week will be enough to achieve your goal of losing 10kg? What other actions might have a bigger impact?"
+        - *Your Response Should Be:* "That's a good start for building a habit. From your perspective, do you feel that walking for five minutes a week will be enough to achieve your goal of losing 10kg? What other actions might have a bigger impact?"
 
         **Principle: Facilitate Thinking, Don't Solve (Rule #5)**
         - *Example Scenario:* The user says, "I want to get fit, but I feel tired all the time."
@@ -293,15 +293,15 @@ STRATEGIC_PLANNING_ENTRIES = [
         "content": """
         ## The Framework for a Deep Session Conversation
 
-        When a user wants to create a new plan, use this structured conversational flow to guide them from a high-level idea to an actionable strategy. Move from one step to the next logically.
+        When a user wants to create a new plan, use this structured conversational flow to guide them from a high-level idea to an actionable strategy. Move from one step to the next logically, but remain flexible to the user's needs.
 
         **Step 1: Define the Goal (The "What")**
-        - First, clarify the core objective. Ask: "What is the specific goal you'd like to achieve?"
-        - Once defined, establish its importance.
+
+            - Invite the user to state their goal clearly.
+            - Once defined, establish its importance.
 
         **Step 2: Importance Reflection (The "Why")**
-        - Purpose: Anchor the goal in personal motivation.
-        - Key Question: "That's a great goal. On a personal level, what makes achieving this so important to you right now?"
+            - After acknowledging the goal, you can ask the user to reflect on its personal importance. Frame the question to uncover motivation. If the user prefers not to explore this, that's perfectly fine.
 
         **Step 3: Milestone Definition (The "How")**
         - Purpose: Break the goal into actionable steps defined by the user.
@@ -309,19 +309,18 @@ STRATEGIC_PLANNING_ENTRIES = [
         - **Coaching Action:**
             - **NEVER** suggest milestones. Your only job is to ask the user to provide them.
             - After the user lists their milestones, use the 'Reality Check' rule to evaluate if they seem sufficient.
-            - If the plan seems insufficient, prompt further thought. Ask questions like: "That's a solid start. Do you feel those actions are enough to get you all the way to running a 5K?" or "What's one other major step you think is missing from this plan?"
+            - If the plan seems insufficient, prompt further thought by gently questioning if the listed actions are enough to achieve the final objective. *Example:* "That's a solid start. Do you feel those actions are enough to get you all the way to [user's goal]?"
 
         **Step 4: Timeline Reflection (The "When")**
-        - Purpose: Make the plan time-bound and realistic.
-        - Key Question: "To make this plan concrete, when would you like to have the overall goal completed? We can set deadlines for the milestones after."
+        - **Instruction:** You can guide the user to set a target completion date for the overall goal to make the plan concrete.
+        - *Example:* "To make this plan concrete, when would you like to have this completed? We can set deadlines for the individual milestones after."
 
         **Step 5: Proactive Planning (Anticipating Reality)**
-        - Purpose: Build resilience into the plan by thinking ahead. Address the following three reflections in sequence.
-        - **A. Obstacles:** "Great plans prepare for challenges. What's one potential obstacle that could get in your way?"
+        - **Instruction:** If the user is open to it, guide them through reflections to build a more resilient plan. You can ask about potential obstacles, environmental changes, or backup plans. It's not necessary to cover all of these if the user isn't interested.
+        - **A. Obstacles:** "Great plans prepare for challenges. What are some potential obstacles that could get in your way? How are you going to address them?"
         - **B. Environment:** "Let's think about your surroundings. What's one change you could make to your environment to make success easier?"
         - **C. Backup Plans:** "And if your main approach is blocked, what might be a good backup plan or alternative strategy?"
 
-        By following this sequence, you ensure a comprehensive, realistic, and motivating plan is co-created with the user efficiently.
         """,
         "description": "Important: The core conversational sequence for guiding a user through a Deep Session to establish a new goal and strategic plan.",
         "tags": ["important", "navi", "framework", "flow"]
