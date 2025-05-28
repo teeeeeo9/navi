@@ -87,17 +87,9 @@ const CompactGoalCard = ({ goal, isSelected = false, onClick }: CompactGoalCardP
       }}
     >
       <div className="relative flex h-full flex-col p-5">
-        {/* Progress ring */}
-        <div className="absolute -right-3 -top-3">
-          <div className="backdrop-blur-md bg-dark-800/40 rounded-full p-1.5">
-            <ProgressRing progress={progressValue} size={56} strokeWidth={5} />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-white">
-              {progressValue}/10
-            </span>
-          </div>
-        </div>
+        {/* Remove progress ring */}
         
-        <div className="pr-12 flex-grow">
+        <div className="flex-grow">
           <h3 className="mb-2 text-lg font-bold text-white line-clamp-2">
             {goal.title}
           </h3>
@@ -106,13 +98,7 @@ const CompactGoalCard = ({ goal, isSelected = false, onClick }: CompactGoalCardP
             <span className="rounded-lg bg-white/5 px-2.5 py-1.5">
               {formatDate(goal.target_date)}
             </span>
-            <span className={`rounded-lg px-2.5 py-1.5`}
-                  style={{ 
-                    backgroundColor: isOverdue ? 'rgba(247,144,81,0.1)' : 'rgba(113,160,198,0.1)',
-                    color: isOverdue ? theme.orange[600] : theme.blue[500]
-                  }}>
-              {Math.abs(daysRemaining)} days {daysRemaining >= 0 ? 'left' : 'overdue'}
-            </span>
+            {/* Removed status/days indicator */}
           </div>
           
           {goal.milestones && goal.milestones.length > 0 && (

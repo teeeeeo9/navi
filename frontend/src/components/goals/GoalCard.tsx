@@ -832,7 +832,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                     <div className="mb-5">
                       <div className="flex justify-between items-center mb-2">
                         <label className="text-sm font-medium text-dark-100">
-                          Progress State: {progressValue}/10
+                          Progress State: {Math.round(progressValue)}/10
                         </label>
                         <span className="text-xs text-dark-300">
                           How far you are from completing this goal
@@ -843,9 +843,9 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           type="range" 
                           min="0" 
                           max="10" 
-                          step="1" 
+                          step="0.01" 
                           value={progressValue}
-                          onChange={(e) => setProgressValue(parseInt(e.target.value))}
+                          onChange={(e) => setProgressValue(parseFloat(e.target.value))}
                           className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
                         />
                         <motion.button
@@ -872,7 +872,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                     <div className="mb-5">
                       <div className="flex justify-between items-center mb-2">
                         <label className="text-sm font-medium text-dark-100">
-                          Effort Level: {effortValue}/10
+                          Effort Level: {Math.round(effortValue)}/10
                         </label>
                         <span className="text-xs text-dark-300">
                           How much effort you're currently investing
@@ -883,9 +883,9 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           type="range" 
                           min="0" 
                           max="10" 
-                          step="1" 
+                          step="0.01" 
                           value={effortValue}
-                          onChange={(e) => setEffortValue(parseInt(e.target.value))}
+                          onChange={(e) => setEffortValue(parseFloat(e.target.value))}
                           className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
                         />
                         <motion.button
@@ -1290,7 +1290,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
           </div>
           
           <div className="ml-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-500/10 border border-primary-500/20">
-            <span className="text-sm font-medium">{progressValue10}/10</span>
+            <span className="text-sm font-medium">{Math.round(progressValue)}/10</span>
           </div>
         </div>
         
@@ -1327,7 +1327,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-xs font-medium text-dark-100">
-                    Progress State: {progressValue}/10
+                    Progress State: {Math.round(progressValue)}/10
                   </label>
                   <span className="text-xs text-dark-300">
                     How far you are from completing this milestone
@@ -1338,9 +1338,9 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     type="range" 
                     min="0" 
                     max="10" 
-                    step="1" 
+                    step="0.01" 
                     value={progressValue}
-                    onChange={(e) => setProgressValue(parseInt(e.target.value))}
+                    onChange={(e) => setProgressValue(parseFloat(e.target.value))}
                     className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
                   />
                   <motion.button
@@ -1367,7 +1367,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-xs font-medium text-dark-100">
-                    Effort Level: {effortValue}/10
+                    Effort Level: {Math.round(effortValue)}/10
                   </label>
                   <span className="text-xs text-dark-300">
                     How much effort you're currently investing
@@ -1378,9 +1378,9 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     type="range" 
                     min="0" 
                     max="10" 
-                    step="1" 
+                    step="0.01" 
                     value={effortValue}
-                    onChange={(e) => setEffortValue(parseInt(e.target.value))}
+                    onChange={(e) => setEffortValue(parseFloat(e.target.value))}
                     className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
                   />
                   <motion.button

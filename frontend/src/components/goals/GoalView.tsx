@@ -63,6 +63,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
   const [effortValue, setEffortValue] = useState<number>(5);
   const [progressNotes, setProgressNotes] = useState<string>('');
   const [effortNotes, setEffortNotes] = useState<string>('');
+  const [showProgressUpdate, setShowProgressUpdate] = useState<boolean>(false);
   
   const [localGoalData, setLocalGoalData] = useState({
     title: goal.title,
@@ -422,23 +423,13 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                      }}>
                 {Math.abs(daysRemaining)} days {daysRemaining >= 0 ? 'left' : 'overdue'}
               </span>
-              
-              {localGoalData.status === 'completed' && (
-                <span className="rounded-lg px-3 py-1.5"
-                      style={{ 
-                        backgroundColor: 'rgba(113,160,198,0.2)',
-                        color: theme.blue[400]
-                      }}>
-                  Completed
-                </span>
-              )}
             </div>
           </div>
           
           <div className="relative flex-shrink-0">
             <ProgressRing progress={progressValue} size={100} strokeWidth={8} />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold text-white">
-              {progressValue}/10
+              {Math.round(progressValue)}/10
             </span>
           </div>
         </div>
@@ -457,86 +448,98 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
           </div>
         )}
         
-        {/* Progress and Effort Input */}
-        <div className="mb-8 rounded-lg border border-white/10 bg-white/5 p-6">
-          <h3 className="mb-4 text-base font-medium text-white">Update Your Progress</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-300">
-                  Progress: {progressValue}/10
-                </label>
-                <span className="text-xs text-gray-400">
-                  How far along are you?
-                </span>
-              </div>
-              <div className="flex gap-3 items-center">
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="10" 
-                  step="1" 
-                  value={progressValue}
-                  onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                  className="range-blue w-full"
-                />
-                <button
-                  className="btn-blue text-sm"
-                  onClick={() => handleProgressUpdate('progress', progressValue)}
-                >
-                  Update
-                </button>
-              </div>
-              <div className="mt-3">
-                <textarea
-                  value={progressNotes}
-                  onChange={(e) => setProgressNotes(e.target.value)}
-                  placeholder="Add notes about your progress..."
-                  className="w-full rounded-lg border border-white/10 bg-dark-800/50 p-3 text-sm text-white placeholder:text-gray-500 resize-none"
-                  rows={3}
-                />
-              </div>
-            </div>
+        {/* Button to show/hide progress update section */}
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={() => setShowProgressUpdate(!showProgressUpdate)}
+            className="rounded-lg px-3 py-1.5 text-xs text-blue-400 hover:bg-blue-400/10 hover:text-blue-300 transition-colors"
+          >
+            {showProgressUpdate ? 'Hide Progress' : 'Track Progress'}
+          </button>
+        </div>
+        
+        {/* Progress and Effort Input - Hidden by default */}
+        {showProgressUpdate && (
+          <div className="mb-8 rounded-lg border border-white/10 bg-white/5 p-6">
+            <h3 className="mb-4 text-base font-medium text-white">Update Your Progress</h3>
             
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-300">
-                  Effort: {effortValue}/10
-                </label>
-                <span className="text-xs text-gray-400">
-                  How much effort are you investing?
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-300">
+                    Progress: {progressValue}/10
+                  </label>
+                  <span className="text-xs text-gray-400">
+                    How far along are you?
+                  </span>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="10" 
+                    step="0.01" 
+                    value={progressValue}
+                    onChange={(e) => setProgressValue(parseFloat(e.target.value))}
+                    className="range-blue w-full"
+                  />
+                  <button
+                    className="btn-blue text-sm"
+                    onClick={() => handleProgressUpdate('progress', progressValue)}
+                  >
+                    Update
+                  </button>
+                </div>
+                <div className="mt-3">
+                  <textarea
+                    value={progressNotes}
+                    onChange={(e) => setProgressNotes(e.target.value)}
+                    placeholder="Add notes about your progress..."
+                    className="w-full rounded-lg border border-white/10 bg-dark-800/50 p-3 text-sm text-white placeholder:text-gray-500 resize-none"
+                    rows={3}
+                  />
+                </div>
               </div>
-              <div className="flex gap-3 items-center">
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="10" 
-                  step="1" 
-                  value={effortValue}
-                  onChange={(e) => setEffortValue(parseInt(e.target.value))}
-                  className="range-green w-full"
-                />
-                <button
-                  className="btn-green text-sm"
-                  onClick={() => handleProgressUpdate('effort', effortValue)}
-                >
-                  Update
-                </button>
-              </div>
-              <div className="mt-3">
-                <textarea
-                  value={effortNotes}
-                  onChange={(e) => setEffortNotes(e.target.value)}
-                  placeholder="Add notes about your effort level..."
-                  className="w-full rounded-lg border border-white/10 bg-dark-800/50 p-3 text-sm text-white placeholder:text-gray-500 resize-none"
-                  rows={3}
-                />
+              
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-300">
+                    Effort: {effortValue}/10
+                  </label>
+                  <span className="text-xs text-gray-400">
+                    How much effort are you investing?
+                  </span>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="10" 
+                    step="0.01" 
+                    value={effortValue}
+                    onChange={(e) => setEffortValue(parseFloat(e.target.value))}
+                    className="range-green w-full"
+                  />
+                  <button
+                    className="btn-green text-sm"
+                    onClick={() => handleProgressUpdate('effort', effortValue)}
+                  >
+                    Update
+                  </button>
+                </div>
+                <div className="mt-3">
+                  <textarea
+                    value={effortNotes}
+                    onChange={(e) => setEffortNotes(e.target.value)}
+                    placeholder="Add notes about your effort level..."
+                    className="w-full rounded-lg border border-white/10 bg-dark-800/50 p-3 text-sm text-white placeholder:text-gray-500 resize-none"
+                    rows={3}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
         
         {/* Main content - Two column layout for reflections and milestones */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

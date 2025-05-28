@@ -316,29 +316,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                 Due: {formatDate(localMilestone.targetDate)}
               </span>
             )}
-            
-            <span 
-              className={`px-2.5 py-1.5 rounded-lg`}
-              style={{ 
-                backgroundColor: localMilestone.status === 'completed' 
-                  ? 'rgba(113, 160, 198, 0.2)'
-                  : 'rgba(126, 148, 168, 0.15)',
-                color: localMilestone.status === 'completed' 
-                  ? theme.orange[700]  // Only use orange for completed
-                  : theme.blue[500]
-              }}
-            >
-              {localMilestone.status === 'completed' ? 'Completed' : 'In Progress'}
-            </span>
           </div>
-        </div>
-        
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 text-sm font-medium"
-             style={{ 
-               backgroundColor: 'rgba(30, 30, 40, 0.4)', 
-               color: getColorForProgress(progressValue)
-             }}>
-          {progressValue}/10
         </div>
       </div>
       
@@ -373,7 +351,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
             <div className="mb-5">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-gray-300">
-                  Progress: {progressValue}/10
+                  Progress: {Math.round(progressValue)}/10
                 </label>
                 <span className="text-xs text-gray-400">
                   How far along are you?
@@ -384,9 +362,9 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                   type="range" 
                   min="0" 
                   max="10" 
-                  step="1" 
+                  step="0.01" 
                   value={progressValue}
-                  onChange={(e) => setProgressValue(parseInt(e.target.value))}
+                  onChange={(e) => setProgressValue(parseFloat(e.target.value))}
                   className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
                 <motion.button
@@ -412,7 +390,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
             <div className="mb-2">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-medium text-gray-300">
-                  Effort: {effortValue}/10
+                  Effort Level: {Math.round(effortValue)}/10
                 </label>
                 <span className="text-xs text-gray-400">
                   How much effort are you investing?
@@ -423,9 +401,9 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                   type="range" 
                   min="0" 
                   max="10" 
-                  step="1" 
+                  step="0.01" 
                   value={effortValue}
-                  onChange={(e) => setEffortValue(parseInt(e.target.value))}
+                  onChange={(e) => setEffortValue(parseFloat(e.target.value))}
                   className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-green-500"
                 />
                 <motion.button
