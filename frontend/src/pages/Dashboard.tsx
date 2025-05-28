@@ -4,10 +4,11 @@ import { useAuth } from '@/context/AuthContext'
 import api, { Goal } from '@/services/api'
 import { useNavigate, Link } from 'react-router-dom'
 import logoImage from '@/assets/logo.png'
+import colorScheme from '@/styles/colorScheme'
 
 // Components
 import ChatInterface from '@/components/chat/ChatInterface'
-import GoalCard from '@/components/goals/GoalCard'
+import GoalView from '@/components/goals/GoalView'
 import GoalCarousel from '@/components/goals/GoalCarousel'
 
 const Dashboard = () => {
@@ -15,8 +16,7 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
-  const [_isLoading, setIsLoading] = useState(true)
-  const [isChatCollapsed, setIsChatCollapsed] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const chatInterfaceRef = useRef<{ handleSystemUpdate: (updateType: string, entity: string, changes: any) => Promise<void> } | null>(null)
 
   // Load goals on component mount
@@ -27,10 +27,9 @@ const Dashboard = () => {
   // If no goals are present, expand the chat by default
   useEffect(() => {
     if (goals.length === 0) {
-      setIsChatCollapsed(false)
       setSelectedGoal(null) // Ensure selectedGoal is null when no goals exist
     }
-  }, [goals.length]) // Depend on goals.length instead of the entire goals array for better performance
+  }, [goals.length])
 
   const loadGoals = async () => {
     try {
@@ -40,9 +39,7 @@ const Dashboard = () => {
       
       // If we have goals but none selected, select the first one and get its full details
       if (goalsData.length > 0 && !selectedGoal) {
-        // Get the full goal details for the first goal (including progress updates)
         const firstGoalDetails = await api.getGoalDetails(goalsData[0].id)
-        console.log('First goal details:', firstGoalDetails)
         setSelectedGoal(firstGoalDetails)
       }
     } catch (error) {
@@ -72,11 +69,6 @@ const Dashboard = () => {
 
     try {
       const updatedGoal = await api.getGoalDetails(selectedGoal.id)
-      
-      // Debug log
-      console.log('Updated goal data:', updatedGoal)
-      console.log('Progress updates:', updatedGoal.progress_updates)
-      
       setSelectedGoal(updatedGoal)
       
       // Also update the goal in the goals list
@@ -139,30 +131,27 @@ const Dashboard = () => {
       )
     }
     
-    // Continue with updating the local state after the animation has started
-    setTimeout(() => {
-      // Always refresh the goal to get the complete data with all nested objects
-      if (selectedGoal && selectedGoal.id === updatedGoal.id) {
-        refreshSelectedGoal();
-      } else {
-        // If it's not the selected goal, we still update our list
-        // but also trigger a background refresh to get full details
-        setGoals(prev => 
-          prev.map(g => g.id === updatedGoal.id ? {...g, ...updatedGoal} : g)
-        );
-        
-        // Background refresh of this goal to ensure all data is up to date
-        api.getGoalDetails(updatedGoal.id)
-          .then(fullGoalData => {
-            setGoals(prev => 
-              prev.map(g => g.id === fullGoalData.id ? fullGoalData : g)
-            );
-          })
-          .catch(error => {
-            console.error('Background goal refresh failed:', error);
-          });
-      }
-    }, 0); // Using setTimeout with 0ms delay to ensure animation starts first
+    // Continue with updating the local state
+    if (selectedGoal && selectedGoal.id === updatedGoal.id) {
+      refreshSelectedGoal();
+    } else {
+      // If it's not the selected goal, we still update our list
+      // but also trigger a background refresh to get full details
+      setGoals(prev => 
+        prev.map(g => g.id === updatedGoal.id ? {...g, ...updatedGoal} : g)
+      );
+      
+      // Background refresh of this goal to ensure all data is up to date
+      api.getGoalDetails(updatedGoal.id)
+        .then(fullGoalData => {
+          setGoals(prev => 
+            prev.map(g => g.id === fullGoalData.id ? fullGoalData : g)
+          );
+        })
+        .catch(error => {
+          console.error('Background goal refresh failed:', error);
+        });
+    }
   }
 
   const handleLogout = () => {
@@ -170,95 +159,76 @@ const Dashboard = () => {
     navigate('/')
   }
 
-  const toggleChat = () => {
-    setIsChatCollapsed(!isChatCollapsed)
-  }
-
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-br from-dark-900 via-dark-850 to-dark-800">
-      {/* Header */}
-      <header className="z-10 flex justify-between p-4 backdrop-blur-md bg-dark-900/30 border-b border-white/5">
-        <Link to="/" className="flex items-center space-x-2">
-          <img src={logoImage} alt="Navi Logo" className="h-8 w-auto" />
-          <h1 className="text-2xl font-bold text-white">Navi</h1>
-        </Link>
+    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-b from-[#111827] to-[#0a0f1a]">
+      {/* Background elements for glass effect */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute top-[10%] -left-[10%] h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[120px]" />
+        <div className="absolute top-[40%] -right-[5%] h-[300px] w-[300px] rounded-full bg-gray-500/10 blur-[100px]" />
+        <div className="absolute bottom-[10%] left-[30%] h-[250px] w-[250px] rounded-full bg-purple-500/10 blur-[80px]" />
+      </div>
 
-        <div className="flex items-center space-x-4">
-          {user && (
-            <span className="text-sm text-dark-100">
-              Logged in as <span className="text-primary-400">{user.username}</span>
-            </span>
-          )}
-          <button
-            onClick={handleLogout}
-            className="rounded-full bg-dark-700/50 hover:bg-dark-600/50 px-4 py-2 text-sm font-medium text-white transition-colors"
-          >
-            Log out
-          </button>
+      {/* Header */}
+      <header className="relative z-10 border-b border-white/10 backdrop-blur-md">
+        <div className="flex items-center justify-between px-8 py-4">
+          <Link to="/" className="flex items-center space-x-3">
+            <img src={logoImage} alt="Navi Logo" className="h-9 w-auto" />
+            <div>
+              <h1 className="text-2xl font-bold text-white">Navi</h1>
+              <p className="text-xs text-blue-300">Your strategic replica</p>
+            </div>
+          </Link>
+
+          <div className="flex items-center space-x-6">
+            {user && (
+              <span className="text-sm text-gray-300">
+                <span className="text-blue-400">{user.username}</span>
+              </span>
+            )}
+            <button
+              onClick={handleLogout}
+              className="rounded-full border border-white/10 bg-white/5 px-5 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/10"
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main content area */}
-      <main className="flex flex-1 overflow-hidden">
-        {/* Left side: Chat */}
-        <motion.div
-          animate={{
-            width: isChatCollapsed ? '60px' : (goals.length > 0 ? '30%' : '100%'),
-            minWidth: isChatCollapsed ? '60px' : '300px'
-          }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="relative h-full backdrop-blur-sm bg-dark-800/20 border-r border-white/5"
-        >
-          {goals.length > 0 && (
-            <button
-              onClick={toggleChat}
-              className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-dark-700/50 hover:bg-dark-600/50 text-white transition-colors"
-            >
-              {isChatCollapsed ? (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                  <path fillRule="evenodd" d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-                  <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clipRule="evenodd" />
-                </svg>
-              )}
-            </button>
-          )}
-          
-          <AnimatePresence>
-            {!isChatCollapsed && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="h-full"
-              >
-                <ChatInterface 
-                  className="w-full" 
-                  relatedGoalId={selectedGoal?.id}
-                  onMessageAction={handleMessageAction}
-                  compact={goals.length > 0}
-                  ref={chatInterfaceRef}
-                  hasGoals={goals.length > 0}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-        
-        {/* Right side: Goals section - visible only when there are goals */}
-        <AnimatePresence>
-          {goals.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, width: isChatCollapsed ? 'calc(100% - 60px)' : '70%' }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="flex h-full flex-col overflow-hidden"
-            >
+      <main className="relative z-10 flex flex-1 overflow-hidden p-4">
+        {/* No goals state - centered chat */}
+        {goals.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center p-6">
+            <div className="w-full max-w-2xl">
+              <ChatInterface 
+                className="glass-morphism rounded-2xl border border-white/10 shadow-xl p-4" 
+                onMessageAction={handleMessageAction}
+                compact={false}
+                ref={chatInterfaceRef}
+                hasGoals={false}
+              />
+            </div>
+          </div>
+        ) : (
+          // With goals state - chat on left, content on right
+          <div className="flex flex-1 space-x-6">
+            {/* Left side: Chat */}
+            <div className="w-[30%] min-w-[300px] h-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4">
+              <ChatInterface 
+                className="h-full" 
+                relatedGoalId={selectedGoal?.id}
+                onMessageAction={handleMessageAction}
+                compact={true}
+                ref={chatInterfaceRef}
+                hasGoals={true}
+              />
+            </div>
+            
+            {/* Right side: Goals section */}
+            <div className="flex-1 flex h-full flex-col overflow-hidden">
               {/* Carousel for compact view of goals */}
-              <div className="p-4 pb-0 backdrop-blur-sm bg-dark-800/10 border-b border-white/5">
+              <div className="p-6 pb-4">
                 <GoalCarousel 
                   goals={goals}
                   selectedGoalId={selectedGoal?.id}
@@ -267,18 +237,18 @@ const Dashboard = () => {
                 />
               </div>
 
-              {/* Selected goal details */}
-              <div className="flex-1 overflow-auto p-4 pt-2 scrollbar-thin scrollbar-track-dark-800/20 scrollbar-thumb-dark-700/50">
+              {/* Selected goal details with glass morphism */}
+              <div className="flex-1 overflow-auto px-2">
                 {selectedGoal && (
-                  <GoalCard 
+                  <GoalView 
                     goal={selectedGoal} 
                     onGoalUpdate={handleGoalUpdate}
                   />
                 )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )

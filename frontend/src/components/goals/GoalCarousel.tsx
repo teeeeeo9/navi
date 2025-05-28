@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Goal } from '@/services/api'
-import GoalCard from './GoalCard'
+import CompactGoalCard from './CompactGoalCard'
 import api from '@/services/api'
 
 interface GoalCarouselProps {
@@ -32,7 +32,7 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
     if (carouselRef.current && goals.length > 0) {
       const scrollContainer = carouselRef.current
       const cardWidth = scrollContainer.querySelector('div')?.clientWidth || 300
-      const scrollPosition = activeIndex * (cardWidth + 12) // 12px for the gap
+      const scrollPosition = activeIndex * (cardWidth + 16) // 16px for the gap
       
       scrollContainer.scrollTo({
         left: scrollPosition,
@@ -91,9 +91,9 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
   if (goals.length === 0) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="rounded-xl p-8 text-center backdrop-blur-md bg-dark-800/20 border border-white/5">
-          <h3 className="mb-2 text-xl font-bold text-white">No Goals Yet</h3>
-          <p className="text-dark-100">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-md">
+          <h3 className="mb-3 text-xl font-bold text-white">No Goals Yet</h3>
+          <p className="text-gray-300">
             Start chatting with your AI assistant to create your first goal.
           </p>
         </div>
@@ -116,7 +116,7 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
           <motion.button
             onClick={goToPrev}
             disabled={activeIndex === 0}
-            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full p-1.5 backdrop-blur-md bg-dark-800/40 border border-white/10 text-white transition-opacity hover:bg-primary-500/20 disabled:opacity-30"
+            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/10 bg-dark-800/60 p-2 text-white transition-colors hover:bg-dark-700/60 disabled:opacity-30 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: showNav ? 0.9 : 0 }}
             transition={{ duration: 0.2 }}
@@ -128,7 +128,7 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
           <motion.button
             onClick={goToNext}
             disabled={activeIndex === goals.length - 1}
-            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full p-1.5 backdrop-blur-md bg-dark-800/40 border border-white/10 text-white transition-opacity hover:bg-primary-500/20 disabled:opacity-30"
+            className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/10 bg-dark-800/60 p-2 text-white transition-colors hover:bg-dark-700/60 disabled:opacity-30 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: showNav ? 0.9 : 0 }}
             transition={{ duration: 0.2 }}
@@ -146,21 +146,19 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
         className="scrollbar-hide h-full overflow-x-auto pb-3"
         onScroll={handleScroll}
       >
-        <div className="flex h-full gap-3 px-2">
+        <div className="flex h-full gap-4 px-2">
           {goals.map((goal, index) => (
             <motion.div
               key={goal.id}
-              className="w-64 flex-shrink-0 h-full"
+              className="w-72 flex-shrink-0 h-full"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
             >
-              <GoalCard
+              <CompactGoalCard
                 goal={goal}
                 isSelected={selectedGoalId === goal.id}
                 onClick={() => handleGoalSelect(goal, index)}
-                onGoalUpdate={handleGoalUpdate}
-                compact
               />
             </motion.div>
           ))}
@@ -169,13 +167,13 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
 
       {/* Pagination dots */}
       {goals.length > 1 && (
-        <div className="absolute -bottom-1 left-0 flex w-full justify-center space-x-1">
+        <div className="absolute -bottom-2 left-0 flex w-full justify-center space-x-2">
           {goals.map((_, index) => (
             <button
               key={index}
               onClick={() => handleGoalSelect(goals[index], index)}
-              className={`h-1 rounded-full transition-colors ${
-                index === activeIndex ? 'bg-primary-400 w-4' : 'bg-dark-400 w-1'
+              className={`h-2 rounded-full transition-all ${
+                index === activeIndex ? 'bg-blue-400 w-6' : 'bg-white/20 w-2'
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />

@@ -4,6 +4,7 @@ import api, { ChatMessage } from '@/services/api'
 import ChatSuggestions from './ChatSuggestions'
 import { useAuth } from '@/context/AuthContext'
 import YodaImage from '@/assets/Yoda.jpeg'
+import colorScheme from '@/styles/colorScheme'
 
 interface ChatInterfaceProps {
   relatedGoalId?: number;
@@ -262,13 +263,13 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
             <img src={YodaImage} alt="Yoda" className="w-20 h-20 rounded-full object-cover shadow-lg" />
           </div>
         )}
-        <div className="glass-dark flex-1 overflow-hidden rounded-2xl flex flex-col">
+        <div className="flex-1 overflow-hidden rounded-2xl flex flex-col bg-transparent">
           {isLoadingMore && (
             <div className="flex justify-center p-2">
-              <div className="flex space-x-2 rounded-full bg-dark-700/70 px-4 py-2">
-                <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400"></div>
-                <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400" style={{ animationDelay: '0.2s' }}></div>
-                <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400" style={{ animationDelay: '0.4s' }}></div>
+              <div className="flex space-x-2 rounded-full bg-gray-700/40 px-4 py-2">
+                <div className="h-2 w-2 animate-bounce rounded-full bg-blue-400"></div>
+                <div className="h-2 w-2 animate-bounce rounded-full bg-blue-400" style={{ animationDelay: '0.2s' }}></div>
+                <div className="h-2 w-2 animate-bounce rounded-full bg-blue-400" style={{ animationDelay: '0.4s' }}></div>
               </div>
             </div>
           )}
@@ -278,7 +279,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
             className="flex flex-1 flex-col overflow-y-auto px-6 pb-6 scrollbar-thin"
           >
             {filteredMessages.length === 0 && !isLoading ? (
-              <div className="flex h-full flex-col items-center justify-center text-dark-100">
+              <div className="flex h-full flex-col items-center justify-center text-gray-400">
                 <p className={`text-center ${!compact ? 'text-lg' : ''}`}>No messages yet. Start a conversation!</p>
               </div>
             ) : (
@@ -296,10 +297,10 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
                       <div
                         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                           message.sender === 'user'
-                            ? 'bg-primary-700/70 text-white'
+                            ? 'bg-blue-600/50 text-white backdrop-blur-sm'
                             : message.sender === 'system'
-                            ? 'bg-dark-600/70 text-dark-200 italic'
-                            : 'bg-secondary-700/70 text-white'
+                            ? 'bg-gray-700/50 text-gray-300 italic backdrop-blur-sm'
+                            : 'bg-teal-600/50 text-white backdrop-blur-sm'
                         } ${!compact ? 'px-5 py-4 shadow-lg' : ''}`}
                       >
                         <p className="whitespace-pre-wrap">{message.content}</p>
@@ -323,10 +324,10 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
                 animate={{ opacity: 1 }}
                 className="mt-2 flex justify-start"
               >
-                <div className="flex space-x-2 rounded-full bg-dark-700/70 px-4 py-2">
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400"></div>
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-secondary-400" style={{ animationDelay: '0.4s' }}></div>
+                <div className="flex space-x-2 rounded-full bg-gray-700/40 px-4 py-2">
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-blue-400"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-blue-400" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-blue-400" style={{ animationDelay: '0.4s' }}></div>
                 </div>
               </motion.div>
             )}
@@ -339,7 +340,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
         </div>
 
         <form onSubmit={handleSendMessage} className="mt-2">
-          <div className="glass-dark flex overflow-hidden rounded-2xl">
+          <div className="flex overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md">
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
@@ -353,7 +354,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              className="bg-primary-600 px-6 py-4 text-white"
+              className="bg-blue-600 px-6 py-4 text-white"
               disabled={isLoading || systemUpdateInProgress || !newMessage.trim()}
             >
               <svg

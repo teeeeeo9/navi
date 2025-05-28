@@ -11,6 +11,7 @@ import {
   Line
 } from 'recharts'
 import { ProgressUpdate } from '@/services/api'
+import colorScheme from '@/styles/colorScheme'
 
 interface ProgressChartProps {
   progressData: ProgressUpdate[]
@@ -41,14 +42,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const effortNotes = payload[0]?.payload?.effort_notes
     
     return (
-      <div className="glass-dark rounded-lg p-3 shadow-lg">
-        <p className="mb-1 text-sm text-dark-100">{formattedDate} {formattedTime}</p>
+      <div className="rounded-lg border border-white/10 bg-dark-800/90 p-4 shadow-lg backdrop-blur-md">
+        <p className="mb-2 text-sm text-gray-300">{formattedDate} {formattedTime}</p>
         
         {/* Show progress value if present */}
         {progressEntry && progressEntry.value !== undefined && (
           <p className="text-base font-bold text-white">
             <span 
-              className="inline-block w-3 h-3 rounded-full mr-2"
+              className="mr-2 inline-block h-3 w-3 rounded-full"
               style={{ backgroundColor: progressEntry.color }}
             ></span>
             Progress: {progressEntry.value}
@@ -59,7 +60,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         {effortEntry && effortEntry.value !== undefined && (
           <p className="text-base font-bold text-white">
             <span 
-              className="inline-block w-3 h-3 rounded-full mr-2"
+              className="mr-2 inline-block h-3 w-3 rounded-full"
               style={{ backgroundColor: effortEntry.color }}
             ></span>
             Effort: {effortEntry.value}
@@ -68,13 +69,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         
         {/* Display notes */}
         {progressNotes && progressEntry && (
-          <p className="mt-1 max-w-[200px] text-xs text-dark-200">
+          <p className="mt-2 max-w-[250px] text-sm text-gray-400">
             {progressNotes}
           </p>
         )}
         
         {effortNotes && effortEntry && (
-          <p className="mt-1 max-w-[200px] text-xs text-dark-200">
+          <p className="mt-2 max-w-[250px] text-sm text-gray-400">
             {effortNotes}
           </p>
         )}
@@ -152,22 +153,22 @@ const ProgressChart = ({
   
   if (chartData.length === 0) {
     return (
-      <div className="rounded-lg bg-dark-700/30 p-3 text-center text-sm text-dark-300">
+      <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-center text-sm text-gray-400 backdrop-blur-sm">
         No progress data available
       </div>
     )
   }
 
   if (minimal) {
-    // Minimal chart for compact view - increase height for milestone charts
+    // Minimal chart for compact view
     return (
-      <div className={`mt-2 bg-dark-800/40 p-2 rounded-lg ${isMilestoneChart ? 'border border-primary-400/20' : ''}`}>
+      <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
         <ResponsiveContainer width="100%" height={100}>
           <ComposedChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.1} />
+                <stop offset="5%" stopColor={colorScheme.blue[500]} stopOpacity={0.8} />
+                <stop offset="95%" stopColor={colorScheme.blue[500]} stopOpacity={0.1} />
               </linearGradient>
             </defs>
             <XAxis 
@@ -183,7 +184,7 @@ const ProgressChart = ({
               <Area 
                 type="monotone" 
                 dataKey="progress" 
-                stroke="#38bdf8" 
+                stroke={colorScheme.blue[500]} 
                 fillOpacity={1} 
                 fill="url(#progressGradient)" 
                 strokeWidth={2}
@@ -196,10 +197,10 @@ const ProgressChart = ({
               <Line 
                 type="monotone" 
                 dataKey="effort" 
-                stroke="#4ade80" 
+                stroke={colorScheme.purple[500]} 
                 strokeWidth={2}
-                dot={{ r: 3, fill: "#4ade80" }}
-                activeDot={{ r: 5 }}
+                dot={{ r: 3, fill: colorScheme.purple[500] }}
+                activeDot={{ r: 4 }}
                 connectNulls
               />
             )}
@@ -209,72 +210,70 @@ const ProgressChart = ({
     )
   }
 
-  // Full interactive chart - now more compact and stylish
+  // Full interactive chart
   return (
     <motion.div 
-      className={`mt-4 overflow-hidden rounded-lg border ${
-        isMilestoneChart ? 'border-primary-400/30 bg-dark-700/40' : 'border-dark-600/30 bg-dark-700/20'
-      }`}
+      className={`overflow-hidden rounded-lg border border-white/10 ${
+        isMilestoneChart ? 'bg-blue-500/5' : 'bg-white/5'
+      } backdrop-blur-sm`}
       animate={{ height: expanded ? 'auto' : height }}
       transition={{ duration: 0.3 }}
     >
       {title && (
-        <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-          <h4 className="text-sm font-medium text-dark-100">{title}</h4>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 mr-2">
-              <span className="w-2 h-2 rounded-full bg-primary-400"></span>
-              <span className="text-xs text-dark-200">Progress</span>
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <h4 className="text-base font-medium text-white">{title}</h4>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-400"></span>
+              <span className="text-xs text-gray-300">Progress</span>
               
               {effortUpdates.length > 0 && (
                 <>
-                  <span className="w-2 h-2 rounded-full bg-green-400 ml-2"></span>
-                  <span className="text-xs text-dark-200">Effort</span>
+                  <span className="ml-3 h-2.5 w-2.5 rounded-full bg-purple-400"></span>
+                  <span className="text-xs text-gray-300">Effort</span>
                 </>
               )}
             </div>
-            <motion.button
+            <button
               onClick={() => setExpanded(!expanded)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="rounded-full bg-dark-600/50 p-1 text-sm text-dark-200 hover:bg-dark-500/50 hover:text-white"
+              className="rounded-full border border-white/10 bg-white/5 p-1.5 text-sm text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
             >
               {expanded ? (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
                   <path fillRule="evenodd" d="M11.47 7.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 9.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clipRule="evenodd" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
                   <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
                 </svg>
               )}
-            </motion.button>
+            </button>
           </div>
         </div>
       )}
       
-      <div className="px-2 pb-3">
-        <ResponsiveContainer width="100%" height={expanded ? 300 : height - 60}>
-          <ComposedChart data={chartData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
+      <div className="px-3 pb-4">
+        <ResponsiveContainer width="100%" height={expanded ? 350 : height - 60}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 15, left: -5, bottom: 5 }}>
             <defs>
               <linearGradient id="progressGradientFull" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.05} />
+                <stop offset="5%" stopColor={colorScheme.blue[500]} stopOpacity={0.3} />
+                <stop offset="95%" stopColor={colorScheme.blue[500]} stopOpacity={0.05} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2e3142" opacity={0.3} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
             <XAxis 
               dataKey="timestamp" 
               type="number"
               domain={['dataMin', 'dataMax']}
               tickFormatter={formatXAxis}
-              tick={{ fill: '#868ca7', fontSize: 10 }} 
-              axisLine={{ stroke: '#2e3142' }}
+              tick={{ fill: '#9ca3af', fontSize: 11 }} 
+              axisLine={{ stroke: '#374151' }}
             />
             <YAxis 
               domain={[0, 10]}
-              tick={{ fill: '#868ca7', fontSize: 10 }} 
-              axisLine={{ stroke: '#2e3142' }}
+              tick={{ fill: '#9ca3af', fontSize: 11 }} 
+              axisLine={{ stroke: '#374151' }}
               tickCount={6}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -284,12 +283,12 @@ const ProgressChart = ({
               <Area 
                 type="monotone" 
                 dataKey="progress" 
-                stroke="#38bdf8" 
+                stroke={colorScheme.blue[500]} 
                 fillOpacity={1} 
                 fill="url(#progressGradientFull)" 
                 strokeWidth={2}
-                dot={{ r: 4, fill: '#0ea5e9', strokeWidth: 1, stroke: '#0c4a6e' }}
-                activeDot={{ r: 6, fill: '#0ea5e9' }}
+                dot={{ r: 3, fill: colorScheme.blue[500], strokeWidth: 1, stroke: colorScheme.blue[800] }}
+                activeDot={{ r: 4, fill: colorScheme.blue[500] }}
                 name="Progress"
                 connectNulls
               />
@@ -300,10 +299,10 @@ const ProgressChart = ({
               <Line 
                 type="monotone" 
                 dataKey="effort" 
-                stroke="#4ade80" 
+                stroke={colorScheme.purple[500]} 
                 strokeWidth={2}
-                dot={{ r: 4, fill: '#22c55e', strokeWidth: 1, stroke: '#166534' }}
-                activeDot={{ r: 6, fill: '#22c55e' }}
+                dot={{ r: 3, fill: colorScheme.purple[500], strokeWidth: 1, stroke: colorScheme.purple[600] }}
+                activeDot={{ r: 4, fill: colorScheme.purple[500] }}
                 name="Effort"
                 connectNulls
               />

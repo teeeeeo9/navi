@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import api from '@/services/api';
+import colorScheme from '@/styles/colorScheme';
 
 interface SuggestionItem {
   title: string;
   message: string;
   icon?: string;
+  color?: string;
 }
 
 interface ChatSuggestionsProps {
@@ -49,28 +51,31 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
     }, 150);
   };
   
-  // Pre-defined list of suggestions - using shorter titles for minimalism
+  // Pre-defined list of suggestions with different accent colors
   const suggestions: SuggestionItem[] = [
     {
       title: "How does Navi work?",
       message: "How does Navi work? How do I use the app?",
-      icon: " "
+      icon: "❓",
+      color: colorScheme.blue[500]
     },    
     {
       title: "Set a new goal",
       message: "I'd like to set a new goal",
-      icon: " "
+      icon: "🎯",
+      color: colorScheme.teal[500]
     },
     {
       title: "Deep dive into strategy",
       message: "Let's dive deep into strategy. Can you help me review strategically my goals, milestones and progress?",
-      icon: " "
+      icon: "🔍",
+      color: colorScheme.purple[500]
     },
-
     {
       title: "Help me focus",
       message: "Help me focus",
-      icon: " "
+      icon: "🧠",
+      color: colorScheme.orange[500]
     }
   ];
   
@@ -80,28 +85,22 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
         {suggestions.map((suggestion, index) => (
           <motion.button
             key={suggestion.title}
-            className="rounded-full px-3 py-1 bg-dark-700/50 backdrop-blur-sm border border-dark-600/20 text-white/90 text-xs flex items-center space-x-1.5 transition-all hover:bg-dark-600/60"
+            className="rounded-full px-3.5 py-1.5 bg-white/5 backdrop-blur-sm border border-white/10 text-white/90 text-xs flex items-center space-x-1.5 transition-all"
             onClick={() => handleClick(suggestion.message, index)}
             whileHover={{ 
               y: -2,
+              boxShadow: `0 0 0 1px ${suggestion.color || colorScheme.blue[500]}30`,
+              borderColor: `${suggestion.color || colorScheme.blue[500]}50`,
               transition: { duration: 0.2 }
             }}
             animate={{ 
               scale: selectedSuggestion === index ? 0.9 : 1,
-              backgroundColor: selectedSuggestion === index ? 'rgba(99, 102, 241, 0.4)' : 'rgba(31, 41, 55, 0.5)'
+              backgroundColor: selectedSuggestion === index ? `${suggestion.color || colorScheme.blue[500]}20` : 'rgba(255, 255, 255, 0.05)'
             }}
             transition={{ duration: 0.15 }}
           >
             <span>{suggestion.icon}</span>
             <span>{suggestion.title}</span>
-            
-            {/* Subtle gradient ring on hover */}
-            <motion.span 
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-500/20 to-secondary-500/20 opacity-0 hover:opacity-100"
-              initial={{ opacity: 0 }}
-              whileHover={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            />
           </motion.button>
         ))}
       </div>
@@ -113,12 +112,12 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
           animate={{ opacity: 1 }}
           className="mt-2 flex justify-between items-center"
         >
-          <p className="text-xs text-dark-200 italic">
+          <p className="text-xs text-gray-400 italic">
             Try Yoda mode for a fun strategizing experience
           </p>
           <motion.button
             onClick={switchToYoda}
-            className="text-xs text-primary-400 hover:text-primary-300"
+            className="text-xs text-teal-400 hover:text-teal-300"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

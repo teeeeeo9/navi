@@ -63,37 +63,37 @@ const reflectionTypes = {
   'importance': {
     title: 'Why This Matters',
     icon: '✨',
-    color: 'border-white/10'
+    color: 'border-primary-400/30 bg-primary-400/5'
   },
   'obstacles': {
     title: 'Potential Obstacles',
     icon: '🧗',
-    color: 'border-white/10'
+    color: 'border-primary-400/30 bg-primary-400/5'
   },
   'environment': {
     title: 'Environmental Setup',
     icon: '🏡',
-    color: 'border-white/10'
+    color: 'border-primary-400/30 bg-primary-400/5'
   },
   'timeline': {
     title: 'Timeline Considerations',
     icon: '⏱️',
-    color: 'border-white/10'
+    color: 'border-primary-400/30 bg-primary-400/5'
   },
   'backups': {
     title: 'Backup Plans',
     icon: '🛟',
-    color: 'border-white/10'
+    color: 'border-primary-400/30 bg-primary-400/5'
   },
   'review_positive': {
     title: 'What Went Well',
     icon: '👍',
-    color: 'border-white/10'
+    color: 'border-primary-400/30 bg-primary-400/5'
   },
   'review_improve': {
     title: 'Areas to Improve',
     icon: '🔍',
-    color: 'border-white/10'
+    color: 'border-primary-400/30 bg-primary-400/5'
   }
 };
 
@@ -548,13 +548,17 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
 
   if (compact) {
     return (
-      <div
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={onClick}
-        className={`glass-card relative cursor-pointer overflow-hidden rounded-xl p-0.5 transition-all h-full ${
-          isSelected ? 'ring-1 ring-primary-400/60' : ''
+        className={`glass relative cursor-pointer overflow-hidden rounded-xl p-0.5 transition-all h-full ${
+          isSelected ? 'ring-2 ring-primary-400/70' : ''
         }`}
       >
-        <div className="relative rounded-xl p-3 h-full flex flex-col backdrop-blur-sm bg-dark-800/30">
+        <div className="relative rounded-xl p-3 h-full flex flex-col">
+          {/* Status badge removed */}
+          
           <div className="absolute -right-4 -top-4">
             <ProgressRing progress={progressValue} size={50} strokeWidth={4} />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
@@ -590,20 +594,20 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           <div className="mt-auto">
             <div className="w-full bg-dark-700/30 h-2 rounded-full overflow-hidden mt-2">
               <div 
-                className="bg-gradient-to-r from-primary-400 to-primary-300 h-full" 
+                className="bg-primary-400 h-full" 
                 style={{ width: `${goal.completion_status}%` }}
               ></div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
   return (
     <>
-      <div className="glass-card rounded-xl overflow-hidden border border-white/5">
-        <div className="p-6 backdrop-blur-md bg-dark-800/20">
+      <div className="glass rounded-2xl p-0.5">
+        <div className="rounded-2xl p-6">
           {/* Header with title and progress */}
           <div className="mb-6 flex items-start justify-between">
             <div className="flex-1">
@@ -615,12 +619,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                   onChange={(e) => setTitleValue(e.target.value)}
                   onBlur={handleTitleSave}
                   onKeyDown={handleTitleKeyDown}
-                  className="mb-1 w-full bg-transparent text-2xl font-bold text-white outline-none border-b border-primary-400/50 pb-1"
+                  className="mb-1 w-full bg-transparent text-2xl font-bold text-white outline-none focus:border-b focus:border-primary-400/50"
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
                 <h2 
-                  className="mb-1 text-2xl font-bold text-white transition-colors hover:text-primary-200 cursor-pointer"
+                  className="mb-1 text-2xl font-bold text-white"
                   onDoubleClick={handleTitleDoubleClick}
                 >
                   {localGoalData.title}
@@ -637,12 +641,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                         value={startDateValue}
                         onChange={(e) => setStartDateValue(e.target.value)}
                         onBlur={handleStartDateSave}
-                        className="bg-transparent text-sm text-dark-100 outline-none border-b border-primary-400/30"
+                        className="bg-transparent text-sm text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
                       />
                     ) : (
                       <span 
-                        className="cursor-pointer px-1.5 py-0.5 rounded transition-colors hover:text-primary-300"
                         onDoubleClick={handleStartDateDoubleClick}
+                        className="cursor-pointer px-1.5 py-0.5 rounded hover:bg-dark-700/40"
                       >
                         {formatDate(localGoalData.startDate)}
                       </span>
@@ -659,12 +663,12 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                         value={targetDateValue}
                         onChange={(e) => setTargetDateValue(e.target.value)}
                         onBlur={handleTargetDateSave}
-                        className="bg-transparent text-sm text-dark-100 outline-none border-b border-primary-400/30"
+                        className="bg-transparent text-sm text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
                       />
                     ) : (
                       <span 
-                        className="cursor-pointer px-1.5 py-0.5 rounded transition-colors hover:text-primary-300"
                         onDoubleClick={handleTargetDateDoubleClick}
+                        className="cursor-pointer px-1.5 py-0.5 rounded hover:bg-dark-700/40"
                       >
                         {formatDate(localGoalData.targetDate)}
                       </span>
@@ -672,7 +676,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                   }
                 </span>
                 
-                <span className={`px-1.5 py-0.5 rounded-full ${isOverdue ? 'bg-amber-400/10 text-amber-300' : 'bg-dark-700/30 text-dark-100'}`}>
+                <span className={`${isOverdue ? 'text-amber-400' : ''} px-1.5 py-0.5 rounded ${isOverdue ? 'bg-amber-400/10' : ''}`}>
                   {Math.abs(daysRemaining)} days {daysRemaining >= 0 ? 'left' : 'overdue'}
                 </span>
               </div>
@@ -690,20 +694,20 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left column: Reflections */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-medium text-white">Reflections</h3>
                 <button
                   onClick={() => {
                     const elem = document.getElementById(`reflection-${goal.id}-importance`);
                     if (elem) elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
-                  className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded-full bg-primary-400/5 hover:bg-primary-400/10 transition-colors"
+                  className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded hover:bg-primary-400/10 transition-colors"
                 >
-                  Why This Matters
+                  Why This Matters ↗
                 </button>
               </div>
               
-              <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-400px)] pr-1">
+              <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-400px)]">
                 {getSortedReflections().map(([type, reflection]) => {
                   const isEditing = editingReflectionId === type;
                   const content = isEditing ? reflectionValues[type] : localReflections[type] || reflection.content;
@@ -713,14 +717,15 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                   const reflectionStyle = reflectionTypes[type as keyof typeof reflectionTypes] || {
                     title: type.replace('_', ' '),
                     icon: '📝',
-                    color: 'border-white/10'
+                    color: 'border-primary-400/30 bg-primary-400/5'
                   };
                   
                   return (
-                    <div 
+                    <motion.div 
                       key={type}
                       id={`reflection-${goal.id}-${type}`}
-                      className={`group rounded-lg p-4 border ${reflectionStyle.color} backdrop-blur-sm bg-dark-800/20 transition-all`}
+                      whileHover={{ scale: 1.01 }}
+                      className={`group rounded-lg p-4 border ${reflectionStyle.color} transition-all shadow-sm hover:shadow`}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-lg">{reflectionStyle.icon}</span>
@@ -728,14 +733,16 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           {reflectionStyle.title}
                         </h4>
                         
-                        <button
-                          onClick={(e) => handleReflectionDoubleClick(type, e)}
-                          className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-dark-700/50 text-dark-200 hover:text-white"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-                            <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
-                          </svg>
-                        </button>
+                        <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => handleReflectionDoubleClick(type, e)}
+                            className="p-1 rounded-full hover:bg-dark-600/50 text-dark-200 hover:text-white"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                              <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                       
                       {isEditing ? (
@@ -752,19 +759,18 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                               setEditingReflectionId(null);
                             }
                           }}
-                          className="w-full bg-dark-700/30 text-white outline-none border border-primary-400/30 p-2 rounded resize-none text-sm"
+                          className="w-full bg-dark-700/30 text-white outline-none focus:border-b focus:border-primary-400/50 p-2 rounded resize-none text-sm"
                           rows={3}
-                          placeholder="Add your reflection..."
                         />
                       ) : (
                         <p 
-                          className="text-sm text-dark-200 pl-1 whitespace-pre-wrap cursor-pointer"
+                          className="text-sm text-dark-200 pl-1 whitespace-pre-wrap"
                           onDoubleClick={(e) => handleReflectionDoubleClick(type, e)}
                         >
                           {content}
                         </p>
                       )}
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -772,19 +778,21 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
             
             {/* Right column: Milestones */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-medium text-white">Milestones</h3>
-                <button
-                  onClick={() => setShowCharts(!showCharts)}
-                  className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded-full bg-primary-400/5 hover:bg-primary-400/10 transition-colors"
-                >
-                  {showCharts ? 'Hide Progress' : 'Show Progress'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowCharts(!showCharts)}
+                    className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded hover:bg-primary-400/10 transition-colors"
+                  >
+                    {showCharts ? 'Hide Progress' : 'Show Progress'}
+                  </button>
+                </div>
               </div>
               
               {/* Milestones */}
               {goal.milestones && goal.milestones.length > 0 ? (
-                <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-400px)] pr-1">
+                <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-400px)]">
                   {goal.milestones.map(milestone => (
                     <MilestoneCard 
                       key={milestone.id} 
@@ -800,7 +808,7 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-32 rounded-lg border border-dashed border-white/10 text-dark-300 text-sm backdrop-blur-sm bg-dark-800/10">
+                <div className="flex items-center justify-center h-32 rounded-lg border border-dashed border-dark-600/40 text-dark-300 text-sm">
                   No milestones yet. Ask the AI to add some milestones.
                 </div>
               )}
@@ -808,8 +816,8 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
               {/* Progress Charts - Only shown when toggled */}
               {showCharts && (
                 <div className="mt-4">
-                  <div className="mb-6 rounded-xl backdrop-blur-sm bg-dark-800/20 p-5 border border-white/10">
-                    <h3 className="mb-4 text-base font-medium text-white">Track Your Progress</h3>
+                  <div className="mb-6 rounded-xl bg-dark-700/30 p-5 border border-dark-600/30">
+                    <h3 className="mb-4 text-lg font-medium text-white">Track Your Progress</h3>
                     
                     <div className="mb-5">
                       <div className="flex justify-between items-center mb-2">
@@ -828,14 +836,16 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           step="1" 
                           value={progressValue}
                           onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                          className="w-full h-1.5 bg-dark-600/50 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                          className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
                         />
-                        <button
-                          className="bg-primary-500/80 hover:bg-primary-500 text-white px-3 py-1 rounded-md text-xs transition-colors"
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-sm"
                           onClick={() => handleProgressUpdate('progress', progressValue)}
                         >
                           Update
-                        </button>
+                        </motion.button>
                       </div>
                       <div className="mt-2">
                         <label className="text-sm font-medium text-dark-100 block mb-2">Progress Notes:</label>
@@ -843,14 +853,14 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           value={progressNotes}
                           onChange={(e) => setProgressNotes(e.target.value)}
                           placeholder="Add notes about your progress..."
-                          className="w-full rounded-lg bg-dark-700/50 border border-white/10 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                          className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
                           rows={2}
                         />
                       </div>
                     </div>
                     
                     <div className="mb-5">
-                      <div className="flex justify-between items-center mb-1">
+                      <div className="flex justify-between items-center mb-2">
                         <label className="text-sm font-medium text-dark-100">
                           Effort Level: {effortValue}/10
                         </label>
@@ -866,22 +876,24 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
                           step="1" 
                           value={effortValue}
                           onChange={(e) => setEffortValue(parseInt(e.target.value))}
-                          className="w-full h-1.5 bg-dark-600/50 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                          className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
                         />
-                        <button
-                          className="bg-primary-500/80 hover:bg-primary-500 text-white px-3 py-1 rounded-md text-xs transition-colors"
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-sm"
                           onClick={() => handleProgressUpdate('effort', effortValue)}
                         >
                           Update
-                        </button>
+                        </motion.button>
                       </div>
                       <div className="mt-2">
-                        <label className="text-sm font-medium text-dark-100 block mb-1">Effort Notes:</label>
+                        <label className="text-sm font-medium text-dark-100 block mb-2">Effort Notes:</label>
                         <textarea
                           value={effortNotes}
                           onChange={(e) => setEffortNotes(e.target.value)}
                           placeholder="Add notes about your effort level..."
-                          className="w-full rounded-lg bg-dark-700/50 border border-white/10 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                          className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-3 text-sm text-white placeholder:text-dark-300 resize-none"
                           rows={2}
                         />
                       </div>
@@ -900,16 +912,15 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
           </div>
           
           {/* Remove Goal Button */}
-          <div className="mt-6 pt-4 flex justify-end">
-            <button
+          <div className="mt-6 border-t border-dark-600/30 pt-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setIsDeleteModalOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-dark-300 hover:text-red-300 transition-colors"
+              className="w-full rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 px-4 py-2 text-sm font-medium transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                <path fillRule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clipRule="evenodd" />
-              </svg>
               Remove Goal
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -1209,8 +1220,11 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
   const progressValue10 = Math.round(milestone.completion_status / 10);
   
   return (
-    <div className="glass-card rounded-lg overflow-hidden border border-white/5">
-      <div className="p-4 backdrop-blur-sm bg-dark-800/20">
+    <motion.div 
+      className="glass rounded-lg p-0.5 group"
+      whileHover={{ scale: 1.01 }}
+    >
+      <div className="rounded-lg p-4 bg-dark-700/40 backdrop-blur-sm">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             {isEditingTitle ? (
@@ -1221,19 +1235,19 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                 onChange={(e) => setTitleValue(e.target.value)}
                 onBlur={handleTitleSave}
                 onKeyDown={handleTitleKeyDown}
-                className="mb-2 w-full bg-transparent text-base font-medium text-white outline-none border-b border-primary-400/30 pb-1"
+                className="mb-2 w-full bg-transparent text-base font-medium text-white outline-none focus:border-b focus:border-primary-400/50"
               />
             ) : (
-              <div className="flex items-center mb-2">
+              <div className="flex items-center">
                 <h4 
-                  className="text-base font-medium text-white cursor-pointer transition-colors hover:text-primary-200"
+                  className="mb-2 text-base font-medium text-white cursor-pointer"
                   onDoubleClick={handleTitleDoubleClick}
                 >
                   {localMilestone.title}
                 </h4>
                 <button
                   onClick={handleTitleDoubleClick}
-                  className="ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity bg-dark-700/50 hover:bg-dark-600/50 text-dark-200 hover:text-white"
+                  className="ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-dark-600/50 text-dark-200 hover:text-white"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                     <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
@@ -1243,52 +1257,56 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
             )}
             
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-dark-100">
-              <span className="transition-colors hover:text-primary-300 cursor-pointer" onDoubleClick={handleTargetDateDoubleClick}>
-                {isEditingTargetDate ? (
-                  <input
-                    ref={targetDateInputRef}
-                    type="date"
-                    value={targetDateValue}
-                    onChange={(e) => setTargetDateValue(e.target.value)}
-                    onBlur={handleTargetDateSave}
-                    onKeyDown={handleTargetDateKeyDown}
-                    className="bg-transparent text-xs text-dark-100 outline-none border-b border-primary-400/30"
-                  />
-                ) : (
-                  <span className="px-1.5 py-0.5 rounded-full bg-dark-700/30">
-                    {formatDate(localMilestone.targetDate)}
-                  </span>
-                )}
+              <span className="px-1.5 py-0.5 rounded hover:bg-dark-700/40 cursor-pointer" onDoubleClick={handleTargetDateDoubleClick}>
+                Target: {
+                  isEditingTargetDate ? (
+                    <input
+                      ref={targetDateInputRef}
+                      type="date"
+                      value={targetDateValue}
+                      onChange={(e) => setTargetDateValue(e.target.value)}
+                      onBlur={handleTargetDateSave}
+                      onKeyDown={handleTargetDateKeyDown}
+                      className="bg-transparent text-xs text-dark-100 outline-none focus:border-b focus:border-primary-400/50"
+                    />
+                  ) : (
+                    <span>
+                      {formatDate(localMilestone.targetDate)}
+                    </span>
+                  )
+                }
               </span>
             </div>
           </div>
           
-          <div className="ml-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary-500/10 border border-primary-500/20">
-            <span className="text-xs font-medium">{progressValue10}</span>
+          <div className="ml-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-500/10 border border-primary-500/20">
+            <span className="text-sm font-medium">{progressValue10}/10</span>
           </div>
         </div>
         
         <div className="mt-2 mb-1">
-          <div className="w-full bg-dark-700/30 h-1 rounded-full overflow-hidden">
+          <div className="w-full bg-dark-700/30 h-1.5 rounded-full overflow-hidden">
             <div 
-              className="bg-gradient-to-r from-primary-400 to-primary-300 h-full" 
+              className="bg-primary-400/70 h-full" 
               style={{ width: `${milestone.completion_status}%` }}
             ></div>
           </div>
         </div>
         
         <div className="mt-3 flex justify-end">
-          <button
+          <motion.button
             onClick={() => setShowMilestoneProgress(!showMilestoneProgress)}
-            className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded-full bg-primary-400/5 hover:bg-primary-400/10 transition-colors"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="text-xs text-primary-400 hover:text-primary-300 px-2 py-1 rounded hover:bg-primary-400/10 transition-colors"
           >
             {showMilestoneProgress ? 'Hide Progress' : 'Track Progress'}
-          </button>
+          </motion.button>
         </div>
         
         {showMilestoneProgress && (
           <>
-            <div className="mt-4 mb-4 rounded-xl backdrop-blur-sm bg-dark-800/20 p-4 border border-white/10">
+            <div className="mt-4 mb-4 rounded-xl bg-dark-700/30 p-4 border border-dark-600/30">
               <h3 className="mb-3 text-sm font-medium text-white">Track Milestone Progress</h3>
               
               <div className="mb-4">
@@ -1297,7 +1315,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     Progress State: {progressValue}/10
                   </label>
                   <span className="text-xs text-dark-300">
-                    Completion level
+                    How far you are from completing this milestone
                   </span>
                 </div>
                 <div className="flex gap-3 items-center">
@@ -1308,14 +1326,16 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     step="1" 
                     value={progressValue}
                     onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                    className="w-full h-1.5 bg-dark-600/50 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
                   />
-                  <button
-                    className="bg-primary-500/80 hover:bg-primary-500 text-white px-3 py-1 rounded-md text-xs transition-colors"
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-xs"
                     onClick={() => handleMilestoneProgressUpdate('progress', progressValue)}
                   >
                     Update
-                  </button>
+                  </motion.button>
                 </div>
                 <div className="mt-2">
                   <label className="text-xs font-medium text-dark-100 block mb-1">Progress Notes:</label>
@@ -1323,7 +1343,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     value={progressNotes}
                     onChange={(e) => setProgressNotes(e.target.value)}
                     placeholder="Add notes about your progress..."
-                    className="w-full rounded-lg bg-dark-700/50 border border-white/10 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                    className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
                     rows={2}
                   />
                 </div>
@@ -1335,7 +1355,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     Effort Level: {effortValue}/10
                   </label>
                   <span className="text-xs text-dark-300">
-                    Current effort
+                    How much effort you're currently investing
                   </span>
                 </div>
                 <div className="flex gap-3 items-center">
@@ -1346,14 +1366,16 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     step="1" 
                     value={effortValue}
                     onChange={(e) => setEffortValue(parseInt(e.target.value))}
-                    className="w-full h-1.5 bg-dark-600/50 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                    className="w-full h-2 bg-dark-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
                   />
-                  <button
-                    className="bg-primary-500/80 hover:bg-primary-500 text-white px-3 py-1 rounded-md text-xs transition-colors"
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-md text-xs"
                     onClick={() => handleMilestoneProgressUpdate('effort', effortValue)}
                   >
                     Update
-                  </button>
+                  </motion.button>
                 </div>
                 <div className="mt-2">
                   <label className="text-xs font-medium text-dark-100 block mb-1">Effort Notes:</label>
@@ -1361,7 +1383,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
                     value={effortNotes}
                     onChange={(e) => setEffortNotes(e.target.value)}
                     placeholder="Add notes about your effort level..."
-                    className="w-full rounded-lg bg-dark-700/50 border border-white/10 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
+                    className="w-full rounded-lg bg-dark-800/60 border border-dark-600/50 p-2 text-xs text-white placeholder:text-dark-300 resize-none"
                     rows={2}
                   />
                 </div>
@@ -1369,7 +1391,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
             </div>
             
             {milestoneProgressUpdates.length > 0 && (
-              <div className="mt-3 rounded-lg backdrop-blur-sm bg-dark-800/20 p-3 border border-white/10">
+              <div className="mt-3 rounded-lg bg-dark-700/30 p-3 border border-dark-600/30">
                 <h4 className="mb-2 text-xs font-medium text-dark-100">Milestone Progress Chart</h4>
                 <ProgressChart 
                   progressData={milestoneProgressUpdates} 
@@ -1381,7 +1403,7 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
           </>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
