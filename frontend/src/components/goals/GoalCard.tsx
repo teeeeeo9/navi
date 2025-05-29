@@ -1,14 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Goal, Milestone, ProgressUpdate } from '@/services/api'
+import { Goal, Milestone, ProgressUpdate, Reflection } from '@/services/api'
 import ProgressChart from './ProgressChart'
 import api from '@/services/api'
 import Modal from '@/components/ui/Modal'
-
-// Define an interface for goal updates with simpler reflection format
-interface GoalUpdateWithReflections extends Partial<Omit<Goal, 'reflections'>> {
-  reflections?: Record<string, string>;
-}
 
 // Progress Ring Component
 const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: number, size?: number, strokeWidth?: number }) => {
@@ -461,50 +456,48 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
   }
 
   const handleReflectionSave = async (type: string) => {
-    if (!goal.reflections || !goal.reflections[type]) {
+    const content = reflectionValues[type]
+    if (!content.trim()) {
       setEditingReflectionId(null)
       return
     }
-
-    const originalContent = goal.reflections[type].content;
-    if (reflectionValues[type] === originalContent) {
-      setEditingReflectionId(null)
-      return
-    }
-
-    const newContent = reflectionValues[type]
-    setLocalReflections(prev => ({
-      ...prev,
-      [type]: newContent
-    }))
-    setEditingReflectionId(null)
 
     try {
-      const updateData: GoalUpdateWithReflections = {
-        reflections: {
-          [type]: newContent
+      // Create proper reflection object structure
+      const newReflections: Record<string, Reflection> = {
+        ...goal.reflections
+      }
+      
+      if (newReflections[type]) {
+        // Update existing reflection
+        newReflections[type] = {
+          ...newReflections[type],
+          content: content.trim(),
+          updated_at: new Date().toISOString()
+        }
+      } else {
+        // Create new reflection
+        newReflections[type] = {
+          id: Date.now(), // Temporary ID, backend will assign proper one
+          content: content.trim(),
+          reflection_type: type,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }
       }
 
-      const updatedGoal = await api.updateGoal(goal.id, updateData as any)
+      await api.updateGoal(goal.id, {
+        reflections: newReflections
+      })
       
       if (onGoalUpdate) {
-        onGoalUpdate(updatedGoal, 'reflection_update')
+        const refreshedGoal = await api.getGoalDetails(goal.id)
+        onGoalUpdate(refreshedGoal, 'reflection_update')
       }
+      
+      setEditingReflectionId(null)
     } catch (error) {
       console.error('Failed to update reflection:', error)
-      setLocalReflections(prev => ({
-        ...prev,
-        [type]: originalContent
-      }))
-    }
-  }
-
-  const handleReflectionKeyDown = (type: string, e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleReflectionSave(type)
-    } else if (e.key === 'Escape') {
-      setEditingReflectionId(null)
     }
   }
 
@@ -1228,9 +1221,6 @@ const MilestoneCard = ({ milestone, formatDate, onMilestoneUpdate, goalId }: Mil
       setIsEditingTargetDate(false);
     }
   };
-  
-  // Convert from 0-100 to 0-10 scale for display
-  const progressValue10 = Math.round(milestone.completion_status / 10);
   
   return (
     <motion.div 

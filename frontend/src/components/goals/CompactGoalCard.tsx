@@ -1,51 +1,6 @@
 import { Goal } from '@/services/api'
 import theme from '@/styles/theme'
 
-// Progress Ring Component
-const ProgressRing = ({ progress, size = 80, strokeWidth = 6 }: { progress: number, size?: number, strokeWidth?: number }) => {
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const strokeDashoffset = circumference - ((progress / 10) * circumference)
-  
-  // Calculate color based on progress - blue (for low) to orange (for high)
-  const getColorForProgress = (progress: number) => {
-    if (progress <= 2) return theme.blue[900]; // Dark blue for very low progress
-    if (progress <= 4) return theme.blue[500]; // Blue for low-medium progress
-    if (progress <= 6) return theme.grey[500]; // Grey for medium progress
-    if (progress <= 9) return theme.blue[500]; // Back to blue for higher progress
-    return theme.orange[700]; // Orange ONLY for perfect 10 progress
-  }
-  
-  const progressColor = getColorForProgress(progress);
-
-  return (
-    <svg width={size} height={size} className="transform -rotate-90">
-      {/* Background circle */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="rgba(255,255,255,0.1)"
-        strokeWidth={strokeWidth}
-      />
-      {/* Progress circle with dynamic color */}
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={progressColor}
-        strokeWidth={strokeWidth}
-        strokeDasharray={circumference}
-        strokeDashoffset={strokeDashoffset}
-        strokeLinecap="round"
-        style={{ transition: "stroke 0.3s ease" }}
-      />
-    </svg>
-  )
-}
-
 interface CompactGoalCardProps {
   goal: Goal
   isSelected?: boolean
@@ -53,19 +8,6 @@ interface CompactGoalCardProps {
 }
 
 const CompactGoalCard = ({ goal, isSelected = false, onClick }: CompactGoalCardProps) => {
-  // Calculate progress value on a scale of 0-10
-  const progressValue = Math.round(goal.completion_status / 10)
-  
-  // Calculate days remaining
-  function calculateDaysRemaining(targetDateStr: string) {
-    const targetDate = new Date(targetDateStr)
-    const today = new Date()
-    return Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 3600 * 24))
-  }
-  
-  const daysRemaining = calculateDaysRemaining(goal.target_date)
-  const isOverdue = daysRemaining < 0 && goal.status === 'active'
-  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const today = new Date()

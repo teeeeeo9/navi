@@ -20,15 +20,6 @@ interface ProgressChartProps {
   minimal?: boolean
 }
 
-// Get color for progress based on value (used in tooltip)
-const getColorForValue = (value: number) => {
-  if (value <= 2) return theme.blue[900];
-  if (value <= 4) return theme.blue[500];
-  if (value <= 6) return theme.grey[500];
-  if (value <= 9) return theme.blue[500]; 
-  return theme.orange[700]; // Orange ONLY for perfect 10
-}
-
 // Format date for x-axis
 const formatXAxis = (timestamp: number) => {
   const date = new Date(timestamp)

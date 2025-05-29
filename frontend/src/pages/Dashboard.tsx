@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import api, { Goal } from '@/services/api'
 import { useNavigate, Link } from 'react-router-dom'
@@ -17,7 +16,6 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const [goals, setGoals] = useState<Goal[]>([])
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [isZenMode, setIsZenMode] = useState(false)
   const chatInterfaceRef = useRef<{ handleSystemUpdate: (updateType: string, entity: string, changes: any) => Promise<void> } | null>(null)
 
@@ -35,7 +33,6 @@ const Dashboard = () => {
 
   const loadGoals = async () => {
     try {
-      setIsLoading(true)
       const goalsData = await api.getGoals()
       setGoals(goalsData)
       
@@ -46,8 +43,6 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Failed to load goals:', error)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -276,7 +271,6 @@ const Dashboard = () => {
                     goals={goals}
                     selectedGoalId={selectedGoal?.id}
                     onSelectGoal={setSelectedGoal}
-                    onGoalUpdate={(goal) => handleGoalUpdate(goal)}
                   />
                 </div>
 

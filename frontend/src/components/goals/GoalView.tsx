@@ -352,7 +352,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
     }
   };
 
-  const handleMilestoneUpdate = async (milestoneId: number) => {
+  const handleMilestoneUpdate = async () => {
     try {
       const updatedGoal = await api.getGoalDetails(goal.id);
       onGoalUpdate(updatedGoal, 'milestone_update');

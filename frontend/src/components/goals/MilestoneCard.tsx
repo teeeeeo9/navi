@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Milestone, ProgressUpdate } from '@/services/api';
 import api from '@/services/api';
 import ProgressChart from './ProgressChart';
-import { theme } from '@/styles/theme';
 import { motion } from 'framer-motion';
 import CelebrationAnimation from './CelebrationAnimation';
 
@@ -11,15 +10,6 @@ interface MilestoneCardProps {
   formatDate: (date: string) => string;
   onMilestoneUpdate?: (milestoneId: number) => void;
   goalId: number;
-}
-
-// Helper function to get color based on progress value
-const getColorForProgress = (progress: number) => {
-  if (progress <= 2) return theme.blue[900]; // Dark blue for very low progress
-  if (progress <= 4) return theme.blue[500]; // Blue for low-medium progress
-  if (progress <= 6) return theme.grey[500]; // Grey for medium progress
-  if (progress <= 9) return theme.blue[500]; // Back to blue for higher progress
-  return theme.orange[700]; // Orange ONLY for perfect 10 progress
 }
 
 const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, onMilestoneUpdate, goalId }) => {
@@ -140,7 +130,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
       
       try {
         // Use the API method to create a progress update for the milestone
-        const update = await api.createMilestoneProgressUpdate(
+        await api.createMilestoneProgressUpdate(
           goalId,
           milestone.id,
           scaledValue,
@@ -190,7 +180,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
       
       try {
         // Use the API method to create a progress update for the milestone
-        const update = await api.createMilestoneProgressUpdate(
+        await api.createMilestoneProgressUpdate(
           goalId,
           milestone.id,
           scaledValue,

@@ -8,10 +8,9 @@ interface GoalCarouselProps {
   goals: Goal[]
   onSelectGoal: (goal: Goal) => void
   selectedGoalId?: number
-  onGoalUpdate?: (updatedGoal: Goal, updateType?: string) => void
 }
 
-const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: GoalCarouselProps) => {
+const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId }: GoalCarouselProps) => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [showNav, setShowNav] = useState(false)
   const carouselRef = useRef<HTMLDivElement>(null)
@@ -57,13 +56,6 @@ const GoalCarousel = ({ goals, onSelectGoal, selectedGoalId, onGoalUpdate }: Goa
       console.error('Failed to get goal details:', error)
       // Fall back to basic goal data if details fetch fails
       onSelectGoal(goal)
-    }
-  }
-
-  // Handle goal updates from child components
-  const handleGoalUpdate = (updatedGoal: Goal, updateType?: string) => {
-    if (onGoalUpdate) {
-      onGoalUpdate(updatedGoal, updateType)
     }
   }
 
