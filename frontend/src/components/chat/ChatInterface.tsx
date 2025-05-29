@@ -4,7 +4,6 @@ import api, { ChatMessage } from '@/services/api'
 import ChatSuggestions from './ChatSuggestions'
 import { useAuth } from '@/context/AuthContext'
 import YodaImage from '@/assets/Yoda.jpeg'
-import theme from '@/styles/theme'
 
 interface ChatInterfaceProps {
   relatedGoalId?: number;
@@ -27,10 +26,8 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
     const [messages, setMessages] = useState<ChatMessage[]>([])
     const [newMessage, setNewMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
-    const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const [page, setPage] = useState(1)
-    const [totalPages, setTotalPages] = useState(1)
     const [hasMore, setHasMore] = useState(true)
     const [systemUpdateInProgress, setSystemUpdateInProgress] = useState(false)
     const [hideSuggestions, setHideSuggestions] = useState(() => {
@@ -38,11 +35,44 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
         const saved = localStorage.getItem('hideChatSuggestions')
         return saved === 'true'
     })
+    
+    // Animation states for yoda mode transitions
+    const [isYodaModeTransitioning, setIsYodaModeTransitioning] = useState(false)
+    const [yodaModeTransitionType, setYodaModeTransitionType] = useState<'entering' | 'exiting'>('entering')
+    const [lastMessageCount, setLastMessageCount] = useState(0)
+    
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const chatContainerRef = useRef<HTMLDivElement>(null)
     const messagesPerPage = 20
     const { user } = useAuth()
     const isYodaMode = user?.preferences?.character_preference === 'yoda'
+    
+    // Track yoda mode changes and trigger animations
+    const [previousYodaMode, setPreviousYodaMode] = useState(isYodaMode)
+    
+    useEffect(() => {
+      if (previousYodaMode !== isYodaMode) {
+        // Yoda mode has changed, trigger transition animation
+        setYodaModeTransitionType(isYodaMode ? 'entering' : 'exiting')
+        setIsYodaModeTransitioning(true)
+        setLastMessageCount(messages.length) // Remember current message count
+        setPreviousYodaMode(isYodaMode)
+      }
+    }, [isYodaMode, previousYodaMode, messages.length])
+    
+    // Stop animation when new message arrives
+    useEffect(() => {
+      if (messages.length > lastMessageCount && isYodaModeTransitioning) {
+        setIsYodaModeTransitioning(false)
+      }
+    }, [messages.length, lastMessageCount, isYodaModeTransitioning])
+
+    // Handle yoda mode switch animation trigger
+    const handleYodaModeSwitch = (isEntering: boolean) => {
+      setYodaModeTransitionType(isEntering ? 'entering' : 'exiting')
+      setIsYodaModeTransitioning(true)
+      setLastMessageCount(messages.length)
+    }
 
     // Expose the handleSystemUpdate method to the parent component
     useImperativeHandle(ref, () => ({
@@ -269,12 +299,181 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
     }
 
     return (
-      <div className={`flex h-full flex-col rounded-2xl ${className} ${compact ? '' : 'max-w-4xl mx-auto'}`}>
-        {isYodaMode && (
-          <div className="absolute top-4 left-4 z-10">
-            <img src={YodaImage} alt="Yoda" className="w-20 h-20 rounded-full object-cover shadow-lg" />
-          </div>
+      <div className={`flex h-full flex-col rounded-2xl ${className} ${compact ? '' : 'max-w-4xl mx-auto'} relative`}>
+        {/* Yoda Mode Transition Animation Overlay */}
+        <AnimatePresence>
+          {isYodaModeTransitioning && (
+            <motion.div 
+              className="absolute inset-0 z-50 pointer-events-none overflow-hidden rounded-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Background overlay */}
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-br from-green-900/50 via-emerald-800/40 to-teal-900/50 backdrop-blur-xl"
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+              
+              {/* Floating particles */}
+              {[...Array(12)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-2 h-2 bg-green-400/60 rounded-full"
+                  style={{
+                    left: `${20 + (i * 7)}%`,
+                    top: `${20 + (i % 3) * 20}%`,
+                  }}
+                  initial={{ 
+                    scale: 0, 
+                    opacity: 0,
+                    y: yodaModeTransitionType === 'entering' ? 50 : 0 
+                  }}
+                  animate={{ 
+                    scale: [0, 1.2, 0.8, 1],
+                    opacity: [0, 1, 1, 0.7],
+                    y: yodaModeTransitionType === 'entering' ? [50, -10, 5, 0] : [0, -50],
+                    x: [0, Math.sin(i) * 20, Math.cos(i) * 15, 0]
+                  }}
+                  transition={{ 
+                    duration: 2 + (i * 0.1), 
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut",
+                    delay: i * 0.1
+                  }}
+                />
+              ))}
+              
+              {/* Central animation element */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.div 
+                  className="text-center bg-black/60 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  {yodaModeTransitionType === 'entering' ? (
+                    <>
+                      <motion.div
+                        className="text-6xl mb-4"
+                        animate={{ 
+                          rotate: [0, 10, -10, 0],
+                          scale: [1, 1.1, 0.9, 1]
+                        }}
+                        transition={{ 
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        🧙‍♂️
+                      </motion.div>
+                      <motion.p 
+                        className="text-green-300 text-xl font-bold drop-shadow-lg"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        Entering Yoda Mode...
+                      </motion.p>
+                      <motion.p 
+                        className="text-green-400 text-base mt-3 drop-shadow-md"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        Wise guidance, you shall receive
+                      </motion.p>
+                    </>
+                  ) : (
+                    <>
+                      <motion.div
+                        className="text-6xl mb-4"
+                        animate={{ 
+                          rotate: [0, -10, 10, 0],
+                          scale: [1, 0.9, 1.1, 1]
+                        }}
+                        transition={{ 
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        👋
+                      </motion.div>
+                      <motion.p 
+                        className="text-blue-300 text-xl font-bold drop-shadow-lg"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        Returning to Normal Mode...
+                      </motion.p>
+                      <motion.p 
+                        className="text-blue-400 text-base mt-3 drop-shadow-md"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        Back to regular Navi
+                      </motion.p>
+                    </>
+                  )}
+                </motion.div>
+              </div>
+              
+              {/* Ripple effect */}
+              <motion.div 
+                className="absolute inset-0 border-2 border-green-400/30 rounded-2xl"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ 
+                  scale: [0.5, 1.2, 1],
+                  opacity: [0, 0.6, 0.2]
+                }}
+                transition={{ 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeOut"
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {isYodaMode && !isYodaModeTransitioning && (
+          <motion.div 
+            className="absolute top-4 left-4 z-10"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.img 
+              src={YodaImage} 
+              alt="Yoda" 
+              className="w-20 h-20 rounded-full object-cover shadow-lg border-2 border-green-400/50" 
+              animate={{ 
+                boxShadow: [
+                  "0 0 0 0 rgba(34, 197, 94, 0)",
+                  "0 0 0 10px rgba(34, 197, 94, 0.1)",
+                  "0 0 0 20px rgba(34, 197, 94, 0)"
+                ]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </motion.div>
         )}
+        
         <div className="flex-1 overflow-hidden rounded-2xl flex flex-col bg-transparent">
           {isLoadingMore && (
             <div className="flex justify-center p-2">
@@ -357,7 +556,11 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
         <div className="mt-2 mb-2">
           <div className="flex flex-col space-y-2">
             {!hideSuggestions && (
-              <ChatSuggestions onSuggestionSelected={handleSuggestionSelected} hasGoals={hasGoals} />
+              <ChatSuggestions 
+                onSuggestionSelected={handleSuggestionSelected} 
+                hasGoals={hasGoals}
+                onYodaModeSwitch={handleYodaModeSwitch}
+              />
             )}
             
             {/* Hide/Show Suggestions Button */}

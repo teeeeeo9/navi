@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import api from '@/services/api';
 import theme from '@/styles/theme';
@@ -14,11 +14,13 @@ interface SuggestionItem {
 interface ChatSuggestionsProps {
   onSuggestionSelected: (message: string) => void;
   hasGoals?: boolean; // Prop to indicate if the user has created any goals
+  onYodaModeSwitch?: (isEntering: boolean) => void; // Callback for yoda mode switch animations
 }
 
 const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ 
   onSuggestionSelected, 
-  hasGoals = false 
+  hasGoals = false,
+  onYodaModeSwitch
 }) => {
   const { user } = useAuth();
   const [selectedSuggestion, setSelectedSuggestion] = useState<number | null>(null);
@@ -28,14 +30,22 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
   // Function to switch character mode
   const switchCharacter = async (character: 'default' | 'yoda') => {
     console.log(`Attempting to switch character to: ${character}`);
+    
+    // Trigger animation callback before API call
+    if (onYodaModeSwitch) {
+      onYodaModeSwitch(character === 'yoda');
+    }
+    
     try {
       // Update the character preference via API
       const response = await api.updateCharacterPreference(character);
       console.log(`Character preference updated successfully:`, response);
       
-      // Reload the page to see the changes
+      // Reload the page to see the changes after a slight delay to show animation
       console.log('Reloading page to apply changes...');
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000); // Delay to allow animation to show
     } catch (error) {
       console.error('Failed to switch character:', error);
       // Show an error message to the user
@@ -77,12 +87,13 @@ const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({
       icon: "🔍",
       color: theme.grey[500]
     },
-    {
+    // Only show the focus suggestion if user has goals
+    ...(hasGoals ? [{
       title: "Help me focus",
       message: "Help me focus",
       icon: "🧠",
       color: theme.orange[600]
-    }
+    }] : [])
   ];
   
   return (

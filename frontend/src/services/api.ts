@@ -215,10 +215,10 @@ const api = {
     // Also notify the chat service about the character change
     if (character === 'yoda') {
       // Send a system message to the chat service to inform about Yoda mode
-      await api.sendMessage(`SYSTEM_UPDATE: CHARACTER_CHANGE yoda`, undefined, true);
+      await api.sendMessage(`SYSTEM_UPDATE: CHARACTER_CHANGE yoda`);
     } else {
       // Send a system message to revert to default mode
-      await api.sendMessage(`SYSTEM_UPDATE: CHARACTER_CHANGE default`, undefined, true);
+      await api.sendMessage(`SYSTEM_UPDATE: CHARACTER_CHANGE default`);
     }
     
     return data
