@@ -258,6 +258,31 @@ def create_goal_internal(user_id, data):
     db.session.commit()
     logger.debug(f"Goal created with ID: {goal.id}")
     
+    # Create initial zero progress and effort updates
+    from app.models import ProgressUpdate
+    
+    # Initial progress update (0%)
+    initial_progress = ProgressUpdate(
+        goal_id=goal.id,
+        progress_value=0.0,
+        type='progress',
+        progress_notes='Goal created'
+    )
+    db.session.add(initial_progress)
+    
+    # Initial effort update (0%)
+    initial_effort = ProgressUpdate(
+        goal_id=goal.id,
+        progress_value=0.0,
+        type='effort',
+        effort_notes='Goal created'
+    )
+    db.session.add(initial_effort)
+    
+    # Commit initial progress updates
+    db.session.commit()
+    logger.debug(f"Created initial progress and effort updates for goal {goal.id}")
+    
     # Create milestones if provided
     milestones_data = []
     if 'milestones' in data and isinstance(data['milestones'], list):
@@ -280,6 +305,29 @@ def create_goal_internal(user_id, data):
             )
             
             db.session.add(milestone)
+            db.session.commit()  # Commit to get milestone ID
+            
+            # Create initial zero progress and effort updates for milestone
+            milestone_initial_progress = ProgressUpdate(
+                goal_id=goal.id,
+                milestone_id=milestone.id,
+                progress_value=0.0,
+                type='progress',
+                progress_notes='Milestone created'
+            )
+            db.session.add(milestone_initial_progress)
+            
+            milestone_initial_effort = ProgressUpdate(
+                goal_id=goal.id,
+                milestone_id=milestone.id,
+                progress_value=0.0,
+                type='effort',
+                effort_notes='Milestone created'
+            )
+            db.session.add(milestone_initial_effort)
+            db.session.commit()  # Commit milestone progress updates
+            logger.debug(f"Created initial progress and effort updates for milestone {milestone.id}")
+            
             milestones_data.append({
                 'id': milestone.id,
                 'title': milestone.title,
@@ -639,6 +687,31 @@ def create_milestone(goal_id):
     db.session.commit()
     logger.info(f"Milestone created successfully: {milestone.id} - {milestone.title}")
     
+    # Create initial zero progress and effort updates for milestone
+    from app.models import ProgressUpdate
+    
+    # Initial progress update (0%)
+    milestone_initial_progress = ProgressUpdate(
+        goal_id=goal_id,
+        milestone_id=milestone.id,
+        progress_value=0.0,
+        type='progress',
+        progress_notes='Milestone created'
+    )
+    db.session.add(milestone_initial_progress)
+    
+    # Initial effort update (0%)
+    milestone_initial_effort = ProgressUpdate(
+        goal_id=goal_id,
+        milestone_id=milestone.id,
+        progress_value=0.0,
+        type='effort',
+        effort_notes='Milestone created'
+    )
+    db.session.add(milestone_initial_effort)
+    db.session.commit()
+    logger.debug(f"Created initial progress and effort updates for milestone {milestone.id}")
+    
     return jsonify({
         'message': 'Milestone created successfully',
         'milestone': {
@@ -923,7 +996,7 @@ def create_milestone_progress(goal_id, milestone_id):
     from app.api.chat import send_system_update
     
     # Send the system update
-    system_update_result = send_system_update(user_id, update_message, goal_id)
+    system_update_result = send_system_update(user_id, update_message, goal.id)
     
     return jsonify({
         'message': f'Milestone {update_type} update created successfully',
