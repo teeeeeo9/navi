@@ -34,7 +34,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
   
   // States for tracking progress
   const [progressValue, setProgressValue] = useState<number>(
-    Math.round(milestone.completion_status / 10)
+    milestone.completion_status / 10
   );
   const [effortValue, setEffortValue] = useState<number>(5);
   const [progressNotes, setProgressNotes] = useState<string>('');
@@ -48,7 +48,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
   // Celebration animation state
   const [showCelebration, setShowCelebration] = useState(false);
   const [previousProgressValue, setPreviousProgressValue] = useState<number>(
-    Math.round(milestone.completion_status / 10)
+    milestone.completion_status / 10
   );
   
   // Fetch milestone progress updates when the milestone is shown
@@ -74,7 +74,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
       status: milestone.status
     });
     
-    const newProgressValue = Math.round(milestone.completion_status / 10);
+    const newProgressValue = milestone.completion_status / 10;
     setProgressValue(newProgressValue);
     setPreviousProgressValue(newProgressValue);
     
@@ -371,7 +371,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
             <div className="mb-5">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-medium text-gray-300">
-                  Progress: {Math.round(progressValue)}/10
+                  Progress: {progressValue.toFixed(2)}/10
                 </label>
                 <span className="text-xs text-gray-400">
                   How far along are you?
@@ -410,7 +410,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
             <div className="mb-2">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-medium text-gray-300">
-                  Effort Level: {Math.round(effortValue)}/10
+                  Effort Level: {effortValue.toFixed(2)}/10
                 </label>
                 <span className="text-xs text-gray-400">
                   How much effort are you investing?

@@ -61,7 +61,7 @@ interface GoalViewProps {
 
 const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
   const [progressValue, setProgressValue] = useState<number>(
-    Math.round(goal.completion_status / 10)
+    goal.completion_status / 10
   );
   const [effortValue, setEffortValue] = useState<number>(5);
   const [progressNotes, setProgressNotes] = useState<string>('');
@@ -83,7 +83,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
       status: goal.status
     });
     
-    const newProgressValue = Math.round(goal.completion_status / 10);
+    const newProgressValue = goal.completion_status / 10;
     setProgressValue(newProgressValue);
     setPreviousProgressValue(newProgressValue);
   }, [goal]);
@@ -106,7 +106,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
   // Celebration animation state
   const [showCelebration, setShowCelebration] = useState(false);
   const [previousProgressValue, setPreviousProgressValue] = useState<number>(
-    Math.round(goal.completion_status / 10)
+    goal.completion_status / 10
   );
 
   useEffect(() => {
@@ -458,7 +458,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
           <div className="relative flex-shrink-0">
             <ProgressRing progress={progressValue} size={100} strokeWidth={8} />
             <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold text-white">
-              {Math.round(progressValue)}/10
+              {progressValue.toFixed(1)}/10
             </span>
           </div>
         </div>
@@ -496,7 +496,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-gray-300">
-                    Progress: {Math.round(progressValue)}/10
+                    Progress: {progressValue.toFixed(2)}/10
                   </label>
                   <span className="text-xs text-gray-400">
                     How far along are you?
@@ -533,7 +533,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-gray-300">
-                    Effort: {Math.round(effortValue)}/10
+                    Effort: {effortValue.toFixed(2)}/10
                   </label>
                   <span className="text-xs text-gray-400">
                     How much effort are you investing?
