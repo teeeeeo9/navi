@@ -129,37 +129,30 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
       const wasNotCompleted = previousProgressValue < 10;
       const isNowCompleted = value === 10;
       
-      if (wasNotCompleted && isNowCompleted) {
-        setShowCelebration(true);
-      }
-      
       // Update previous progress value
       setPreviousProgressValue(value);
       
       // Immediately update local progress value for UI feedback
       setProgressValue(value);
-    } else {
-      // Immediately update local effort value for UI feedback
-      setEffortValue(value);
-    }
-    
-    try {
-      // Use the API method to create a progress update for the milestone
-      const update = await api.createMilestoneProgressUpdate(
-        goalId,
-        milestone.id,
-        scaledValue,
-        type,
-        notes
-      );
       
-      // Refresh milestone progress data to get the latest updates from backend
-      const refreshedUpdates = await api.getMilestoneProgressUpdates(goalId, milestone.id);
-      setProgressUpdates(refreshedUpdates);
+      // Store completion state for later use after backend response
+      const shouldCelebrate = wasNotCompleted && isNowCompleted;
       
-      // If this is a progress update, update the milestone's completion status
-      if (type === 'progress') {
-        // Only update if this milestone has its status changed
+      try {
+        // Use the API method to create a progress update for the milestone
+        const update = await api.createMilestoneProgressUpdate(
+          goalId,
+          milestone.id,
+          scaledValue,
+          type,
+          notes
+        );
+        
+        // Refresh milestone progress data to get the latest updates from backend
+        const refreshedUpdates = await api.getMilestoneProgressUpdates(goalId, milestone.id);
+        setProgressUpdates(refreshedUpdates);
+        
+        // Update the milestone's completion status
         if (scaledValue === 100 && localMilestone.status === 'active') {
           await api.updateMilestone(goalId, milestone.id, {
             status: 'completed',
@@ -176,36 +169,66 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
           });
         }
         setProgressUpdateStatus('success');
-      } else {
-        setEffortUpdateStatus('success');
-      }
-      
-      // Refresh the parent goal
-      if (onMilestoneUpdate) {
-        onMilestoneUpdate(milestone.id);
-      }
-      
-      // Reset to idle after showing success for 2 seconds
-      setTimeout(() => {
-        if (type === 'progress') {
-          setProgressUpdateStatus('idle');
-        } else {
-          setEffortUpdateStatus('idle');
+        
+        // Trigger celebration after successful backend response
+        if (shouldCelebrate) {
+          setShowCelebration(true);
         }
-      }, 2000);
-      
-    } catch (error) {
-      console.error(`Failed to update milestone ${type}:`, error);
-      // In case of error, refresh the milestone data to ensure UI is in sync with server
-      const refreshedUpdates = await api.getMilestoneProgressUpdates(goalId, milestone.id);
-      setProgressUpdates(refreshedUpdates);
-      
-      // Reset to idle on error
-      if (type === 'progress') {
+        
+      } catch (error) {
+        console.error(`Failed to update milestone ${type}:`, error);
+        // In case of error, refresh the milestone data to ensure UI is in sync with server
+        const refreshedUpdates = await api.getMilestoneProgressUpdates(goalId, milestone.id);
+        setProgressUpdates(refreshedUpdates);
+        
+        // Reset to idle on error
         setProgressUpdateStatus('idle');
-      } else {
+      }
+    } else {
+      // Immediately update local effort value for UI feedback
+      setEffortValue(value);
+      
+      try {
+        // Use the API method to create a progress update for the milestone
+        const update = await api.createMilestoneProgressUpdate(
+          goalId,
+          milestone.id,
+          scaledValue,
+          type,
+          notes
+        );
+        
+        // Refresh milestone progress data to get the latest updates from backend
+        const refreshedUpdates = await api.getMilestoneProgressUpdates(goalId, milestone.id);
+        setProgressUpdates(refreshedUpdates);
+        
+        setEffortUpdateStatus('success');
+        
+      } catch (error) {
+        console.error(`Failed to update milestone ${type}:`, error);
+        // In case of error, refresh the milestone data to ensure UI is in sync with server
+        const refreshedUpdates = await api.getMilestoneProgressUpdates(goalId, milestone.id);
+        setProgressUpdates(refreshedUpdates);
+        
+        // Reset to idle on error
         setEffortUpdateStatus('idle');
       }
+    }
+    
+    // Refresh the parent goal
+    if (onMilestoneUpdate) {
+      onMilestoneUpdate(milestone.id);
+    }
+    
+    // Reset to idle after showing success for 2 seconds (only for successful updates)
+    if (type === 'progress' && progressUpdateStatus === 'success') {
+      setTimeout(() => {
+        setProgressUpdateStatus('idle');
+      }, 2000);
+    } else if (type === 'effort' && effortUpdateStatus === 'success') {
+      setTimeout(() => {
+        setEffortUpdateStatus('idle');
+      }, 2000);
     }
   };
   
@@ -301,7 +324,7 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
               />
             </div>
           ) : (
-            <div className="flex items-center mb-3">
+            <div className="flex items-center mb-3 relative">
               <h4 
                 className="text-base font-medium text-white cursor-pointer"
                 onClick={handleTitleEdit}
@@ -317,6 +340,18 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                   <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
                 </svg>
               </button>
+              {/* Celebration Animation positioned absolutely to not affect layout */}
+              {showCelebration && (
+                <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center pointer-events-none">
+                  <CelebrationAnimation
+                    isVisible={showCelebration}
+                    type="milestone"
+                    onComplete={() => {
+                      setShowCelebration(false);
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
           
@@ -395,12 +430,10 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`text-xs transition-all duration-200 ${
+                  className={`text-xs px-3 py-1 rounded-md transition-all duration-200 ${
                     progressUpdateStatus === 'updating' 
-                      ? 'bg-blue-400 opacity-75 cursor-not-allowed text-white px-3 py-1 rounded-md' 
-                      : progressUpdateStatus === 'success'
-                      ? 'bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md'
+                      ? 'bg-blue-500 opacity-75 cursor-not-allowed text-white' 
+                      : 'bg-blue-500 hover:bg-blue-600 text-white'
                   }`}
                   onClick={() => handleProgressUpdate('progress', progressValue)}
                   disabled={progressUpdateStatus === 'updating'}
@@ -442,12 +475,10 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`text-xs transition-all duration-200 ${
+                  className={`text-xs px-3 py-1 rounded-md transition-all duration-200 ${
                     effortUpdateStatus === 'updating' 
-                      ? 'bg-green-400 opacity-75 cursor-not-allowed text-white px-3 py-1 rounded-md' 
-                      : effortUpdateStatus === 'success'
-                      ? 'bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md'
-                      : 'bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md'
+                      ? 'bg-green-500 opacity-75 cursor-not-allowed text-white' 
+                      : 'bg-green-500 hover:bg-green-600 text-white'
                   }`}
                   onClick={() => handleProgressUpdate('effort', effortValue)}
                   disabled={effortUpdateStatus === 'updating'}
@@ -477,13 +508,6 @@ const MilestoneCard: React.FC<MilestoneCardProps> = ({ milestone, formatDate, on
           )}
         </div>
       )}
-      
-      {/* Celebration Animation */}
-      <CelebrationAnimation
-        isVisible={showCelebration}
-        type="milestone"
-        onComplete={() => setShowCelebration(false)}
-      />
     </div>
   );
 };

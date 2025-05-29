@@ -76,21 +76,14 @@ const CelebrationAnimation: React.FC<CelebrationAnimationProps> = ({
     <AnimatePresence>
       {showCelebration && (
         <motion.div
-          className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
+          className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {/* Position the explosion closer to center-right where progress controls typically are */}
-          <div 
-            className="absolute"
-            style={{ 
-              top: '45%', 
-              left: '65%',
-              transform: 'translate(-50%, -50%)'
-            }}
-          >
+          {/* Position the explosion at the center of the container */}
+          <div className="relative">
             {/* Emoji explosion burst */}
             <div className="relative">
               {Array.from({ length: 25 }).map((_, index) => (

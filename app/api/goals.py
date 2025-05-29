@@ -764,9 +764,12 @@ def update_milestone(goal_id, milestone_id):
     if 'completion_status' in data:
         try:
             completion_status = float(data['completion_status'])
-            if 0 <= completion_status <= 100 and completion_status != milestone.completion_status:
+            if 0 <= completion_status <= 100:
+                if completion_status != milestone.completion_status:
+                    milestone.completion_status = completion_status
+                    changes.append(f"completion status to {milestone.completion_status}%")
+                # Always update the completion_status field even if same value
                 milestone.completion_status = completion_status
-                changes.append(f"completion status to {milestone.completion_status}%")
             else:
                 return jsonify({'error': 'Completion status must be between 0 and 100'}), 400
         except ValueError:

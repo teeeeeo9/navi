@@ -171,23 +171,26 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
       const wasNotCompleted = previousProgressValue < 10;
       const isNowCompleted = value === 10;
       
-      if (wasNotCompleted && isNowCompleted) {
-        setShowCelebration(true);
-      }
+      console.log('Progress Update Debug:', {
+        wasNotCompleted,
+        isNowCompleted,
+        previousProgressValue,
+        currentValue: value,
+        scaledValue: scaledValue
+      });
       
       // Update previous progress value
       setPreviousProgressValue(value);
       
       // Immediately update local progress value for UI feedback
       setProgressValue(value);
-    } else {
-      // Immediately update local effort value for UI feedback
-      setEffortValue(value);
-    }
-    
-    try {
-      // Use appropriate API function based on type
-      if (type === 'progress') {
+      
+      // Store completion state for later use after backend response
+      const shouldCelebrate = wasNotCompleted && isNowCompleted;
+      console.log('Should celebrate:', shouldCelebrate);
+      
+      try {
+        // Use appropriate API function based on type
         await api.createProgressUpdate(goal.id, scaledValue, notes);
         setProgressUpdateStatus('success');
         
@@ -203,31 +206,43 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
         }));
         onGoalUpdate(updatedGoal, type);
         
-      } else if (type === 'effort') {
+        // Trigger celebration after successful backend response
+        if (shouldCelebrate) {
+          setShowCelebration(true);
+        }
+        
+      } catch (error) {
+        console.error(`Failed to update ${type}:`, error);
+        // Reset to idle on error
+        setProgressUpdateStatus('idle');
+      }
+    } else {
+      // Immediately update local effort value for UI feedback
+      setEffortValue(value);
+      
+      try {
         await api.createEffortUpdate(goal.id, scaledValue, notes);
         setEffortUpdateStatus('success');
         
         // For effort updates, just notify parent to refresh data
         onGoalUpdate(goal, type);
-      }
-      
-      // Reset to idle after showing success for 2 seconds
-      setTimeout(() => {
-        if (type === 'progress') {
-          setProgressUpdateStatus('idle');
-        } else {
-          setEffortUpdateStatus('idle');
-        }
-      }, 2000);
-      
-    } catch (error) {
-      console.error(`Failed to update ${type}:`, error);
-      // Reset to idle on error
-      if (type === 'progress') {
-        setProgressUpdateStatus('idle');
-      } else {
+        
+      } catch (error) {
+        console.error(`Failed to update ${type}:`, error);
+        // Reset to idle on error
         setEffortUpdateStatus('idle');
       }
+    }
+    
+    // Reset to idle after showing success for 2 seconds (only for successful updates)
+    if (type === 'progress' && progressUpdateStatus === 'success') {
+      setTimeout(() => {
+        setProgressUpdateStatus('idle');
+      }, 2000);
+    } else if (type === 'effort' && effortUpdateStatus === 'success') {
+      setTimeout(() => {
+        setEffortUpdateStatus('idle');
+      }, 2000);
     }
   };
 
@@ -410,7 +425,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                 />
               </div>
             ) : (
-              <div className="flex items-center mb-4">
+              <div className="flex items-center mb-4 relative">
                 <h2 
                   className="text-xl font-medium text-white cursor-pointer"
                   onClick={handleTitleEdit}
@@ -425,6 +440,18 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                     <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
                   </svg>
                 </button>
+                {/* Celebration Animation positioned absolutely to not affect layout */}
+                {showCelebration && (
+                  <div className="absolute -left-12 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center pointer-events-none">
+                    <CelebrationAnimation
+                      isVisible={showCelebration}
+                      type="goal"
+                      onComplete={() => {
+                        setShowCelebration(false);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
             
@@ -537,12 +564,10 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                     className="range-blue w-full"
                   />
                   <button
-                    className={`text-sm transition-all duration-200 ${
+                    className={`text-sm px-4 py-2 rounded-lg transition-all duration-200 ${
                       progressUpdateStatus === 'updating' 
-                        ? 'btn-blue opacity-75 cursor-not-allowed' 
-                        : progressUpdateStatus === 'success'
-                        ? 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg'
-                        : 'btn-blue'
+                        ? 'bg-blue-500 opacity-75 cursor-not-allowed text-white' 
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
                     }`}
                     onClick={() => handleProgressUpdate('progress', progressValue)}
                     disabled={progressUpdateStatus === 'updating'}
@@ -582,12 +607,10 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                     className="range-green w-full"
                   />
                   <button
-                    className={`text-sm transition-all duration-200 ${
+                    className={`text-sm px-4 py-2 rounded-lg transition-all duration-200 ${
                       effortUpdateStatus === 'updating' 
-                        ? 'btn-green opacity-75 cursor-not-allowed' 
-                        : effortUpdateStatus === 'success'
-                        ? 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg'
-                        : 'btn-green'
+                        ? 'bg-green-500 opacity-75 cursor-not-allowed text-white' 
+                        : 'bg-green-500 hover:bg-green-600 text-white'
                     }`}
                     onClick={() => handleProgressUpdate('effort', effortValue)}
                     disabled={effortUpdateStatus === 'updating'}
@@ -680,13 +703,6 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
           </motion.button>
         </div>
       </div>
-      
-      {/* Celebration Animation */}
-      <CelebrationAnimation
-        isVisible={showCelebration}
-        type="goal"
-        onComplete={() => setShowCelebration(false)}
-      />
       
       {/* Delete Confirmation Modal */}
       <Modal
