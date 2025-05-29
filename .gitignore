@@ -1,6 +1,7 @@
 app_description.txt
 .env
 env/
+venv/
 
 *.pyc
 *.log

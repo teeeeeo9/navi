@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './styles/index.css'
-import { logApiConfiguration } from './utils/debugUtils'
+import { logApiConfiguration } from './utils/debugUtils.ts'
 import axios from 'axios'
 
 // Set axios baseURL from environment variable with fallback
