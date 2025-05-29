@@ -892,6 +892,7 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
             system_message = YODA_INSTRUCTION + STRATEGIST_SYSTEM_MESSAGE
             logger.info(f"Using Yoda mode for user: {user.id}")
             
+            
         # Check if the user already has a replica_id stored
         if hasattr(user, 'replica_id') and user.replica_id:
             logger.info(f"User already has a replica ID stored: {user.replica_id}")
@@ -912,6 +913,7 @@ def ensure_replica_exists(sensay_client, sensay_user_id):
                 
                 if normalize_message(current_system_message) != normalize_message(system_message):
                     logger.info(f"Updating system message for replica: {user.replica_id}")
+                    logger.debug(f"system message updated: {system_message}")
                     
                     # Prepare replica data with all required fields
                     update_data = {
