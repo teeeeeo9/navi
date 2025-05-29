@@ -576,7 +576,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
           <div>
             <h3 className="text-base font-medium text-white mb-4">Reflections</h3>
             
-            <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-450px)] pr-2">
+            <div className="space-y-4">
               {getSortedReflections().map(([type, reflection]) => (
                 <ReflectionCard
                   key={type}
@@ -606,7 +606,7 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
             <h3 className="text-base font-medium text-white mb-4">Milestones</h3>
             
             {/* Milestones */}
-            <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-450px)] pr-2">
+            <div className="space-y-4">
               {goal.milestones && goal.milestones.length > 0 ? (
                 goal.milestones.map(milestone => (
                   <MilestoneCard 
