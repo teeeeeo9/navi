@@ -68,6 +68,10 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
   const [effortNotes, setEffortNotes] = useState<string>('');
   const [showProgressUpdate, setShowProgressUpdate] = useState<boolean>(false);
   
+  // Add states for update feedback
+  const [progressUpdateStatus, setProgressUpdateStatus] = useState<'idle' | 'updating' | 'success'>('idle');
+  const [effortUpdateStatus, setEffortUpdateStatus] = useState<'idle' | 'updating' | 'success'>('idle');
+  
   const [localGoalData, setLocalGoalData] = useState({
     title: goal.title,
     startDate: goal.start_date,
@@ -150,14 +154,17 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
     // Convert from 0-10 scale to 0-100 for backend
     const scaledValue = value * 10;
     
-    // Use appropriate notes based on the update type
+    // Use appropriate notes based on the update type (capture notes before clearing)
     const notes = type === 'progress' ? progressNotes : effortNotes;
     
-    // Create an optimistic update
-    const updatedGoal = {
-      ...goal,
-      completion_status: type === 'progress' ? scaledValue : goal.completion_status
-    };
+    // Set updating status and clear notes immediately
+    if (type === 'progress') {
+      setProgressUpdateStatus('updating');
+      setProgressNotes('');
+    } else {
+      setEffortUpdateStatus('updating');
+      setEffortNotes('');
+    }
     
     if (type === 'progress') {
       // Check if goal just reached completion (went from < 10 to 10)
@@ -171,39 +178,56 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
       // Update previous progress value
       setPreviousProgressValue(value);
       
-      // Update local goal data if progress state was updated
-      setLocalGoalData(prev => ({
-        ...prev,
-        status: scaledValue === 100 && prev.status === 'active' ? 'completed' : prev.status
-      }));
-      
-      // Immediately update local progress value
+      // Immediately update local progress value for UI feedback
       setProgressValue(value);
     } else {
-      // Immediately update local effort value
+      // Immediately update local effort value for UI feedback
       setEffortValue(value);
     }
-    
-    // Call the update handler to refresh the UI immediately
-    onGoalUpdate(updatedGoal, type);
     
     try {
       // Use appropriate API function based on type
       if (type === 'progress') {
         await api.createProgressUpdate(goal.id, scaledValue, notes);
+        setProgressUpdateStatus('success');
+        
+        // Update local goal data and notify parent only after successful backend response
+        const updatedGoal = {
+          ...goal,
+          completion_status: scaledValue,
+          status: scaledValue === 100 && goal.status === 'active' ? 'completed' : goal.status
+        };
+        setLocalGoalData(prev => ({
+          ...prev,
+          status: scaledValue === 100 && prev.status === 'active' ? 'completed' : prev.status
+        }));
+        onGoalUpdate(updatedGoal, type);
+        
       } else if (type === 'effort') {
         await api.createEffortUpdate(goal.id, scaledValue, notes);
+        setEffortUpdateStatus('success');
+        
+        // For effort updates, just notify parent to refresh data
+        onGoalUpdate(goal, type);
       }
       
-      // Clear the appropriate notes field based on the update type
-      if (type === 'progress') {
-        setProgressNotes('');
-      } else {
-        setEffortNotes('');
-      }
+      // Reset to idle after showing success for 2 seconds
+      setTimeout(() => {
+        if (type === 'progress') {
+          setProgressUpdateStatus('idle');
+        } else {
+          setEffortUpdateStatus('idle');
+        }
+      }, 2000);
       
     } catch (error) {
       console.error(`Failed to update ${type}:`, error);
+      // Reset to idle on error
+      if (type === 'progress') {
+        setProgressUpdateStatus('idle');
+      } else {
+        setEffortUpdateStatus('idle');
+      }
     }
   };
 
@@ -513,10 +537,18 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                     className="range-blue w-full"
                   />
                   <button
-                    className="btn-blue text-sm"
+                    className={`text-sm transition-all duration-200 ${
+                      progressUpdateStatus === 'updating' 
+                        ? 'btn-blue opacity-75 cursor-not-allowed' 
+                        : progressUpdateStatus === 'success'
+                        ? 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg'
+                        : 'btn-blue'
+                    }`}
                     onClick={() => handleProgressUpdate('progress', progressValue)}
+                    disabled={progressUpdateStatus === 'updating'}
                   >
-                    Update
+                    {progressUpdateStatus === 'updating' ? 'Updating...' : 
+                     progressUpdateStatus === 'success' ? 'Updated!' : 'Update'}
                   </button>
                 </div>
                 <div className="mt-3">
@@ -550,10 +582,18 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
                     className="range-green w-full"
                   />
                   <button
-                    className="btn-green text-sm"
+                    className={`text-sm transition-all duration-200 ${
+                      effortUpdateStatus === 'updating' 
+                        ? 'btn-green opacity-75 cursor-not-allowed' 
+                        : effortUpdateStatus === 'success'
+                        ? 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg'
+                        : 'btn-green'
+                    }`}
                     onClick={() => handleProgressUpdate('effort', effortValue)}
+                    disabled={effortUpdateStatus === 'updating'}
                   >
-                    Update
+                    {effortUpdateStatus === 'updating' ? 'Updating...' : 
+                     effortUpdateStatus === 'success' ? 'Updated!' : 'Update'}
                   </button>
                 </div>
                 <div className="mt-3">
