@@ -10,19 +10,14 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
 - **Milestones**: Break goals into achievable milestones with their own deadlines.
 - **Progress Tracking**: Track progress on goals and visualize your journey with charts.
 - **Reflections**: Capture thoughts on the importance of goals, potential obstacles, and strategies.
-- **AI Assistant**: Chat with an AI assistant trained to help with strategic planning.
 - **Knowledge Base Training**: Each replica is automatically trained with strategic planning concepts and methodologies.
 - **Dual UI Interaction**: Interact through both chat interface and traditional UI elements, with the AI being aware of changes made in either interface.
-- **Animated Visualizations**: Beautiful, animated displays of your goals, milestones, and progress.
-- **Glass Morphism UI**: Modern transparent/glass UI elements that create depth and visual appeal.
-- **Carousel Goal Navigation**: Intuitive carousel-based navigation for goals.
-- **Responsive Design**: Works on all device sizes from mobile to desktop.
 
 ## Technology Stack
 
 ### Backend
 - **Framework**: Python Flask
-- **Database**: SQLAlchemy (with SQLite for development)
+- **Database**: SQLAlchemy
 - **AI Integration**: Sensay API for AI replica creation and interaction
 - **Authentication**: JWT-based auth system
 
@@ -47,7 +42,7 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/navi.git
+   git clone https://github.com/teeeeeo9/navi
    cd navi
    ```
 
@@ -79,10 +74,6 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
    python app.py create_db
    ```
 
-6. Run the database migration to add the replica_id column:
-   ```
-   python migrations/add_replica_id.py
-   ```
 
 ### Frontend Installation
 
