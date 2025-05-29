@@ -16,6 +16,8 @@ STRATEGIC_PLANNING_ENTRIES = [
         "content": """
         ## What is Navi?
 
+        This knowledge base entry is primarily for telling the user what Navi is and how it works.
+
         Navi is your dedicated thinking partner - a digital strategic mastermind designed to help you clarify your priorities, set meaningful goals, and navigate the path to achieving them. Unlike typical productivity apps that focus on task management, Navi focuses on the bigger picture: your strategic direction and meaningful accomplishments.
 
         Navi combines the warmth and wisdom of a trusted mentor with cutting-edge AI technology to provide personalized strategic guidance whenever you need it.
@@ -63,6 +65,8 @@ STRATEGIC_PLANNING_ENTRIES = [
         - **Save time**: Skip complex productivity systems for a more intuitive approach
 
         Navi isn't about doing more things - it's about doing the right things. It's designed for people who want to make significant progress on what truly matters rather than just staying busy.
+
+        This knowledge base entry is primarily for telling the user what Navi is and how it works.
         """,
         "description": "Important: Overview of Navi as a strategic thinking partner, how it works, and its benefits",
         "tags": ["important", "navi", "overview", "introduction", "usage"]
@@ -326,7 +330,7 @@ STRATEGIC_PLANNING_ENTRIES = [
         "tags": ["important", "navi", "framework", "flow"]
     },
 {
-    "title": "cience-Backed Strategies to Achieve Your Goals",
+    "title": "Science-Backed Strategies to Achieve Your Goals",
     "content": """
     ## Unlock Your Potential with Proven Goal-Setting Techniques
 

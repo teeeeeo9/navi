@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, FormEvent, forwardRef, useImperativeHandle
 import { motion, AnimatePresence } from 'framer-motion'
 import api, { ChatMessage } from '@/services/api'
 import ChatSuggestions from './ChatSuggestions'
+import MarkdownRenderer from './MarkdownRenderer'
 import { useAuth } from '@/context/AuthContext'
 import YodaImage from '@/assets/Yoda.jpeg'
 
@@ -521,7 +522,7 @@ const ChatInterface = forwardRef<ChatInterfaceHandle, ChatInterfaceProps>(
                             : 'rgba(113, 160, 198, 0.3)' // More transparent blue for replica
                         }}
                       >
-                        <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                        <MarkdownRenderer content={message.content} />
                         <p className="mt-1 text-right text-xs opacity-70">
                           {new Date(message.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
