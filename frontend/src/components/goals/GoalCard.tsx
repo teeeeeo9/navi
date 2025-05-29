@@ -512,18 +512,21 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
 
   // Handle goal deletion
   const handleDeleteGoal = async () => {
+    // Close the modal immediately
+    setIsDeleteModalOpen(false)
+    
+    // Immediately remove from UI (optimistic update) - pass the original goal
+    if (onGoalUpdate) {
+      onGoalUpdate(goal, 'goal_delete')
+    }
+    
+    // Send delete request to backend (async, don't wait)
     try {
       await api.deleteGoal(goal.id)
-      // Close the modal
-      setIsDeleteModalOpen(false)
-      // Notify parent component
-      if (onGoalUpdate) {
-        // Use a special update type for deletion
-        onGoalUpdate({ ...goal, id: -1 }, 'goal_delete')
-      }
     } catch (error) {
       console.error('Failed to delete goal:', error)
-      setIsDeleteModalOpen(false)
+      // Note: We don't re-add the goal to UI as that would be confusing
+      // The user has already seen it disappear, so we just log the error
     }
   }
 
@@ -944,8 +947,8 @@ const GoalCard = ({ goal, isSelected = false, onClick, compact = false, onGoalUp
         onConfirm={handleDeleteGoal}
         isDanger
       >
-        <p>Are you sure you want to remove the goal "{goal.title}"?</p>
-        <p className="mt-2">This action cannot be undone and all associated data will be permanently deleted.</p>
+        <p>Are you sure you want to remove the goal"?</p>
+        {/* <p className="mt-2">This action cannot be undone and all associated data will be permanently deleted.</p> */}
       </Modal>
     </>
   )

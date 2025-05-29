@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Goal } from '@/services/api';
 import api from '@/services/api';
 import ProgressChart from './ProgressChart';
 import MilestoneCard from './MilestoneCard';
 import ReflectionCard, { reflectionTypes } from './ReflectionCard';
 import CelebrationAnimation from './CelebrationAnimation';
+import Modal from '@/components/ui/Modal';
 import theme from '@/styles/theme';
 
 // Progress Ring Component
@@ -320,17 +322,24 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
     }
   };
 
+  // Add state for delete modal
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   const handleDeleteGoal = async () => {
-    if (!confirm('Are you sure you want to delete this goal? This action cannot be undone.')) {
-      return;
-    }
+    // Close the modal immediately
+    setIsDeleteModalOpen(false);
     
+    // Immediately remove from UI (optimistic update) - pass the original goal
+    onGoalUpdate(goal, 'goal_delete');
+    
+    // Send delete request to backend (async, don't wait)
     try {
       await api.deleteGoal(goal.id);
-      // Use a special update type for deletion
-      onGoalUpdate({ ...goal, id: -1 }, 'goal_delete');
     } catch (error) {
       console.error('Failed to delete goal:', error);
+      // Note: We don't re-add the goal to UI as that would be confusing
+      // The user has already seen it disappear, so we just log the error
+      // In a production app, you might want to show a toast notification
     }
   };
 
@@ -621,12 +630,14 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
         
         {/* Delete Goal Button */}
         <div className="mt-8 border-t border-white/10 pt-6 flex justify-end">
-          <button
-            onClick={handleDeleteGoal}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setIsDeleteModalOpen(true)}
             className="rounded-lg bg-white/5 border border-red-500/20 hover:bg-red-500/10 text-red-400 hover:text-red-300 px-5 py-2.5 text-sm transition-colors"
           >
             Delete Goal
-          </button>
+          </motion.button>
         </div>
       </div>
       
@@ -636,6 +647,19 @@ const GoalView: React.FC<GoalViewProps> = ({ goal, onGoalUpdate }) => {
         type="goal"
         onComplete={() => setShowCelebration(false)}
       />
+      
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Goal"
+        confirmText="Delete"
+        onConfirm={handleDeleteGoal}
+        isDanger
+      >
+        <p>Are you sure you want to delete the goal?</p>
+        {/* <p className="mt-2 text-sm text-gray-400">This action cannot be undone and all associated data will be permanently deleted.</p> */}
+      </Modal>
     </div>
   );
 };

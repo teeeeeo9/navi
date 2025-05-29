@@ -536,6 +536,9 @@ def delete_goal(goal_id):
         logger.warning(f"Goal not found: {goal_id} for user: {user_id}")
         return jsonify({'error': 'Goal not found'}), 404
     
+    # Store goal details for system message before deletion
+    goal_title = goal.title
+    
     # Set parent_goal_id to None for any subgoals
     subgoals = Goal.query.filter_by(parent_goal_id=goal.id).all()
     for subgoal in subgoals:
@@ -545,6 +548,18 @@ def delete_goal(goal_id):
     db.session.delete(goal)
     db.session.commit()
     logger.info(f"Goal deleted successfully: {goal_id}")
+    
+    # Send system update to the replica
+    try:
+        # Import here to avoid circular imports
+        from app.api.chat import send_system_update
+        
+        update_message = f"User deleted the goal '{goal_title}'"
+        system_update_result = send_system_update(user_id, update_message, goal_id)
+        logger.debug(f"System update sent for goal deletion: {goal_id}")
+    except Exception as e:
+        logger.error(f"Failed to send system update for goal deletion: {e}")
+        # Don't fail the deletion if system update fails
     
     return jsonify({'message': 'Goal deleted successfully'}), 200
 

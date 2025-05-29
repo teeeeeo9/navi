@@ -86,16 +86,27 @@ const Dashboard = () => {
   const handleGoalUpdate = (updatedGoal: Goal, updateType?: string) => {
     // Handle goal deletion
     if (updateType === 'goal_delete') {
+      // Get the index of the goal to be deleted before removing it
+      const deletedGoalIndex = goals.findIndex(g => g.id === updatedGoal.id);
+      
       // Remove the goal from the list
-      setGoals(prev => prev.filter(g => g.id !== updatedGoal.id));
+      const newGoals = goals.filter(g => g.id !== updatedGoal.id);
+      setGoals(newGoals);
       
       // If the deleted goal was selected, select another goal or set to null
       if (selectedGoal && selectedGoal.id === updatedGoal.id) {
-        if (goals.length > 1) {
-          // Find the next goal to select
-          const index = goals.findIndex(g => g.id === updatedGoal.id);
-          const nextIndex = index === goals.length - 1 ? index - 1 : index + 1;
-          const nextGoal = goals[nextIndex];
+        if (newGoals.length > 0) {
+          // Determine which goal to select next
+          let nextGoalIndex;
+          if (deletedGoalIndex >= newGoals.length) {
+            // If we deleted the last goal, select the new last goal
+            nextGoalIndex = newGoals.length - 1;
+          } else {
+            // Otherwise, select the goal that took the deleted goal's position
+            nextGoalIndex = deletedGoalIndex;
+          }
+          
+          const nextGoal = newGoals[nextGoalIndex];
           
           // Get full details for the next goal
           api.getGoalDetails(nextGoal.id)
