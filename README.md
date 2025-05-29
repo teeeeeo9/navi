@@ -61,9 +61,8 @@ Navi is a minimalistic app that helps users set meaningful goals, create strateg
    ```
    FLASK_APP=app
    FLASK_ENV=development
-   SECRET_KEY=your_secret_key_here
-   JWT_SECRET_KEY=your_jwt_secret_key_here
-   SENSAY_API_KEY=your_sensay_api_key_here
+   JWT_SECRET_KEY=generated_jwt_secret_key
+   SENSAY_API_KEY=your_sensay_api_key
    SENSAY_USER_ID_PREFIX=navi_
    SENSAY_REPLICA_SLUG=navi_planning_assistant
    LOG_LEVEL=INFO
