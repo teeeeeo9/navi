@@ -257,18 +257,19 @@ const Dashboard = () => {
             
             {/* Right side: Goals section */}
             <div className="flex-1 flex h-full flex-col overflow-hidden">
-              {/* Carousel for compact view of goals */}
-              <div className="p-6 pb-4">
-                <GoalCarousel 
-                  goals={goals}
-                  selectedGoalId={selectedGoal?.id}
-                  onSelectGoal={setSelectedGoal}
-                  onGoalUpdate={(goal) => handleGoalUpdate(goal)}
-                />
-              </div>
-
-              {/* Selected goal details with glass morphism */}
+              {/* Combined scrollable area for carousel and goal details */}
               <div className="flex-1 overflow-auto px-2">
+                {/* Carousel for compact view of goals */}
+                <div className="p-6 pb-4">
+                  <GoalCarousel 
+                    goals={goals}
+                    selectedGoalId={selectedGoal?.id}
+                    onSelectGoal={setSelectedGoal}
+                    onGoalUpdate={(goal) => handleGoalUpdate(goal)}
+                  />
+                </div>
+
+                {/* Selected goal details */}
                 {selectedGoal && (
                   <GoalView 
                     goal={selectedGoal} 
