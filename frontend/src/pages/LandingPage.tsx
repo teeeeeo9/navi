@@ -94,16 +94,19 @@ const LandingPage = () => {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-            whileHover={{ 
-              scale: 1.1, 
-              rotate: 360,
-              transition: { duration: 0.6, ease: "easeInOut" }
-            }}
           >
-            <div className="relative">
+            <motion.div 
+              className="relative"
+              transition={{ duration: 1.2, ease: "easeInOut" }}
+              whileHover={{ 
+                scale: 1.1, 
+                rotate: 360,
+                transition: { duration: 1, ease: "easeInOut" }
+              }}
+            >
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-400 to-primary-600 blur-xl opacity-30"></div>
               <img src={logoImage} alt="Navi Logo" className="relative h-28 w-auto" />
-            </div>
+            </motion.div>
           </motion.div>
           
           <motion.h1 
