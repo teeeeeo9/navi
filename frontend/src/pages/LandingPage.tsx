@@ -94,7 +94,11 @@ const LandingPage = () => {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-            whileHover={{ scale: 1.1, rotate: 360 }}
+            whileHover={{ 
+              scale: 1.1, 
+              rotate: 360,
+              transition: { duration: 0.6, ease: "easeInOut" }
+            }}
           >
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-400 to-primary-600 blur-xl opacity-30"></div>
