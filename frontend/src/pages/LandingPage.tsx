@@ -366,6 +366,34 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Trained on Best Practices Visualization */}
+      <section className="relative z-10 py-24">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="mb-16 text-center"
+          >
+            <h2 className="mb-6 text-5xl font-bold">Trained on Proven Best Practices</h2>
+            <p className="mx-auto max-w-2xl text-xl text-white/80">
+              Our AI has absorbed knowledge from countless success stories and proven methodologies.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="glass mx-auto max-w-4xl rounded-3xl p-8 shadow-2xl"
+          >
+            <TrainedOnBestPracticesVisualization />
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative z-10 py-24">
         <div className="container mx-auto px-4 text-center">
@@ -921,10 +949,10 @@ const BecomesYouVisualization = () => {
                   ry: [0, 0, 0, 30, 30, 30, 30]
                 }}
                 transition={{ 
-                  duration: 14,
+                  duration: 8,
                   delay: 0,
                   repeat: Infinity,
-                  repeatDelay: 4,
+                  repeatDelay: 2,
                   ease: "easeInOut"
                 }}
               />
@@ -939,10 +967,10 @@ const BecomesYouVisualization = () => {
                   ry: [0, 0, 0, 0, 4, 4, 4]
                 }}
                 transition={{ 
-                  duration: 14,
+                  duration: 8,
                   delay: 0,
                   repeat: Infinity,
-                  repeatDelay: 4,
+                  repeatDelay: 2,
                   ease: "easeInOut"
                 }}
               />
@@ -957,10 +985,10 @@ const BecomesYouVisualization = () => {
                   ry: [0, 0, 0, 0, 4, 4, 4]
                 }}
                 transition={{ 
-                  duration: 14,
+                  duration: 8,
                   delay: 0,
                   repeat: Infinity,
-                  repeatDelay: 4,
+                  repeatDelay: 2,
                   ease: "easeInOut"
                 }}
               />
@@ -971,10 +999,10 @@ const BecomesYouVisualization = () => {
                   opacity: [1, 1, 1, 1, 1, 0, 0]
                 }}
                 transition={{ 
-                  duration: 14,
+                  duration: 8,
                   delay: 0,
                   repeat: Infinity,
-                  repeatDelay: 4,
+                  repeatDelay: 2,
                   ease: "easeInOut"
                 }}
               >
@@ -1010,10 +1038,10 @@ const BecomesYouVisualization = () => {
                   ]
                 }}
                 transition={{ 
-                  duration: 14,
+                  duration: 8,
                   delay: 0,
                   repeat: Infinity,
-                  repeatDelay: 4,
+                  repeatDelay: 2,
                   ease: "easeInOut"
                 }}
               />
@@ -1021,6 +1049,213 @@ const BecomesYouVisualization = () => {
             </svg>
           </div>
         </div>
+
+      </div>
+    </div>
+  )
+}
+
+// Trained on Best Practices Visualization Component
+const TrainedOnBestPracticesVisualization = () => {
+  return (
+    <div className="relative h-[400px] w-full overflow-hidden flex items-center justify-center">
+      <div className="relative w-[600px] h-[400px] flex items-center justify-center">
+        
+        {/* Central Robot Face */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <motion.div
+            className="glass relative rounded-2xl border border-primary-400/30 p-6 shadow-xl"
+            animate={{ 
+              scale: [1, 1.02, 1],
+              boxShadow: [
+                "0 25px 50px -12px rgba(113, 160, 198, 0.25)",
+                "0 25px 50px -12px rgba(113, 160, 198, 0.4)",
+                "0 25px 50px -12px rgba(113, 160, 198, 0.25)"
+              ]
+            }}
+            transition={{ 
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <svg width="100" height="100" viewBox="0 0 100 100" className="text-primary-400">
+              {/* Robot head outline */}
+              <rect 
+                x="20" y="25" width="60" height="50" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                rx="12"
+              />
+              
+              {/* Robot eyes (square) with blinking */}
+              <motion.rect 
+                x="32" y="40" width="10" height="10" 
+                fill="currentColor"
+                animate={{ 
+                  scaleY: [1, 0.1, 1, 1, 1],
+                }}
+                transition={{ 
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              <motion.rect 
+                x="58" y="40" width="10" height="10" 
+                fill="currentColor"
+                animate={{ 
+                  scaleY: [1, 0.1, 1, 1, 1],
+                }}
+                transition={{ 
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              
+              {/* Robot mouth (happy line) */}
+              <path 
+                d="M38 58 Q50 65 62 58" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+              />
+              
+              {/* Robot antenna with pulsing */}
+              <motion.line 
+                x1="50" y1="20" x2="50" y2="25" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                animate={{ 
+                  opacity: [0.7, 1, 0.7]
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              <motion.circle 
+                cx="50" cy="16" r="4" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                animate={{ 
+                  scale: [1, 1.3, 1],
+                  opacity: [0.7, 1, 0.7]
+                }}
+                transition={{ 
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            </svg>
+          </motion.div>
+        </div>
+
+        {/* Floating Books around the robot */}
+        {[
+          { x: -150, y: -80, rotation: -15, delay: 0 },
+          { x: 150, y: -60, rotation: 12, delay: 0.5 },
+          { x: -120, y: 100, rotation: 8, delay: 1 },
+          { x: 140, y: 120, rotation: -10, delay: 1.5 }
+        ].map((book, index) => (
+          <motion.div
+            key={index}
+            className="absolute"
+            style={{
+              left: `calc(50% + ${book.x}px)`,
+              top: `calc(50% + ${book.y}px)`,
+              transform: `translate(-50%, -50%) rotate(${book.rotation}deg)`
+            }}
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ 
+              opacity: [0, 1, 1, 0],
+              scale: [0.8, 1, 1, 0.8],
+              y: [20, 0, 0, 20],
+              rotate: [book.rotation, book.rotation + 5, book.rotation]
+            }}
+            transition={{ 
+              duration: 6,
+              delay: book.delay,
+              repeat: Infinity,
+              repeatDelay: 2,
+              ease: "easeInOut"
+            }}
+          >
+            <div className="glass-dark rounded-lg border border-primary-400/20 p-3 shadow-lg">
+              <svg width="40" height="30" viewBox="0 0 40 30" className="text-primary-300">
+                {/* Book cover */}
+                <rect 
+                  x="2" y="4" width="36" height="22" 
+                  fill="currentColor" 
+                  opacity="0.3"
+                  rx="2"
+                />
+                {/* Book spine */}
+                <rect 
+                  x="2" y="4" width="4" height="22" 
+                  fill="currentColor" 
+                  opacity="0.6"
+                  rx="1"
+                />
+                {/* Book lines */}
+                <line x1="10" y1="10" x2="32" y2="10" stroke="currentColor" strokeWidth="1" opacity="0.4"/>
+                <line x1="10" y1="14" x2="28" y2="14" stroke="currentColor" strokeWidth="1" opacity="0.4"/>
+                <line x1="10" y1="18" x2="30" y2="18" stroke="currentColor" strokeWidth="1" opacity="0.4"/>
+              </svg>
+            </div>
+          </motion.div>
+        ))}
+
+        {/* Knowledge absorption particles */}
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={`particle-${i}`}
+            className="absolute h-2 w-2 rounded-full"
+            style={{
+              left: `${30 + i * 8}%`,
+              top: `${25 + (i % 3) * 25}%`,
+              backgroundColor: `rgba(113, 160, 198, ${0.3 + (i % 3) * 0.2})`
+            }}
+            animate={{
+              scale: [0, 1.5, 0],
+              opacity: [0, 0.8, 0],
+              x: [0, (50 - (30 + i * 8)) * 6, 0],
+              y: [0, (50 - (25 + (i % 3) * 25)) * 4, 0]
+            }}
+            transition={{
+              duration: 3,
+              delay: i * 0.2,
+              repeat: Infinity,
+              repeatDelay: 4,
+              ease: "easeOut"
+            }}
+          />
+        ))}
+
+        {/* Pulsing aura around robot */}
+        <motion.div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            width: '200px',
+            height: '200px',
+            background: 'radial-gradient(circle, rgba(113, 160, 198, 0.1) 0%, transparent 70%)'
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
 
       </div>
     </div>
