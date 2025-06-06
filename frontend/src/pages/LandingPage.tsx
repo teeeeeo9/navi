@@ -310,6 +310,62 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Stay on Track Visualization */}
+      <section className="relative z-10 py-24">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="mb-16 text-center"
+          >
+            <h2 className="mb-6 text-5xl font-bold">Stay on Track</h2>
+            <p className="mx-auto max-w-2xl text-xl text-white/80">
+              Visualize your progress over time with beautiful, animated charts that show both your effort and achievement.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="glass mx-auto max-w-4xl rounded-3xl p-8 shadow-2xl"
+          >
+            <StayOnTrackVisualization />
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Becomes You Visualization */}
+      <section className="relative z-10 py-24">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="mb-16 text-center"
+          >
+            <h2 className="mb-6 text-5xl font-bold">Becomes You</h2>
+            <p className="mx-auto max-w-2xl text-xl text-white/80">
+              See how Navi helps you transform into the person you want to be.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="glass mx-auto max-w-4xl rounded-3xl p-8 shadow-2xl"
+          >
+            <BecomesYouVisualization />
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative z-10 py-24">
         <div className="container mx-auto px-4 text-center">
@@ -421,7 +477,7 @@ const StrategicThinkingVisualization = () => {
   const questions = [
     {
       id: 1,
-      title: "How?",
+      title: "How",
       description: "Figure out the steps",
       position: { x: -300, y: -150 },
       connectionPoint: { x: -200, y: -150 }, // Right edge of rectangle
@@ -429,7 +485,7 @@ const StrategicThinkingVisualization = () => {
     },
     {
       id: 2,
-      title: "When?",
+      title: "When",
       description: "Build the timeline",
       position: { x: 300, y: -150 },
       connectionPoint: { x: 200, y: -150 }, // Left edge of rectangle
@@ -437,7 +493,7 @@ const StrategicThinkingVisualization = () => {
     },
     {
       id: 3,
-      title: "Why?",
+      title: "Why",
       description: "Stay motivated",
       position: { x: -300, y: 150 },
       connectionPoint: { x: -200, y: 150 }, // Right edge of rectangle
@@ -445,7 +501,7 @@ const StrategicThinkingVisualization = () => {
     },
     {
       id: 4,
-      title: "What if?",
+      title: "What if",
       description: "Anticipate obstacles and plan action in advance",
       position: { x: 300, y: 150 },
       connectionPoint: { x: 200, y: 150 }, // Left edge of rectangle
@@ -453,7 +509,7 @@ const StrategicThinkingVisualization = () => {
     },
     {
       id: 5,
-      title: "What else?",
+      title: "What else",
       description: "What piece of puzzle is missing",
       position: { x: 0, y: 250 },
       connectionPoint: { x: 0, y: 190 }, // Top edge of rectangle
@@ -603,7 +659,7 @@ const StrategicThinkingVisualization = () => {
               />
               <div className="relative">
                 <h3 className="text-2xl font-bold text-orange-400">Goal</h3>
-                <p className="text-sm text-white/70">Your focus</p>
+                <p className="text-sm text-white/70">Your strategic focus</p>
               </div>
             </div>
           </motion.div>
@@ -688,6 +744,284 @@ const StrategicThinkingVisualization = () => {
             }}
           />
         ))}
+      </div>
+    </div>
+  )
+}
+
+// Stay on Track Visualization Component
+const StayOnTrackVisualization = () => {
+  // Generate dummy data points for progress and effort over time
+  const generateDummyData = () => {
+    const dataPoints = [];
+    const startTime = Date.now() - (30 * 24 * 60 * 60 * 1000); // 30 days ago
+    
+    for (let i = 0; i < 15; i++) {
+      const timestamp = startTime + (i * 2 * 24 * 60 * 60 * 1000); // Every 2 days
+      dataPoints.push({
+        timestamp,
+        progress: Math.max(0, Math.min(10, 1 + i * 0.6 + Math.sin(i * 0.5) * 1.5)),
+        effort: Math.max(0, Math.min(10, 2 + i * 0.4 + Math.cos(i * 0.7) * 2))
+      });
+    }
+    
+    return dataPoints;
+  };
+
+  const chartData = generateDummyData();
+
+  // Create SVG path for progress line
+  const createProgressPath = (data: typeof chartData) => {
+    const width = 600;
+    const height = 300;
+    const margin = { top: 20, right: 20, bottom: 30, left: 30 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+    
+    const xScale = (timestamp: number) => {
+      const minTime = Math.min(...data.map(d => d.timestamp));
+      const maxTime = Math.max(...data.map(d => d.timestamp));
+      return margin.left + ((timestamp - minTime) / (maxTime - minTime)) * chartWidth;
+    };
+    
+    const yScale = (value: number) => {
+      return margin.top + chartHeight - (value / 10) * chartHeight;
+    };
+    
+    return data.map((d, i) => 
+      i === 0 ? `M ${xScale(d.timestamp)} ${yScale(d.progress)}` : 
+      `L ${xScale(d.timestamp)} ${yScale(d.progress)}`
+    ).join(' ');
+  };
+
+  // Create SVG path for effort line
+  const createEffortPath = (data: typeof chartData) => {
+    const width = 600;
+    const height = 300;
+    const margin = { top: 20, right: 20, bottom: 30, left: 30 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+    
+    const xScale = (timestamp: number) => {
+      const minTime = Math.min(...data.map(d => d.timestamp));
+      const maxTime = Math.max(...data.map(d => d.timestamp));
+      return margin.left + ((timestamp - minTime) / (maxTime - minTime)) * chartWidth;
+    };
+    
+    const yScale = (value: number) => {
+      return margin.top + chartHeight - (value / 10) * chartHeight;
+    };
+    
+    return data.map((d, i) => 
+      i === 0 ? `M ${xScale(d.timestamp)} ${yScale(d.effort)}` : 
+      `L ${xScale(d.timestamp)} ${yScale(d.effort)}`
+    ).join(' ');
+  };
+
+  const progressPath = createProgressPath(chartData);
+  const effortPath = createEffortPath(chartData);
+
+  return (
+    <div className="relative h-[400px] w-full overflow-hidden flex items-center justify-center">
+      <div className="relative w-[600px] h-[300px]">
+        <svg width="600" height="300" viewBox="0 0 600 300">
+          {/* X Axis */}
+          <line 
+            x1="30" 
+            y1="270" 
+            x2="570" 
+            y2="270" 
+            stroke="rgba(113, 160, 198, 0.3)" 
+            strokeWidth="1"
+          />
+          
+          {/* Y Axis */}
+          <line 
+            x1="30" 
+            y1="20" 
+            x2="30" 
+            y2="270" 
+            stroke="rgba(113, 160, 198, 0.3)" 
+            strokeWidth="1"
+          />
+
+          {/* Progress Line (Blue) */}
+          <motion.path
+            d={progressPath}
+            fill="none"
+            stroke="rgba(113, 160, 198, 0.8)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="1000"
+            initial={{ 
+              strokeDashoffset: 1000
+            }}
+            animate={{ 
+              strokeDashoffset: [1000, 0, 0, -1000]
+            }}
+            transition={{ 
+              duration: 9,
+              delay: 0,
+              repeat: Infinity,
+              repeatDelay: 0.5,
+              ease: "easeInOut"
+            }}
+          />
+
+          {/* Effort Line (Green) */}
+          <motion.path
+            d={effortPath}
+            fill="none"
+            stroke="rgba(34, 197, 94, 0.8)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray="1000"
+            initial={{ 
+              strokeDashoffset: 1000
+            }}
+            animate={{ 
+              strokeDashoffset: [1000, 0, 0, -1000]
+            }}
+            transition={{ 
+              duration: 9,
+              delay: 0,
+              repeat: Infinity,
+              repeatDelay: 0.5,
+              ease: "easeInOut"
+            }}
+          />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+// Becomes You Visualization Component
+const BecomesYouVisualization = () => {
+  return (
+    <div className="relative h-[400px] w-full overflow-hidden flex items-center justify-center">
+      <div className="relative w-[600px] h-[400px] flex items-center justify-center">
+        
+        {/* Single Morphing Face */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="glass relative rounded-2xl border border-primary-400/30 p-8 shadow-xl">
+            <svg width="120" height="120" viewBox="0 0 120 120" className="text-primary-400">
+              
+              {/* Robot/Human Head - morphs from square to circle */}
+              <motion.rect
+                x="30" y="30" width="60" height="60" 
+                rx="8"
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                animate={{ 
+                  rx: [8, 8, 8, 30, 30, 30, 30],
+                  ry: [0, 0, 0, 30, 30, 30, 30]
+                }}
+                transition={{ 
+                  duration: 14,
+                  delay: 0,
+                  repeat: Infinity,
+                  repeatDelay: 4,
+                  ease: "easeInOut"
+                }}
+              />
+              
+              {/* Left Eye - morphs from square to circle */}
+              <motion.rect 
+                x="42" y="48" width="12" height="12" 
+                rx="0"
+                fill="currentColor"
+                animate={{ 
+                  rx: [0, 0, 0, 0, 4, 4, 4],
+                  ry: [0, 0, 0, 0, 4, 4, 4]
+                }}
+                transition={{ 
+                  duration: 14,
+                  delay: 0,
+                  repeat: Infinity,
+                  repeatDelay: 4,
+                  ease: "easeInOut"
+                }}
+              />
+              
+              {/* Right Eye - morphs from square to circle */}
+              <motion.rect 
+                x="66" y="48" width="12" height="12" 
+                rx="0"
+                fill="currentColor"
+                animate={{ 
+                  rx: [0, 0, 0, 0, 4, 4, 4],
+                  ry: [0, 0, 0, 0, 4, 4, 4]
+                }}
+                transition={{ 
+                  duration: 14,
+                  delay: 0,
+                  repeat: Infinity,
+                  repeatDelay: 4,
+                  ease: "easeInOut"
+                }}
+              />
+              
+              {/* Antenna - disappears */}
+              <motion.g
+                animate={{ 
+                  opacity: [1, 1, 1, 1, 1, 0, 0]
+                }}
+                transition={{ 
+                  duration: 14,
+                  delay: 0,
+                  repeat: Infinity,
+                  repeatDelay: 4,
+                  ease: "easeInOut"
+                }}
+              >
+                <line 
+                  x1="60" y1="22" x2="60" y2="30" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                />
+                <circle 
+                  cx="60" cy="18" r="4" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                />
+              </motion.g>
+              
+              {/* Mouth - transforms from line to smile */}
+              <motion.path
+                d="M45 72 L75 72"
+                stroke="currentColor" 
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                animate={{ 
+                  d: [
+                    "M45 72 L75 72",           // Step 1: straight line
+                    "M45 72 L75 72",           // Step 2: still straight
+                    "M45 72 L75 72",           // Step 3: still straight  
+                    "M45 72 L75 72",           // Step 4: still straight
+                    "M45 72 L75 72",           // Step 5: still straight
+                    "M45 72 L75 72",           // Step 6: still straight
+                    "M45 72 Q60 82 75 72"      // Step 7: becomes smile
+                  ]
+                }}
+                transition={{ 
+                  duration: 14,
+                  delay: 0,
+                  repeat: Infinity,
+                  repeatDelay: 4,
+                  ease: "easeInOut"
+                }}
+              />
+
+            </svg>
+          </div>
+        </div>
+
       </div>
     </div>
   )
