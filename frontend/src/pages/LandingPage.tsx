@@ -282,6 +282,34 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Strategic Thinking Visualization */}
+      <section className="relative z-10 py-24">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="mb-16 text-center"
+          >
+            <h2 className="mb-6 text-5xl font-bold">Think Clearly</h2>
+            <p className="mx-auto max-w-2xl text-xl text-white/80">
+              Navi helps you approach your goals with strategic thinking, asking the right questions at the right time.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="glass mx-auto max-w-6xl rounded-3xl p-8 shadow-2xl"
+          >
+            <StrategicThinkingVisualization />
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative z-10 py-24">
         <div className="container mx-auto px-4 text-center">
@@ -387,5 +415,282 @@ const features = [
     )
   }
 ]
+
+// Strategic Thinking Visualization Component
+const StrategicThinkingVisualization = () => {
+  const questions = [
+    {
+      id: 1,
+      title: "How?",
+      description: "Figure out the steps",
+      position: { x: -300, y: -150 },
+      connectionPoint: { x: -200, y: -150 }, // Right edge of rectangle
+      delay: 0
+    },
+    {
+      id: 2,
+      title: "When?",
+      description: "Build the timeline",
+      position: { x: 300, y: -150 },
+      connectionPoint: { x: 200, y: -150 }, // Left edge of rectangle
+      delay: 2
+    },
+    {
+      id: 3,
+      title: "Why?",
+      description: "Stay motivated",
+      position: { x: -300, y: 150 },
+      connectionPoint: { x: -200, y: 150 }, // Right edge of rectangle
+      delay: 4
+    },
+    {
+      id: 4,
+      title: "What if?",
+      description: "Anticipate obstacles and plan action in advance",
+      position: { x: 300, y: 150 },
+      connectionPoint: { x: 200, y: 150 }, // Left edge of rectangle
+      delay: 6
+    },
+    {
+      id: 5,
+      title: "What else?",
+      description: "What piece of puzzle is missing",
+      position: { x: 0, y: 250 },
+      connectionPoint: { x: 0, y: 190 }, // Top edge of rectangle
+      delay: 8
+    }
+  ]
+
+  // Connection points exactly on the goal rectangle edges
+  const goalConnectionPoints = [
+    { x: -105, y: 0 }, // Left edge for "How?" - moved further left to actual border
+    { x: 105, y: 0 },  // Right edge for "When?" - moved further right to actual border
+    { x: -105, y: 0 }, // Left edge for "Why?" - moved further left to actual border
+    { x: 105, y: 0 },  // Right edge for "What if?" - moved further right to actual border
+    { x: 0, y: 50 }   // Bottom edge for "What else?" - moved further down to actual border
+  ]
+
+  const connectionPaths = [
+    // From left edge of goal to How (top-left)
+    "M -105 0 L -150 0 L -150 -150 L -200 -150",
+    // From right edge of goal to When (top-right)
+    "M 105 0 L 150 0 L 150 -150 L 200 -150",
+    // From left edge of goal to Why (bottom-left)
+    "M -105 0 L -150 0 L -150 150 L -200 150",
+    // From right edge of goal to What if (bottom-right)
+    "M 105 0 L 150 0 L 150 150 L 200 150",
+    // From bottom edge of goal to What else (bottom)
+    "M 0 50 L 0 125 L 0 190"
+  ]
+
+  return (
+    <div className="relative h-[800px] w-full overflow-hidden flex items-center justify-center">
+      <div className="relative w-[800px] h-[600px]">
+        <svg 
+          className="absolute inset-0 h-full w-full" 
+          viewBox="-400 -300 800 600"
+        >
+          {/* Animated Connection Lines */}
+          {connectionPaths.map((path, index) => (
+            <motion.path
+              key={index}
+              d={path}
+              stroke="rgba(113, 160, 198, 0.4)"
+              strokeWidth="2"
+              fill="none"
+              strokeDasharray="5,5"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ 
+                pathLength: [0, 1, 1, 0],
+                opacity: [0, 1, 1, 0],
+                strokeDashoffset: [0, -20]
+              }}
+              transition={{ 
+                pathLength: {
+                  duration: 3,
+                  delay: questions[index]?.delay || 0,
+                  repeat: Infinity,
+                  repeatDelay: 5,
+                  ease: "easeInOut"
+                },
+                opacity: {
+                  duration: 3,
+                  delay: questions[index]?.delay || 0,
+                  repeat: Infinity,
+                  repeatDelay: 5,
+                  ease: "easeInOut"
+                },
+                strokeDashoffset: {
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "linear"
+                }
+              }}
+            />
+          ))}
+
+          {/* Goal connection points - exactly on rectangle edges */}
+          {goalConnectionPoints.map((point, index) => (
+            <motion.circle
+              key={`goal-point-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r="4"
+              fill="rgba(247, 144, 81, 0.9)"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ 
+                scale: [0, 1, 1, 0],
+                opacity: [0, 1, 1, 0]
+              }}
+              transition={{ 
+                duration: 3,
+                delay: questions[index]?.delay || 0,
+                repeat: Infinity,
+                repeatDelay: 5,
+                ease: "easeInOut"
+              }}
+            />
+          ))}
+
+          {/* Glowing connection points */}
+          {questions.map((question, index) => (
+            <motion.circle
+              key={`point-${question.id}`}
+              cx={question.connectionPoint.x}
+              cy={question.connectionPoint.y}
+              r="4"
+              fill="rgba(113, 160, 198, 0.8)"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ 
+                scale: [0, 1, 1, 0],
+                opacity: [0, 1, 1, 0]
+              }}
+              transition={{ 
+                duration: 3,
+                delay: question.delay + 0.5,
+                repeat: Infinity,
+                repeatDelay: 5,
+                ease: "easeInOut"
+              }}
+            />
+          ))}
+        </svg>
+
+        {/* Central Goal */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <motion.div
+            animate={{ 
+              scale: [1, 1.05, 1],
+              opacity: [0.9, 1, 0.9]
+            }}
+            transition={{ 
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <div className="glass-dark relative rounded-2xl border border-orange-400/30 px-8 py-6 text-center shadow-2xl">
+              <motion.div
+                className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/10 to-orange-600/10"
+                animate={{ 
+                  opacity: [0.5, 0.8, 0.5]
+                }}
+                transition={{ 
+                  duration: 3, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+              />
+              <div className="relative">
+                <h3 className="text-2xl font-bold text-orange-400">Goal</h3>
+                <p className="text-sm text-white/70">Your focus</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Question Nodes */}
+        {questions.map((question) => (
+          <div
+            key={question.id}
+            className="absolute"
+            style={{
+              left: `calc(50% + ${question.position.x}px)`,
+              top: `calc(50% + ${question.position.y}px)`,
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0, opacity: 0, y: 20 }}
+              animate={{ 
+                scale: [0, 1, 1, 0],
+                opacity: [0, 1, 1, 0],
+                y: [20, 0, 0, 20]
+              }}
+              transition={{ 
+                duration: 3,
+                delay: question.delay,
+                repeat: Infinity,
+                repeatDelay: 5,
+                ease: "easeInOut"
+              }}
+              whileHover={{ 
+                scale: 1.1, 
+                y: -10,
+                transition: { duration: 0.3 }
+              }}
+            >
+              <div className="glass relative w-[200px] rounded-xl border border-primary-400/30 p-4 text-center shadow-xl">
+                <motion.div
+                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-500/5 to-primary-600/5"
+                  animate={{ 
+                    opacity: [0.3, 0.6, 0.3],
+                  }}
+                  transition={{ 
+                    duration: 4, 
+                    repeat: Infinity, 
+                    ease: "easeInOut",
+                    delay: question.delay
+                  }}
+                />
+                <div className="relative">
+                  <h4 className="mb-2 text-lg font-bold text-primary-400">
+                    {question.title}
+                  </h4>
+                  <p className="text-xs text-white/70">
+                    {question.description}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        ))}
+
+        {/* Floating particles for extra visual appeal */}
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute h-1 w-1 rounded-full bg-primary-400/30"
+            style={{
+              left: `${10 + i * 7}%`,
+              top: `${20 + (i % 4) * 20}%`,
+            }}
+            animate={{
+              y: [-15, 15, -15],
+              opacity: [0.1, 0.6, 0.1],
+              scale: [0.3, 1, 0.3]
+            }}
+            transition={{
+              duration: 5 + i * 0.3,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.4
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default LandingPage 

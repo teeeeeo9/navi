@@ -1,0 +1,71 @@
+NAVI LANDING PAGE COPY
+====================
+
+HEADER/NAVIGATION
+-----------------
+- Logo: Navi
+- Navigation Links: Log in, Sign up
+
+HERO SECTION
+------------
+Main Headline: Navi: your strategic mastermind
+
+Subheadline: Navi helps you set meaningful goals and achieve them by fostering strategic thinking.
+
+Call-to-Action Buttons:
+- Get Started
+- Learn More
+
+SENSAY AI SECTION
+-----------------
+Section Title: Powered by Sensay
+
+Description: The Sensay Wisdom API empowers Navi with its cutting-edge Sensay replicas. Your replica understands your goals, provides strategic personalized guidance, and helps you stay on track. The more you use Navi, the smarter and more powerful your replica becomes.
+
+
+KEY FEATURES SECTION
+--------------------
+Section Title: Key Features
+
+Features:
+1. Helps you think clearly
+   Foresee challenges and plan your actions.
+   Define the timeline.
+   Write it down.
+
+2. Helps You Stay on Track
+   Record progress and effort invested.
+   Stay motivated.
+   Remain accountable.
+   Effortlessly.
+
+3. Becomes you eventually.
+   Learns your thinking and communication patterns over time.
+   Remembers everything you tell it.
+   Gets better with every interaction.
+
+4. Trained on Proven Best Practices
+   So you can skip the theory and just do it.
+   Don't watch tons of productivity videos - Navi did it for you. 
+
+5. Customize Your Replica
+   Have fun!
+
+6. See Goals & Progress at a Glance
+   Interactive dashboard.
+
+SECTION DESCRIBING WHAT REPLICAS SAY ABOUT NAVI
+----------------------
+Dan bot: some text
+
+CALL-TO-ACTION SECTION
+----------------------
+Headline: Ready to move from "Someday I will..." to "Here's the plan"?
+
+Description: Join Navi today. It's the only tool you need to stay focused and on track.
+
+Button: Get Started for Free
+
+FOOTER
+------
+Copyright: © 2025 Navi. Powered by Sensay. 

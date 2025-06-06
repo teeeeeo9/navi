@@ -1,0 +1,64 @@
+NAVI LANDING PAGE COPY
+====================
+
+HEADER/NAVIGATION
+-----------------
+- Logo: Navi
+- Navigation Links: Log in, Sign up
+
+HERO SECTION
+------------
+Main Headline: Strategic Goal Planning Powered by AI
+
+Subheadline: Navi helps you set meaningful goals, create strategic plans, and track your progress with the help of advanced AI assistance.
+
+Call-to-Action Buttons:
+- Get Started
+- Learn More
+
+SENSAY AI SECTION
+-----------------
+Section Title: Powered by Sensay AI
+
+Description: Sensay is at the heart of Navi, providing intelligent assistance for your goal planning and strategic thinking. The advanced AI understands your goals, provides personalized guidance, and helps you stay on track.
+
+Features:
+1. Conversational Guidance
+   - Interact naturally with an AI assistant that handles all goal-related actions, provides personalized advice, and helps you overcome obstacles.
+
+2. Intelligent Analysis
+   - Sensay AI analyzes your goals, progress, and patterns to provide strategic insights and suggestions tailored to your specific needs.
+
+3. Adaptive Interaction
+   - The AI adapts its interaction style based on your history and preferences, becoming more helpful as it learns about your goals and challenges.
+
+KEY FEATURES SECTION
+--------------------
+Section Title: Key Features
+
+Section Description: Navi combines powerful planning tools with artificial intelligence to make goal setting and achievement easier than ever.
+
+Features:
+1. Goal Setting
+   - Define clear, meaningful goals with descriptions, timelines, and importance.
+
+2. Milestones
+   - Break goals into achievable milestones with their own deadlines for better tracking.
+
+3. Progress Tracking
+   - Track progress on goals and visualize your journey with beautiful charts and statistics.
+
+4. Reflections
+   - Capture thoughts on the importance of goals, potential obstacles, and strategies.
+
+CALL-TO-ACTION SECTION
+----------------------
+Headline: Ready to Achieve Your Goals?
+
+Description: Join Navi today and experience the power of AI-assisted goal planning and achievement.
+
+Button: Get Started for Free
+
+FOOTER
+------
+Copyright: © 2024 Navi. Powered by Sensay AI. 
