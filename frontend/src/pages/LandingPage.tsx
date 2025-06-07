@@ -506,69 +506,77 @@ const LandingPage = () => {
 
 // Strategic Thinking Visualization Component
 const StrategicThinkingVisualization = () => {
+  // Each question is positioned relative to the center (0,0)
+  // x: negative = left, positive = right
+  // y: negative = up, positive = down
+  // Example: {x: -200, y: -100} means 200px left and 100px up from center
   const questions = [
     {
       id: 1,
       title: "How",
       description: "Figure out the steps",
-      position: { x: -200, y: -100 },
-      connectionPoint: { x: -120, y: -100 }, // Right edge of rectangle
-      delay: 0
+      position: { x: -200, y: -100 }, // Top left quadrant
+      connectionPoint: { x: -130, y: -100 }, // Where the line connects to this question box
+      delay: 0 // Animation starts immediately
     },
     {
-      id: 2,
+      id: 2, 
       title: "When",
       description: "Build the timeline",
-      position: { x: 200, y: -100 },
-      connectionPoint: { x: 120, y: -100 }, // Left edge of rectangle
-      delay: 2
+      position: { x: 200, y: -100 }, // Top right quadrant
+      connectionPoint: { x: 130, y: -100 }, // Where the line connects to this question box
+      delay: 2 // Animation starts after 2 seconds
     },
     {
       id: 3,
-      title: "Why",
+      title: "Why", 
       description: "Stay motivated",
-      position: { x: -200, y: 100 },
-      connectionPoint: { x: -120, y: 100 }, // Right edge of rectangle
-      delay: 4
+      position: { x: -200, y: 100 }, // Bottom left quadrant
+      connectionPoint: { x: -130, y: 100 }, // Where the line connects to this question box
+      delay: 4 // Animation starts after 4 seconds
     },
     {
       id: 4,
       title: "What if",
-      description: "Anticipate obstacles",
-      position: { x: 200, y: 100 },
-      connectionPoint: { x: 120, y: 100 }, // Left edge of rectangle
-      delay: 6
+      description: "Anticipate obstacles", 
+      position: { x: 200, y: 100 }, // Bottom right quadrant
+      connectionPoint: { x: 130, y: 100 }, // Where the line connects to this question box
+      delay: 6 // Animation starts after 6 seconds
     },
     {
       id: 5,
       title: "What else",
       description: "Missing puzzle piece",
-      position: { x: 0, y: 180 },
-      connectionPoint: { x: 0, y: 120 }, // Top edge of rectangle
-      delay: 8
+      position: { x: 0, y: 180 }, // Bottom center
+      connectionPoint: { x: 0, y: 145 }, // Where the line connects to this question box
+      delay: 8 // Animation starts after 8 seconds
     }
   ]
 
-  // Connection points exactly on the goal rectangle edges
+  // These points are where lines connect to the central goal rectangle
+  // The goal rectangle is 140px wide (70px on each side) and 70px tall (35px on each side)
   const goalConnectionPoints = [
-    { x: -70, y: 0 }, // Left edge for "How?"
-    { x: 70, y: 0 },  // Right edge for "When?"
-    { x: -70, y: 0 }, // Left edge for "Why?"
-    { x: 70, y: 0 },  // Right edge for "What if?"
-    { x: 0, y: 35 }   // Bottom edge for "What else?"
+    { x: -84, y: 0 },  // Left edge center point
+    { x: 84, y: 0 },   // Right edge center point 
+    { x: -84, y: 0 },  // Left edge center point
+    { x: 84, y: 0 },   // Right edge center point
+    { x: 0, y: 39 }    // Bottom edge center point
   ]
 
+  // SVG path definitions for the connecting lines
+  // Each path moves from a goal connection point to a question connection point
+  // Format: M (start x y) L (line to x y) L (line to x y) ...
   const connectionPaths = [
-    // From left edge of goal to How (top-left)
-    "M -70 0 L -95 0 L -95 -100 L -120 -100",
-    // From right edge of goal to When (top-right)
-    "M 70 0 L 95 0 L 95 -100 L 120 -100",
-    // From left edge of goal to Why (bottom-left)
-    "M -70 0 L -95 0 L -95 100 L -120 100",
-    // From right edge of goal to What if (bottom-right)
-    "M 70 0 L 95 0 L 95 100 L 120 100",
-    // From bottom edge of goal to What else (bottom)
-    "M 0 35 L 0 77 L 0 120"
+    // From goal left to How (top-left)
+    "M -84 0 L -95 0 L -95 -100 L -130 -100",
+    // From goal right to When (top-right)  
+    "M 84 0 L 95 0 L 95 -100 L 130 -100",
+    // From goal left to Why (bottom-left)
+    "M -84 0 L -95 0 L -95 100 L -130 100", 
+    // From goal right to What if (bottom-right)
+    "M 84 0 L 95 0 L 95 100 L 130 100",
+    // From goal bottom to What else (bottom)
+    "M 0 39 L 0 77 L 0 145"
   ]
 
   return (
