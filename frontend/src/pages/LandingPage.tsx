@@ -649,7 +649,7 @@ const StrategicThinkingVisualization = () => {
           ))}
 
           {/* Glowing connection points */}
-          {questions.map((question, index) => (
+          {questions.map((question) => (
             <motion.circle
               key={`point-${question.id}`}
               cx={question.connectionPoint.x}
