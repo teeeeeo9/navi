@@ -2,6 +2,11 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import logoImage from '@/assets/logo.png'
+import dashboardImage from '@/assets/dashboard.png'
+import churchillImage from '@/assets/s465_Sir-Winston-Churchill.jpg'
+import houseImage from '@/assets/house-cp.jpg'
+import yodaImage from '@/assets/yoda-the-empire-strikes-back-28a7558.jpg'
+import danBotAvatar from '@/assets/photo_2025-06-08_01-00-15.jpg'
 
 const LandingPage = () => {
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0)
@@ -76,7 +81,7 @@ const LandingPage = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link 
                 to="/login" 
-                className="glass-dark rounded-full px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:bg-white/10"
+                className="glass-dark rounded-full px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
               >
                 Log in
               </Link>
@@ -84,7 +89,7 @@ const LandingPage = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link 
                 to="/register" 
-                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/25 hover:shadow-xl"
+                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/25 hover:shadow-xl hover:from-primary-400 hover:to-primary-500"
               >
                 Sign up
               </Link>
@@ -147,7 +152,7 @@ const LandingPage = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link 
                 to="/register" 
-                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-10 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/30 hover:shadow-2xl"
+                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-10 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/30 hover:shadow-2xl hover:from-primary-400 hover:to-primary-500"
               >
                 Get Started
               </Link>
@@ -155,7 +160,7 @@ const LandingPage = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <a 
                 href="#features" 
-                className="glass rounded-full border border-primary-400/50 px-10 py-4 text-lg font-medium text-primary-400 transition-all duration-300 hover:bg-primary-400/10 hover:border-primary-400"
+                className="glass rounded-full border border-primary-400/50 px-10 py-4 text-lg font-medium text-primary-400 transition-all duration-300 hover:bg-primary-400/10 hover:border-primary-400 hover:shadow-lg"
               >
                 Learn More
               </a>
@@ -214,7 +219,7 @@ const LandingPage = () => {
           {/* Left Arrow */}
           <button
             onClick={prevFeature}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 glass-dark rounded-full p-3 transition-all duration-300 hover:bg-white/10"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 glass-dark rounded-full p-3 transition-all duration-300 hover:bg-white/10 hover:scale-110 hover:shadow-lg"
           >
             <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -224,7 +229,7 @@ const LandingPage = () => {
           {/* Right Arrow */}
           <button
             onClick={nextFeature}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 glass-dark rounded-full p-3 transition-all duration-300 hover:bg-white/10"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 glass-dark rounded-full p-3 transition-all duration-300 hover:bg-white/10 hover:scale-110 hover:shadow-lg"
           >
             <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -249,9 +254,14 @@ const LandingPage = () => {
                       <h3 className="text-4xl font-bold text-primary-400">
                         {feature.title}
                       </h3>
-                      <p className="text-xl text-white/80 leading-relaxed">
-                        {feature.description}
-                      </p>
+                      <div className="text-xl text-white/80 leading-relaxed">
+                        {feature.description.split('\n').map((line, lineIndex) => (
+                          <div key={lineIndex}>
+                            {line}
+                            {lineIndex < feature.description.split('\n').length - 1 && <br />}
+                          </div>
+                        ))}
+                      </div>
                     </motion.div>
 
                     {/* Animation - Right Side */}
@@ -278,15 +288,95 @@ const LandingPage = () => {
                 <button
                   key={index}
                   onClick={() => setCurrentFeatureIndex(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  className={`w-3 h-3 rounded-full transition-all duration-300 hover:scale-125 ${
                     index === currentFeatureIndex 
-                      ? 'bg-primary-400' 
+                      ? 'bg-primary-400 shadow-lg' 
                       : 'bg-white/20 hover:bg-white/40'
                   }`}
                 />
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* SensayDanBot About Navi Section */}
+      <section className="relative z-10 py-16">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="mb-12 text-center"
+          >
+            <h2 className="mb-6 text-5xl font-bold">
+              <a 
+                href="https://t.me/SensayDanBot" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary-400 hover:text-primary-300 transition-colors duration-300 underline decoration-primary-400/50 hover:decoration-primary-300"
+              >
+                @SensayDanBot
+              </a>
+              {" "}about Navi
+            </h2>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="glass mx-auto max-w-4xl rounded-3xl p-8 shadow-2xl"
+          >
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              {/* Avatar */}
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="flex-shrink-0"
+              >
+                <div className="relative">
+                  <motion.div
+                    className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-500/30 to-primary-600/30 blur-xl"
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  <img 
+                    src={danBotAvatar} 
+                    alt="SensayDanBot Avatar" 
+                    className="relative w-32 h-32 rounded-full object-cover border-4 border-primary-400/30 shadow-2xl"
+                  />
+                </div>
+              </motion.div>
+
+              {/* Quote */}
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="flex-1"
+              >
+                <blockquote className="text-xl md:text-2xl text-white/90 leading-relaxed italic">
+                  "Navi transforms the way you approach your goals. It's not just a tool - it's your strategic thinking partner that helps you break through mental barriers and achieve what truly matters to you."
+                </blockquote>
+                <footer className="mt-4 text-primary-400 font-medium">
+                  — <a 
+                    href="https://t.me/SensayDanBot" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="hover:text-primary-300 transition-colors duration-300"
+                  >
+                    @SensayDanBot
+                  </a>
+                </footer>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -328,7 +418,7 @@ const LandingPage = () => {
             >
               <Link 
                 to="/register" 
-                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-12 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/30 hover:shadow-2xl"
+                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-12 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/30 hover:shadow-2xl hover:from-primary-400 hover:to-primary-500"
               >
                 Get Started for Free
               </Link>
@@ -1117,6 +1207,76 @@ const TrainedOnBestPracticesVisualization = () => {
   )
 }
 
+// Customize Your Replica Visualization Component
+const CustomizeReplicaVisualization = () => {
+  const characters = [
+    { id: 1, image: churchillImage, name: "Churchill" },
+    { id: 2, image: houseImage, name: "House" },
+    { id: 3, image: yodaImage, name: "Yoda" }
+  ]
+
+  return (
+    <div className="flex items-center justify-center h-[400px] w-full">
+      <div className="flex space-x-8">
+        {characters.map((character, index) => (
+          <motion.div
+            key={character.id}
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: index * 0.2 }}
+            viewport={{ once: true }}
+            whileHover={{ scale: 1.1 }}
+            className="relative"
+          >
+            <div className="relative">
+              <motion.div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-500/20 to-primary-600/20 blur-lg"
+                animate={{ opacity: [0.5, 0.8, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: index * 0.5 }}
+              />
+              <img 
+                src={character.image} 
+                alt={character.name}
+                className="relative w-24 h-24 rounded-full object-cover border-3 border-primary-400/30 shadow-xl"
+              />
+            </div>
+            <p className="mt-3 text-center text-sm text-white/70 font-medium">{character.name}</p>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Dashboard Visualization Component
+const DashboardVisualization = () => {
+  return (
+    <div className="flex items-center justify-center h-[400px] w-full">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+        whileHover={{ scale: 1.02 }}
+        className="relative max-w-lg w-full"
+      >
+        <div className="relative">
+          <motion.div
+            className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-500/10 to-primary-600/10 blur-xl"
+            animate={{ opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <img 
+            src={dashboardImage} 
+            alt="Interactive Dashboard"
+            className="relative w-full rounded-2xl shadow-2xl border border-primary-400/20"
+          />
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 // Feature list for the carousel
 const features = [
   {
@@ -1142,24 +1302,12 @@ const features = [
   {
     title: 'Customize Your Replica',
     description: 'Have fun!',
-    animation: (
-      <div className="flex items-center justify-center h-[400px] w-full">
-        <div className="glass-dark rounded-2xl p-8 text-center">
-          <p className="text-white/60">Animation placeholder</p>
-        </div>
-      </div>
-    )
+    animation: <CustomizeReplicaVisualization />
   },
   {
     title: 'See Goals & Progress at a Glance',
     description: 'Interactive dashboard.',
-    animation: (
-      <div className="flex items-center justify-center h-[400px] w-full">
-        <div className="glass-dark rounded-2xl p-8 text-center">
-          <p className="text-white/60">Animation placeholder</p>
-        </div>
-      </div>
-    )
+    animation: <DashboardVisualization />
   }
 ]
 
