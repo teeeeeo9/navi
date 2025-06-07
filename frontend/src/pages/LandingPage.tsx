@@ -1,8 +1,19 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import logoImage from '@/assets/logo.png'
 
 const LandingPage = () => {
+  const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0)
+
+  const nextFeature = () => {
+    setCurrentFeatureIndex((prev) => (prev + 1) % features.length)
+  }
+
+  const prevFeature = () => {
+    setCurrentFeatureIndex((prev) => (prev - 1 + features.length) % features.length)
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-dark-900 to-dark-800 text-white">
       {/* Enhanced Background Elements for Glass Effect */}
@@ -115,15 +126,7 @@ const LandingPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.7 }}
           >
-            Strategic Goal Planning <br />
-            <motion.span 
-              className="bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, delay: 1 }}
-            >
-              Powered by AI
-            </motion.span>
+            Navi: your strategic mastermind
           </motion.h1>
           
           <motion.p 
@@ -132,7 +135,7 @@ const LandingPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.2 }}
           >
-            Navi helps you set meaningful goals, create strategic plans, and track your progress with the help of advanced AI assistance.
+            Navi helps you set meaningful goals and achieve them by fostering strategic thinking.
           </motion.p>
           
           <motion.div 
@@ -171,24 +174,6 @@ const LandingPage = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="glass mx-auto max-w-5xl rounded-3xl p-10 text-center shadow-2xl"
           >
-            <motion.div 
-              className="mb-8 flex justify-center"
-              whileInView={{ scale: [0.8, 1.1, 1] }}
-              transition={{ duration: 1, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              <div className="relative">
-                <motion.div 
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-500/30 to-primary-600/30 blur-xl"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                />
-                {/* <div className="relative flex h-24 w-24 items-center justify-center rounded-full glass-dark">
-                  <img src={logoImage} alt="Sensay Logo" className="h-18 w-auto" />
-                </div> */}
-              </div>
-            </motion.div>
-            
             <motion.h2 
               className="mb-6 text-4xl font-bold"
               initial={{ opacity: 0, y: 20 }}
@@ -196,7 +181,7 @@ const LandingPage = () => {
               transition={{ duration: 0.6, delay: 0.3 }}
               viewport={{ once: true }}
             >
-              Powered by Sensay AI
+              Powered by Sensay
             </motion.h2>
             
             <motion.p 
@@ -206,191 +191,102 @@ const LandingPage = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
               viewport={{ once: true }}
             >
-              Sensay is at the heart of Navi, providing intelligent assistance for your goal planning and strategic thinking. The advanced AI understands your goals, provides personalized guidance, and helps you stay on track.
+              The Sensay Wisdom API empowers Navi with its cutting-edge Sensay replicas. Your replica understands your goals, provides strategic personalized guidance, and helps you stay on track. The more you use Navi, the smarter and more powerful your replica becomes.
             </motion.p>
-            
-            <div className="mx-auto flex max-w-3xl flex-col space-y-6 text-left">
-              {[
-                {
-                  title: "Conversational Guidance",
-                  description: "Interact naturally with an AI assistant that handles all goal-related actions, provides personalized advice, and helps you overcome obstacles."
-                },
-                {
-                  title: "Intelligent Analysis", 
-                  description: "Sensay AI analyzes your goals, progress, and patterns to provide strategic insights and suggestions tailored to your specific needs."
-                },
-                {
-                  title: "Adaptive Interaction",
-                  description: "The AI adapts its interaction style based on your history and preferences, becoming more helpful as it learns about your goals and challenges."
-                }
-              ].map((feature, index) => (
-                <motion.div 
-                  key={index}
-                  className="glass-dark rounded-xl p-6 transition-all duration-300 hover:bg-white/5"
-                  initial={{ opacity: 0, x: -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, delay: 0.5 + index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <h3 className="mb-3 text-xl font-medium text-primary-400">{feature.title}</h3>
-                  <p className="text-white/70">{feature.description}</p>
-                </motion.div>
-              ))}
-            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="relative z-10 container mx-auto px-4 py-24">
+      {/* Features Section - Carousel */}
+      <section id="features" className="relative z-10 container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true, margin: "-100px" }}
-          className="mb-16 text-center"
+          className="mb-12 text-center"
         >
           <h2 className="mb-6 text-5xl font-bold">Key Features</h2>
-          <p className="mx-auto max-w-2xl text-xl text-white/80">
-            Navi combines powerful planning tools with artificial intelligence to make goal setting and achievement easier than ever.
-          </p>
         </motion.div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          {features.map((feature, index) => (
+        {/* Carousel Container */}
+        <div className="relative glass mx-auto max-w-7xl rounded-3xl p-6 shadow-2xl">
+          {/* Left Arrow */}
+          <button
+            onClick={prevFeature}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 glass-dark rounded-full p-3 transition-all duration-300 hover:bg-white/10"
+          >
+            <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* Right Arrow */}
+          <button
+            onClick={nextFeature}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 glass-dark rounded-full p-3 transition-all duration-300 hover:bg-white/10"
+          >
+            <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <div className="relative overflow-hidden mx-16">
             <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true, margin: "-50px" }}
-              className="glass group rounded-2xl p-8 transition-all duration-300 hover:bg-white/5"
-              whileHover={{ y: -5, scale: 1.02 }}
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${currentFeatureIndex * 100}%)` }}
             >
-              <motion.div 
-                className="mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-r from-primary-500/20 to-primary-600/20 text-primary-400"
-                whileHover={{ rotate: 360, scale: 1.1 }}
-                transition={{ duration: 0.6 }}
-              >
-                {feature.icon}
-              </motion.div>
-              <h3 className="mb-4 text-xl font-bold transition-colors group-hover:text-primary-400">{feature.title}</h3>
-              <p className="text-white/70">{feature.description}</p>
+              {features.map((feature, index) => (
+                <div key={index} className="w-full flex-shrink-0">
+                  <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[400px]">
+                    {/* Feature Content - Left Side */}
+                    <motion.div
+                      className="space-y-6"
+                      initial={{ opacity: 0, x: -50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.6, delay: 0.2 }}
+                    >
+                      <h3 className="text-4xl font-bold text-primary-400">
+                        {feature.title}
+                      </h3>
+                      <p className="text-xl text-white/80 leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </motion.div>
+
+                    {/* Animation - Right Side */}
+                    <motion.div
+                      className="flex items-center justify-center"
+                      initial={{ opacity: 0, x: 50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.6, delay: 0.4 }}
+                    >
+                      <div className="w-full max-w-lg">
+                        {feature.animation}
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              ))}
             </motion.div>
-          ))}
-        </div>
-      </section>
+          </div>
 
-      {/* Strategic Thinking Visualization */}
-      <section className="relative z-10 py-24">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="mb-16 text-center"
-          >
-            <h2 className="mb-6 text-5xl font-bold">Think Clearly</h2>
-            <p className="mx-auto max-w-2xl text-xl text-white/80">
-              Navi helps you approach your goals with strategic thinking, asking the right questions at the right time.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="glass mx-auto max-w-6xl rounded-3xl p-8 shadow-2xl"
-          >
-            <StrategicThinkingVisualization />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Stay on Track Visualization */}
-      <section className="relative z-10 py-24">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="mb-16 text-center"
-          >
-            <h2 className="mb-6 text-5xl font-bold">Stay on Track</h2>
-            <p className="mx-auto max-w-2xl text-xl text-white/80">
-              Visualize your progress over time with beautiful, animated charts that show both your effort and achievement.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="glass mx-auto max-w-4xl rounded-3xl p-8 shadow-2xl"
-          >
-            <StayOnTrackVisualization />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Becomes You Visualization */}
-      <section className="relative z-10 py-24">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="mb-16 text-center"
-          >
-            <h2 className="mb-6 text-5xl font-bold">Becomes You</h2>
-            <p className="mx-auto max-w-2xl text-xl text-white/80">
-              See how Navi helps you transform into the person you want to be.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="glass mx-auto max-w-4xl rounded-3xl p-8 shadow-2xl"
-          >
-            <BecomesYouVisualization />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Trained on Best Practices Visualization */}
-      <section className="relative z-10 py-24">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="mb-16 text-center"
-          >
-            <h2 className="mb-6 text-5xl font-bold">Trained on Proven Best Practices</h2>
-            <p className="mx-auto max-w-2xl text-xl text-white/80">
-              Our AI has absorbed knowledge from countless success stories and proven methodologies.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="glass mx-auto max-w-4xl rounded-3xl p-8 shadow-2xl"
-          >
-            <TrainedOnBestPracticesVisualization />
-          </motion.div>
+          {/* Dots Indicator - Bottom Center */}
+          <div className="flex justify-center mt-6">
+            <div className="flex space-x-2">
+              {features.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentFeatureIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentFeatureIndex 
+                      ? 'bg-primary-400' 
+                      : 'bg-white/20 hover:bg-white/40'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -411,7 +307,7 @@ const LandingPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              Ready to Achieve Your Goals?
+              Ready to move from "Someday I will..." to "Here's the plan"?
             </motion.h2>
             <motion.p 
               className="mx-auto mb-10 max-w-2xl text-xl text-white/80"
@@ -420,7 +316,7 @@ const LandingPage = () => {
               transition={{ duration: 0.6, delay: 0.3 }}
               viewport={{ once: true }}
             >
-              Join Navi today and experience the power of AI-assisted goal planning and achievement.
+              Join Navi today. It's the only tool you need to stay focused and on track.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -451,54 +347,13 @@ const LandingPage = () => {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            © {new Date().getFullYear()} Navi. Powered by Sensay AI.
+            © 2025 Navi. Powered by Sensay.
           </motion.p>
         </div>
       </footer>
     </div>
   )
 }
-
-// Feature list for the features section
-const features = [
-  {
-    title: 'Goal Setting',
-    description: 'Define clear, meaningful goals with descriptions, timelines, and importance.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
-        <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clipRule="evenodd" />
-      </svg>
-    )
-  },
-  {
-    title: 'Milestones',
-    description: 'Break goals into achievable milestones with their own deadlines for better tracking.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
-        <path fillRule="evenodd" d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm4.5 7.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0v-2.25a.75.75 0 0 1 .75-.75Zm3.75-1.5a.75.75 0 0 0-1.5 0v4.5a.75.75 0 0 0 1.5 0V12Zm2.25-3a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V9.75A.75.75 0 0 1 13.5 9Zm3.75-1.5a.75.75 0 0 0-1.5 0v9a.75.75 0 0 0 1.5 0v-9Z" clipRule="evenodd" />
-      </svg>
-    )
-  },
-  {
-    title: 'Progress Tracking',
-    description: 'Track progress on goals and visualize your journey with beautiful charts and statistics.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
-        <path fillRule="evenodd" d="M2.25 13.5a8.25 8.25 0 0 1 8.25-8.25.75.75 0 0 1 .75.75v6.75H18a.75.75 0 0 1 .75.75 8.25 8.25 0 0 1-16.5 0Z" clipRule="evenodd" />
-        <path fillRule="evenodd" d="M12.75 3a.75.75 0 0 1 .75-.75 8.25 8.25 0 0 1 8.25 8.25.75.75 0 0 1-.75.75h-7.5a.75.75 0 0 1-.75-.75V3Z" clipRule="evenodd" />
-      </svg>
-    )
-  },
-  {
-    title: 'Reflections',
-    description: 'Capture thoughts on the importance of goals, potential obstacles, and strategies.',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
-        <path fillRule="evenodd" d="M4.848 2.771A49.144 49.144 0 0 1 12 2.25c2.43 0 4.817.178 7.152.52 1.978.292 3.348 2.024 3.348 3.97v6.02c0 1.946-1.37 3.678-3.348 3.97a48.901 48.901 0 0 1-3.476.383.39.39 0 0 0-.297.17l-2.755 4.133a.75.75 0 0 1-1.248 0l-2.755-4.133a.39.39 0 0 0-.297-.17 48.9 48.9 0 0 1-3.476-.384c-1.978-.29-3.348-2.024-3.348-3.97V6.741c0-1.946 1.37-3.68 3.348-3.97ZM6.75 8.25a.75.75 0 0 1 .75-.75h9a.75.75 0 0 1 0 1.5h-9a.75.75 0 0 1-.75-.75Zm.75 2.25a.75.75 0 0 0 0 1.5H12a.75.75 0 0 0 0-1.5H7.5Z" clipRule="evenodd" />
-      </svg>
-    )
-  }
-]
 
 // Strategic Thinking Visualization Component
 const StrategicThinkingVisualization = () => {
@@ -507,72 +362,72 @@ const StrategicThinkingVisualization = () => {
       id: 1,
       title: "How",
       description: "Figure out the steps",
-      position: { x: -300, y: -150 },
-      connectionPoint: { x: -200, y: -150 }, // Right edge of rectangle
+      position: { x: -200, y: -100 },
+      connectionPoint: { x: -120, y: -100 }, // Right edge of rectangle
       delay: 0
     },
     {
       id: 2,
       title: "When",
       description: "Build the timeline",
-      position: { x: 300, y: -150 },
-      connectionPoint: { x: 200, y: -150 }, // Left edge of rectangle
+      position: { x: 200, y: -100 },
+      connectionPoint: { x: 120, y: -100 }, // Left edge of rectangle
       delay: 2
     },
     {
       id: 3,
       title: "Why",
       description: "Stay motivated",
-      position: { x: -300, y: 150 },
-      connectionPoint: { x: -200, y: 150 }, // Right edge of rectangle
+      position: { x: -200, y: 100 },
+      connectionPoint: { x: -120, y: 100 }, // Right edge of rectangle
       delay: 4
     },
     {
       id: 4,
       title: "What if",
-      description: "Anticipate obstacles and plan action in advance",
-      position: { x: 300, y: 150 },
-      connectionPoint: { x: 200, y: 150 }, // Left edge of rectangle
+      description: "Anticipate obstacles",
+      position: { x: 200, y: 100 },
+      connectionPoint: { x: 120, y: 100 }, // Left edge of rectangle
       delay: 6
     },
     {
       id: 5,
       title: "What else",
-      description: "What piece of puzzle is missing",
-      position: { x: 0, y: 250 },
-      connectionPoint: { x: 0, y: 190 }, // Top edge of rectangle
+      description: "Missing puzzle piece",
+      position: { x: 0, y: 180 },
+      connectionPoint: { x: 0, y: 120 }, // Top edge of rectangle
       delay: 8
     }
   ]
 
   // Connection points exactly on the goal rectangle edges
   const goalConnectionPoints = [
-    { x: -105, y: 0 }, // Left edge for "How?" - moved further left to actual border
-    { x: 105, y: 0 },  // Right edge for "When?" - moved further right to actual border
-    { x: -105, y: 0 }, // Left edge for "Why?" - moved further left to actual border
-    { x: 105, y: 0 },  // Right edge for "What if?" - moved further right to actual border
-    { x: 0, y: 50 }   // Bottom edge for "What else?" - moved further down to actual border
+    { x: -70, y: 0 }, // Left edge for "How?"
+    { x: 70, y: 0 },  // Right edge for "When?"
+    { x: -70, y: 0 }, // Left edge for "Why?"
+    { x: 70, y: 0 },  // Right edge for "What if?"
+    { x: 0, y: 35 }   // Bottom edge for "What else?"
   ]
 
   const connectionPaths = [
     // From left edge of goal to How (top-left)
-    "M -105 0 L -150 0 L -150 -150 L -200 -150",
+    "M -70 0 L -95 0 L -95 -100 L -120 -100",
     // From right edge of goal to When (top-right)
-    "M 105 0 L 150 0 L 150 -150 L 200 -150",
+    "M 70 0 L 95 0 L 95 -100 L 120 -100",
     // From left edge of goal to Why (bottom-left)
-    "M -105 0 L -150 0 L -150 150 L -200 150",
+    "M -70 0 L -95 0 L -95 100 L -120 100",
     // From right edge of goal to What if (bottom-right)
-    "M 105 0 L 150 0 L 150 150 L 200 150",
+    "M 70 0 L 95 0 L 95 100 L 120 100",
     // From bottom edge of goal to What else (bottom)
-    "M 0 50 L 0 125 L 0 190"
+    "M 0 35 L 0 77 L 0 120"
   ]
 
   return (
-    <div className="relative h-[800px] w-full overflow-hidden flex items-center justify-center">
-      <div className="relative w-[800px] h-[600px]">
+    <div className="relative h-[400px] w-full overflow-hidden flex items-center justify-center">
+      <div className="relative w-[500px] h-[400px]">
         <svg 
           className="absolute inset-0 h-full w-full" 
-          viewBox="-400 -300 800 600"
+          viewBox="-250 -200 500 400"
         >
           {/* Animated Connection Lines */}
           {connectionPaths.map((path, index) => (
@@ -619,7 +474,7 @@ const StrategicThinkingVisualization = () => {
               key={`goal-point-${index}`}
               cx={point.x}
               cy={point.y}
-              r="4"
+              r="3"
               fill="rgba(247, 144, 81, 0.9)"
               initial={{ scale: 0, opacity: 0 }}
               animate={{ 
@@ -642,7 +497,7 @@ const StrategicThinkingVisualization = () => {
               key={`point-${question.id}`}
               cx={question.connectionPoint.x}
               cy={question.connectionPoint.y}
-              r="4"
+              r="3"
               fill="rgba(113, 160, 198, 0.8)"
               initial={{ scale: 0, opacity: 0 }}
               animate={{ 
@@ -673,9 +528,9 @@ const StrategicThinkingVisualization = () => {
               ease: "easeInOut"
             }}
           >
-            <div className="glass-dark relative rounded-2xl border border-orange-400/30 px-8 py-6 text-center shadow-2xl">
+            <div className="glass-dark relative rounded-xl border border-orange-400/30 px-6 py-4 text-center shadow-2xl">
               <motion.div
-                className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/10 to-orange-600/10"
+                className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-500/10 to-orange-600/10"
                 animate={{ 
                   opacity: [0.5, 0.8, 0.5]
                 }}
@@ -686,8 +541,8 @@ const StrategicThinkingVisualization = () => {
                 }}
               />
               <div className="relative">
-                <h3 className="text-2xl font-bold text-orange-400">Goal</h3>
-                <p className="text-sm text-white/70">Your strategic focus</p>
+                <h3 className="text-xl font-bold text-orange-400">Goal</h3>
+                <p className="text-xs text-white/70">Your strategic focus</p>
               </div>
             </div>
           </motion.div>
@@ -724,9 +579,9 @@ const StrategicThinkingVisualization = () => {
                 transition: { duration: 0.3 }
               }}
             >
-              <div className="glass relative w-[200px] rounded-xl border border-primary-400/30 p-4 text-center shadow-xl">
+              <div className="glass relative w-[140px] rounded-lg border border-primary-400/30 p-3 text-center shadow-xl">
                 <motion.div
-                  className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-500/5 to-primary-600/5"
+                  className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary-500/5 to-primary-600/5"
                   animate={{ 
                     opacity: [0.3, 0.6, 0.3],
                   }}
@@ -738,10 +593,10 @@ const StrategicThinkingVisualization = () => {
                   }}
                 />
                 <div className="relative">
-                  <h4 className="mb-2 text-lg font-bold text-primary-400">
+                  <h4 className="mb-1 text-sm font-bold text-primary-400">
                     {question.title}
                   </h4>
-                  <p className="text-xs text-white/70">
+                  <p className="text-[10px] text-white/70">
                     {question.description}
                   </p>
                 </div>
@@ -751,21 +606,21 @@ const StrategicThinkingVisualization = () => {
         ))}
 
         {/* Floating particles for extra visual appeal */}
-        {[...Array(12)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute h-1 w-1 rounded-full bg-primary-400/30"
             style={{
-              left: `${10 + i * 7}%`,
-              top: `${20 + (i % 4) * 20}%`,
+              left: `${15 + i * 10}%`,
+              top: `${25 + (i % 3) * 25}%`,
             }}
             animate={{
-              y: [-15, 15, -15],
+              y: [-10, 10, -10],
               opacity: [0.1, 0.6, 0.1],
               scale: [0.3, 1, 0.3]
             }}
             transition={{
-              duration: 5 + i * 0.3,
+              duration: 4 + i * 0.3,
               repeat: Infinity,
               ease: "easeInOut",
               delay: i * 0.4
@@ -1261,5 +1116,51 @@ const TrainedOnBestPracticesVisualization = () => {
     </div>
   )
 }
+
+// Feature list for the carousel
+const features = [
+  {
+    title: 'Helps you think clearly',
+    description: 'Foresee challenges and plan your actions.\nDefine the timeline.\nWrite it down.',
+    animation: <StrategicThinkingVisualization />
+  },
+  {
+    title: 'Helps You Stay on Track',
+    description: 'Record progress and effort invested.\nStay motivated.\nRemain accountable.\nEffortlessly.',
+    animation: <StayOnTrackVisualization />
+  },
+  {
+    title: 'Becomes you eventually.',
+    description: 'Learns your thinking and communication patterns over time.\nRemembers everything you tell it.\nGets better with every interaction.',
+    animation: <BecomesYouVisualization />
+  },
+  {
+    title: 'Trained on Proven Best Practices',
+    description: 'So you can skip the theory and just do it.\nDon\'t watch tons of productivity videos - Navi did it for you.',
+    animation: <TrainedOnBestPracticesVisualization />
+  },
+  {
+    title: 'Customize Your Replica',
+    description: 'Have fun!',
+    animation: (
+      <div className="flex items-center justify-center h-[400px] w-full">
+        <div className="glass-dark rounded-2xl p-8 text-center">
+          <p className="text-white/60">Animation placeholder</p>
+        </div>
+      </div>
+    )
+  },
+  {
+    title: 'See Goals & Progress at a Glance',
+    description: 'Interactive dashboard.',
+    animation: (
+      <div className="flex items-center justify-center h-[400px] w-full">
+        <div className="glass-dark rounded-2xl p-8 text-center">
+          <p className="text-white/60">Animation placeholder</p>
+        </div>
+      </div>
+    )
+  }
+]
 
 export default LandingPage 
