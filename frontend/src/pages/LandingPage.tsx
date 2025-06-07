@@ -81,7 +81,7 @@ const LandingPage = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link 
                 to="/login" 
-                className="glass-dark rounded-full px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
+                className="glass-dark rounded-full px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-blue-600/20 hover:shadow-lg"
               >
                 Log in
               </Link>
@@ -89,7 +89,7 @@ const LandingPage = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link 
                 to="/register" 
-                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/25 hover:shadow-xl hover:from-primary-400 hover:to-primary-500"
+                className="rounded-full bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:shadow-blue-500/25 hover:shadow-xl hover:from-blue-400 hover:to-blue-500"
               >
                 Sign up
               </Link>
@@ -152,7 +152,19 @@ const LandingPage = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link 
                 to="/register" 
-                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-10 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/30 hover:shadow-2xl hover:from-primary-400 hover:to-primary-500"
+                className="rounded-full px-10 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:shadow-2xl"
+                style={{
+                  background: 'linear-gradient(to right, #fc9747, #f77e43)',
+                  boxShadow: '0 10px 25px -5px rgba(252, 151, 71, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(to right, #f77e43, #ec5c42)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px -5px rgba(247, 126, 67, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(to right, #fc9747, #f77e43)';
+                  e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(252, 151, 71, 0.3)';
+                }}
               >
                 Get Started
               </Link>
@@ -160,7 +172,7 @@ const LandingPage = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <a 
                 href="#features" 
-                className="glass rounded-full border border-primary-400/50 px-10 py-4 text-lg font-medium text-primary-400 transition-all duration-300 hover:bg-primary-400/10 hover:border-primary-400 hover:shadow-lg"
+                className="glass rounded-full border border-blue-400/50 px-10 py-4 text-lg font-medium text-blue-400 transition-all duration-300 hover:bg-blue-400/10 hover:border-blue-400 hover:shadow-lg"
               >
                 Learn More
               </a>
@@ -177,7 +189,7 @@ const LandingPage = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             viewport={{ once: true, margin: "-100px" }}
-            className="glass mx-auto max-w-5xl rounded-3xl p-10 text-center shadow-2xl"
+            className="mx-auto max-w-5xl rounded-3xl p-10 text-center"
           >
             <motion.h2 
               className="mb-6 text-4xl font-bold"
@@ -204,7 +216,7 @@ const LandingPage = () => {
 
       {/* Features Section - Carousel */}
       <section id="features" className="relative z-10 container mx-auto px-4 py-16">
-        <motion.div
+                <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -212,7 +224,7 @@ const LandingPage = () => {
           className="mb-12 text-center"
         >
           <h2 className="mb-6 text-5xl font-bold">Key Features</h2>
-        </motion.div>
+                </motion.div>
 
         {/* Carousel Container */}
         <div className="relative glass mx-auto max-w-7xl rounded-3xl p-6 shadow-2xl">
@@ -243,10 +255,10 @@ const LandingPage = () => {
             >
               {features.map((feature, index) => (
                 <div key={index} className="w-full flex-shrink-0">
-                  <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[400px]">
-                    {/* Feature Content - Left Side */}
+                  <div className="grid lg:grid-cols-5 gap-12 items-center min-h-[400px]">
+                    {/* Feature Content - Left Side (2 columns) */}
                     <motion.div
-                      className="space-y-6"
+                      className="lg:col-span-2 space-y-6"
                       initial={{ opacity: 0, x: -50 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.6, delay: 0.2 }}
@@ -260,18 +272,18 @@ const LandingPage = () => {
                             {line}
                             {lineIndex < feature.description.split('\n').length - 1 && <br />}
                           </div>
-                        ))}
-                      </div>
-                    </motion.div>
+              ))}
+            </div>
+          </motion.div>
 
-                    {/* Animation - Right Side */}
+                    {/* Animation - Right Side (3 columns) */}
                     <motion.div
-                      className="flex items-center justify-center"
+                      className="lg:col-span-3 flex items-center justify-center"
                       initial={{ opacity: 0, x: 50 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.6, delay: 0.4 }}
                     >
-                      <div className="w-full max-w-lg">
+                      <div className="w-full max-w-2xl">
                         {feature.animation}
                       </div>
                     </motion.div>
@@ -303,11 +315,11 @@ const LandingPage = () => {
       {/* SensayDanBot About Navi Section */}
       <section className="relative z-10 py-16">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true, margin: "-100px" }}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true, margin: "-100px" }}
             className="mb-12 text-center"
           >
             <h2 className="mb-6 text-5xl font-bold">
@@ -321,18 +333,18 @@ const LandingPage = () => {
               </a>
               {" "}about Navi
             </h2>
-          </motion.div>
+        </motion.div>
 
-          <motion.div
+            <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1 }}
             viewport={{ once: true, margin: "-100px" }}
-            className="glass mx-auto max-w-4xl rounded-3xl p-8 shadow-2xl"
+            className="mx-auto max-w-4xl rounded-3xl p-8"
           >
             <div className="flex flex-col md:flex-row items-center gap-8">
               {/* Avatar */}
-              <motion.div
+              <motion.div 
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -374,7 +386,7 @@ const LandingPage = () => {
                     @SensayDanBot
                   </a>
                 </footer>
-              </motion.div>
+            </motion.div>
             </div>
           </motion.div>
         </div>
@@ -397,7 +409,54 @@ const LandingPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              Ready to move from "Someday I will..." to "Here's the plan"?
+              Ready to move from "Someday I will..." to{" "}
+              <span className="relative inline-block">
+                "Here's the plan"
+                <svg
+                  className="absolute -bottom-2 left-0 w-full h-4"
+                  viewBox="0 0 300 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <motion.path
+                    d="M5 15 Q75 12 150 13 Q225 14 295 15"
+                    stroke="rgba(247, 144, 81, 0.7)"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    style={{
+                      filter: 'drop-shadow(0 0 1px rgba(247, 144, 81, 0.3))',
+                    }}
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    whileInView={{ pathLength: 1, opacity: 1 }}
+                    transition={{ 
+                      duration: 1.5, 
+                      delay: 0.8,
+                      ease: "easeInOut"
+                    }}
+                    viewport={{ once: true }}
+                  />
+                  {/* Add a second slightly offset path for pencil texture */}
+                  <motion.path
+                    d="M5 16 Q75 13 150 14 Q225 15 295 16"
+                    stroke="rgba(247, 144, 81, 0.4)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    whileInView={{ pathLength: 1, opacity: 1 }}
+                    transition={{ 
+                      duration: 1.5, 
+                      delay: 0.85,
+                      ease: "easeInOut"
+                    }}
+                    viewport={{ once: true }}
+                  />
+                </svg>
+              </span>
+              ?
             </motion.h2>
             <motion.p 
               className="mx-auto mb-10 max-w-2xl text-xl text-white/80"
@@ -418,7 +477,7 @@ const LandingPage = () => {
             >
               <Link 
                 to="/register" 
-                className="rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-12 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:shadow-primary-500/30 hover:shadow-2xl hover:from-primary-400 hover:to-primary-500"
+                className="rounded-full bg-gradient-to-r from-blue-500 to-blue-600 px-12 py-4 text-lg font-medium text-white shadow-lg transition-all duration-300 hover:shadow-blue-500/30 hover:shadow-2xl hover:from-blue-400 hover:to-blue-500"
               >
                 Get Started for Free
               </Link>
@@ -603,7 +662,7 @@ const StrategicThinkingVisualization = () => {
               }}
             />
           ))}
-        </svg>
+      </svg>
 
         {/* Central Goal */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
