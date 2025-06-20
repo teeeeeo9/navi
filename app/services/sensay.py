@@ -58,6 +58,22 @@ class SensayAPI:
         if headers:
             request_headers.update(headers)
         
+        # Log the raw request details
+        logger.debug(f"=== SENSAY API REQUEST ===")
+        logger.debug(f"Method: {method}")
+        logger.debug(f"URL: {url}")
+        logger.debug(f"Headers: {json.dumps(request_headers, indent=2)}")
+        if params:
+            logger.debug(f"Query Params: {json.dumps(params, indent=2)}")
+        if data:
+            data_str = json.dumps(data, indent=2)
+            if len(data_str) > 1000:  # Truncate if longer than 1000 characters
+                truncated_data = data_str[:1000] + f"... [TRUNCATED - Total length: {len(data_str)} chars]"
+                logger.debug(f"Request Body: {truncated_data}")
+            else:
+                logger.debug(f"Request Body: {data_str}")
+        logger.debug(f"========================")
+        
         try:
             response = requests.request(
                 method=method,
@@ -66,6 +82,13 @@ class SensayAPI:
                 params=params,
                 json=data
             )
+            
+            # Log the raw response details
+            logger.debug(f"=== SENSAY API RESPONSE ===")
+            logger.debug(f"Status Code: {response.status_code}")
+            logger.debug(f"Response Headers: {dict(response.headers)}")
+            logger.debug(f"Response Body: {response.text}")
+            logger.debug(f"===========================")
             
             # Check for error responses
             if response.status_code >= 400:
@@ -76,6 +99,7 @@ class SensayAPI:
                         error_message = error_data["message"]
                 except:
                     pass
+                logger.error(f"API Error - Status: {response.status_code}, Message: {error_message}")
                 raise SensayAPIError(response.status_code, error_message)
             
             # Return successful response data
@@ -91,56 +115,114 @@ class SensayAPI:
     
     def get_user(self, user_id: str) -> Dict:
         """Get a user by ID."""
-        return self._make_request("GET", f"/v1/users/{user_id}")
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        return self._make_request(
+            "GET", 
+            f"/v1/users/{user_id}",
+            headers=headers
+        )
     
     def create_user(self, user_data: Dict) -> Dict:
         """Create a new user."""
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
         return self._make_request(
             "POST", 
             "/v1/users", 
-            data=user_data
+            data=user_data,
+            headers=headers
         )
     
     def update_user(self, user_id: str, user_data: Dict) -> Dict:
         """Update an existing user."""
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
         return self._make_request(
             "PUT", 
             f"/v1/users/{user_id}", 
             data=user_data,
-            user_id=user_id
+            user_id=user_id,
+            headers=headers
+        )
+    
+    def delete_user(self, user_id: str) -> Dict:
+        """Delete a user."""
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        return self._make_request(
+            "DELETE", 
+            f"/v1/users/{user_id}", 
+            user_id=user_id,
+            headers=headers
         )
     
     # Replica Management
     
     def list_replicas(self, user_id: str) -> Dict:
         """List all replicas for a user."""
-        return self._make_request("GET", "/v1/replicas", user_id=user_id)
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        return self._make_request(
+            "GET", 
+            "/v1/replicas", 
+            user_id=user_id,
+            headers=headers
+        )
     
     def get_replica(self, replica_id: str, user_id: str) -> Dict:
         """Get a replica by ID."""
-        return self._make_request("GET", f"/v1/replicas/{replica_id}", user_id=user_id)
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        return self._make_request(
+            "GET", 
+            f"/v1/replicas/{replica_id}", 
+            user_id=user_id,
+            headers=headers
+        )
     
     def create_replica(self, user_id: str, replica_data: Dict) -> Dict:
         """Create a new replica."""
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
         return self._make_request(
             "POST", 
             "/v1/replicas", 
             data=replica_data,
-            user_id=user_id
+            user_id=user_id,
+            headers=headers
         )
     
     def update_replica(self, replica_id: str, user_id: str, replica_data: Dict) -> Dict:
         """Update an existing replica."""
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
         return self._make_request(
             "PUT", 
             f"/v1/replicas/{replica_id}", 
             data=replica_data,
-            user_id=user_id
+            # user_id=user_id,
+            headers=headers
         )
     
-    def delete_replica(self, replica_id: str, user_id: str) -> Dict:
+    def delete_replica(self, replica_id: str) -> Dict:
         """Delete a replica."""
-        return self._make_request("DELETE", f"/v1/replicas/{replica_id}", user_id=user_id)
+        headers = {
+            "X-API-Version": "2025-03-25"
+        }
+        return self._make_request(
+            "DELETE", 
+            f"/v1/replicas/{replica_id}", 
+            headers=headers
+        )
     
     # Chat Completions
     

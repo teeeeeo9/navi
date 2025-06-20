@@ -89,7 +89,7 @@ def get_and_delete_replicas():
                         
                         try:
                             print(f"Deleting replica: {replica_name} ({replica_id})")
-                            sensay_client.delete_replica(replica_id, user.sensay_user_id)
+                            sensay_client.delete_replica(replica_id)
                             deleted_replicas += 1
                             print(f"Successfully deleted replica: {replica_id}")
                         except SensayAPIError as e:

@@ -18,7 +18,7 @@ logger = logging.getLogger('strategist.chat')
 chat_bp = Blueprint('chat', __name__)
 
 # Constants
-REPLICA_SLUG = os.environ.get('SENSAY_REPLICA_SLUG', 'strategist_planning_assistant')
+REPLICA_SLUG = os.environ.get('SENSAY_REPLICA_SLUG', 'navi_planning_assistant')
 
 # System update message prefix
 SYSTEM_UPDATE_PREFIX = "SYSTEM_UPDATE:"

@@ -27,8 +27,8 @@ logger.setLevel(logging.WARNING)  # Only show warnings and errors
 
 # Configuration
 BASE_URL = "http://localhost:5000/api"
-USERNAME = "testuser"
-EMAIL = "testuser@example.com"
+USERNAME = "testuser2342314"
+EMAIL = "testuser2342314@example.com"
 PASSWORD = "testpassword"
 
 # Debug mode flag
@@ -192,6 +192,28 @@ def get_progress_summary():
         print(f"Failed to get progress summary: {response.status_code}")
         return None
 
+def delete_user():
+    """Delete the current user from both Sensay and local database."""
+    print("\n===== DELETING USER =====")
+    
+    response = requests.delete(
+        f"{BASE_URL}/auth/delete",
+        headers=auth_headers
+    )
+    
+    if response.status_code == 200:
+        data = response.json()
+        print(f"User deleted successfully: {data['deleted_user']['username']}")
+        print(f"Sensay User ID: {data['deleted_user']['sensay_user_id']}")
+        
+        # Clear the auth token since user is deleted
+        auth_headers.pop('Authorization', None)
+        return True
+    else:
+        print(f"Failed to delete user: {response.status_code}")
+        pretty_print(response.json())
+        return False
+
 def display_goals():
     """Display all goals in a user-friendly format."""
     print("\n===== YOUR GOALS =====")
@@ -293,6 +315,7 @@ def display_help():
     print("/history - Show recent chat history")
     print("/history all - Show full chat history including system messages")
     print("/debug - Toggle debug mode to show raw JSON responses")
+    print("/delete - Delete the current user (WARNING: This cannot be undone!)")
     print("")
     print("Any other text will be sent as a message to the AI replica.")
     print("To discuss a specific goal, use: /chat <goal_id> and then chat normally.")
@@ -398,6 +421,18 @@ def interactive_chat():
             else:
                 print("You're not in a goal-specific chat.")
                 
+        elif user_input.lower() == '/delete':
+            # Confirm before deletion
+            confirm = input("Are you sure you want to delete your user account? This cannot be undone! (yes/no): ").strip().lower()
+            if confirm == 'yes':
+                if delete_user():
+                    print("User deleted successfully. Exiting chat.")
+                    break  # Exit the chat loop since user is deleted
+                else:
+                    print("Failed to delete user.")
+            else:
+                print("User deletion cancelled.")
+                
         else:
             # Send message to AI
             response = send_message(user_input, active_goal_id)
@@ -432,6 +467,7 @@ def interactive_chat():
 def main():
     """Run the interactive chat application."""
     try:
+        # delete_user()
         # Authentication
         if not register_user():
             print("Failed to authenticate. Exiting.")

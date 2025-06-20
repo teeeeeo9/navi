@@ -40,34 +40,33 @@ def register():
     if User.query.filter_by(email=data['email']).first():
         logger.warning(f"Registration failed: Email already exists: {data['email']}")
         return jsonify({'error': 'Email already exists'}), 409
+    # # Create user in Sensay
+    # try:
+    #     sensay_client = get_sensay_client()
+    #     sensay_user_id = f"{os.environ.get('SENSAY_USER_ID_PREFIX', 'navi_')}{data['username']}"
+    #     logger.debug(f"Generated Sensay user ID: {sensay_user_id}")
         
-    # Create user in Sensay
-    try:
-        sensay_client = get_sensay_client()
-        sensay_user_id = f"{os.environ.get('SENSAY_USER_ID_PREFIX', 'navi_')}{data['username']}"
-        logger.debug(f"Generated Sensay user ID: {sensay_user_id}")
-        
-        # Check if Sensay user exists
-        try:
-            logger.debug(f"Checking if Sensay user exists: {sensay_user_id}")
-            sensay_client.get_user(sensay_user_id)
-            logger.info(f"Sensay user already exists: {sensay_user_id}")
-            # User exists, continue with local registration
-        except Exception as e:
-            # Create user in Sensay
-            logger.info(f"Creating new Sensay user: {sensay_user_id}")
-            sensay_client.create_user({
-                'id': sensay_user_id,
-                'email': data['email'],
-                'name': data['username']
-            })
-            logger.info(f"Successfully created Sensay user: {sensay_user_id}")
-    except SensayAPIError as e:
-        logger.error(f"Failed to register with Sensay API: {str(e)}")
-        return jsonify({'error': f'Failed to register with Sensay: {str(e)}'}), 500
-    except Exception as e:
-        logger.error(f"Unexpected error during Sensay registration: {str(e)}", exc_info=True)
-        return jsonify({'error': f'Failed to register with Sensay: {str(e)}'}), 500
+    #     # Check if Sensay user exists
+    #     try:
+    #         logger.debug(f"Checking if Sensay user exists: {sensay_user_id}")
+    #         sensay_client.get_user(sensay_user_id)
+    #         logger.info(f"Sensay user already exists: {sensay_user_id}")
+    #         # User exists, continue with local registration
+    #     except Exception as e:
+    #         # Create user in Sensay
+    #         logger.info(f"Creating new Sensay user: {sensay_user_id}")
+    #         sensay_client.create_user({
+    #             'id': sensay_user_id,
+    #             'email': data['email'],
+    #             'name': data['username']
+    #         })
+    #         logger.info(f"Successfully created Sensay user: {sensay_user_id}")
+    # except SensayAPIError as e:
+    #     logger.error(f"Failed to register with Sensay API: {str(e)}")
+    #     return jsonify({'error': f'Failed to register with Sensay: {str(e)}'}), 500
+    # except Exception as e:
+    #     logger.error(f"Unexpected error during Sensay registration: {str(e)}", exc_info=True)
+    #     return jsonify({'error': f'Failed to register with Sensay: {str(e)}'}), 500
     
     # Create user in local database
     user = User(
@@ -105,6 +104,7 @@ def register():
     
     # Generate access token
     access_token = create_access_token(identity=str(user.id))
+    logger.debug(f"Generated JWT token for user: {user.id}")
     
     return jsonify({
         'message': 'User registered successfully',
@@ -116,18 +116,6 @@ def register():
             'sensay_user_id': user.sensay_user_id
         }
     }), 201
-    
-    
-    # return jsonify({
-    #     'message': 'User registered successfully',
-    #     'access_token': access_token,
-    #     'user': {
-    #         'id': '123',
-    #         'username': '123',
-    #         'email': '123',
-    #         'sensay_user_id': '123'
-    #     }
-    # }), 201
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
